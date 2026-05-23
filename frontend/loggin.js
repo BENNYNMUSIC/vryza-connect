@@ -2,7 +2,6 @@ const API = "http://localhost:5000/api/auth";
 
 // ================= TOGGLE FORMS =================
 function showSignup() {
-
   document
     .getElementById("loginBox")
     .classList.add("hidden");
@@ -13,7 +12,6 @@ function showSignup() {
 }
 
 function showLogin() {
-
   document
     .getElementById("signupBox")
     .classList.add("hidden");
@@ -25,7 +23,6 @@ function showLogin() {
 
 // ================= REGISTER =================
 async function register() {
-
   try {
 
     const username =
@@ -39,12 +36,11 @@ async function register() {
 
     // VALIDATION
     if (!username || !email || !password) {
-
       return alert("Please fill all fields");
     }
 
     const res = await fetch(
-      `${API}/signup`,
+      `${API}/register`,
       {
         method: "POST",
 
@@ -62,17 +58,18 @@ async function register() {
 
     const data = await res.json();
 
-    // ERROR
+    // REGISTER FAILED
     if (!res.ok) {
+      console.log(data);
 
       return alert(
-        data.message || "Signup failed"
+        data.message || "Registration failed"
       );
     }
 
     alert("✅ Account created successfully");
 
-    // CLEAR FIELDS
+    // CLEAR INPUTS
     document.getElementById("regUser").value = "";
     document.getElementById("regEmail").value = "";
     document.getElementById("regPass").value = "";
@@ -90,7 +87,6 @@ async function register() {
 
 // ================= LOGIN =================
 async function login() {
-
   try {
 
     const email =
@@ -101,7 +97,6 @@ async function login() {
 
     // VALIDATION
     if (!email || !password) {
-
       return alert("Please fill all fields");
     }
 
@@ -125,6 +120,7 @@ async function login() {
 
     // LOGIN FAILED
     if (!res.ok) {
+      console.log(data);
 
       return alert(
         data.message || "Login failed"
