@@ -1,7 +1,7 @@
 {
   "name": "Vryza+ Chat",
   "short_name": "Vryza+",
-  "start_url":bennynmusic.github.io/vryza-connect/frontend/home.html",
+  "start_url":https://bennynmusic.github.io/vryza-connect/frontend/home.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
