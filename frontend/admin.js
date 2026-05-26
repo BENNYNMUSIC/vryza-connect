@@ -1,3 +1,4 @@
+// ================= API =================
 const API_URL =
   "https://vryza-connect-backend-production.up.railway.app";
 
@@ -23,40 +24,57 @@ async function fetchUsers() {
 
   try {
 
+    // ================= LOADING =================
     container.innerHTML = `
       <div class="text-center text-gray-500 py-10">
         Loading users...
       </div>
     `;
 
+    // ================= REQUEST =================
     const res = await fetch(
       `${API_URL}/admin/users`,
       {
+
         method: "GET",
 
         headers: {
-          "Content-Type": "application/json",
-          token: token
+
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            `Bearer ${token}`
         }
       }
     );
 
-    // ================= HANDLE ERRORS =================
+    // ================= RESPONSE =================
+    const users =
+      await res.json();
+
+    console.log(
+      "USERS RESPONSE:",
+      users
+    );
+
+    // ================= ERROR =================
     if (!res.ok) {
 
       container.innerHTML = `
         <div class="text-center text-red-500 py-10">
-          Failed to load users
+          ${users.message || "Failed to load users"}
         </div>
       `;
 
       return;
     }
 
-    const users = await res.json();
-
     // ================= NO USERS =================
-    if (!users || users.length === 0) {
+    if (
+      !users ||
+      users.length === 0
+    ) {
 
       container.innerHTML = `
         <div class="text-center text-gray-500 py-10">
@@ -67,21 +85,24 @@ async function fetchUsers() {
       return;
     }
 
-    // ================= CLEAR CONTAINER =================
+    // ================= CLEAR =================
     container.innerHTML = "";
 
     // ================= LOOP USERS =================
-    users.forEach(user => {
+    users.forEach((user) => {
 
-      const div = document.createElement("div");
+      const div =
+        document.createElement("div");
 
       div.className =
         "bg-white p-5 rounded-2xl shadow border border-gray-100 mb-4";
 
       div.innerHTML = `
+
         <div class="flex items-center justify-between mb-4">
 
           <div>
+
             <h3 class="font-bold text-lg text-gray-800">
               ${user.username || "Unknown User"}
             </h3>
@@ -89,9 +110,18 @@ async function fetchUsers() {
             <p class="text-sm text-gray-500">
               ${user.email || "No Email"}
             </p>
+
           </div>
 
-          <div class="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-600 font-semibold">
+          <div class="
+            text-xs
+            px-3
+            py-1
+            rounded-full
+            bg-blue-100
+            text-blue-600
+            font-semibold
+          ">
             USER
           </div>
 
@@ -103,6 +133,7 @@ async function fetchUsers() {
             type="number"
             placeholder="Ban minutes"
             id="ban-${user._id}"
+
             class="
               flex-1
               border
@@ -118,6 +149,7 @@ async function fetchUsers() {
 
           <button
             onclick="banUser('${user._id}')"
+
             class="
               bg-red-500
               hover:bg-red-600
@@ -136,12 +168,14 @@ async function fetchUsers() {
       `;
 
       container.appendChild(div);
-
     });
 
   } catch (err) {
 
-    console.log("FETCH USERS ERROR:", err);
+    console.log(
+      "FETCH USERS ERROR:",
+      err
+    );
 
     container.innerHTML = `
       <div class="text-center text-red-500 py-10">
@@ -154,58 +188,93 @@ async function fetchUsers() {
 // ================= BAN USER =================
 async function banUser(userId) {
 
-  const input =
-    document.getElementById(`ban-${userId}`);
-
-  const minutes =
-    input.value.trim();
-
-  // ================= VALIDATION =================
-  if (!minutes || minutes <= 0) {
-
-    alert("Enter valid ban minutes");
-
-    return;
-  }
-
   try {
 
+    const input =
+      document.getElementById(
+        `ban-${userId}`
+      );
+
+    const minutes =
+      input.value.trim();
+
+    // ================= VALIDATION =================
+    if (
+      !minutes ||
+      Number(minutes) <= 0
+    ) {
+
+      alert(
+        "Enter valid ban minutes"
+      );
+
+      return;
+    }
+
+    // ================= REQUEST =================
     const res = await fetch(
       `${API_URL}/admin/ban-user`,
       {
+
         method: "POST",
 
         headers: {
-          "Content-Type": "application/json",
-          token: token
+
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            `Bearer ${token}`
         },
 
         body: JSON.stringify({
-          userId: userId,
-          durationMinutes: Number(minutes)
+
+          userId:
+            userId,
+
+          durationMinutes:
+            Number(minutes)
         })
       }
     );
 
-    const data = await res.json();
+    // ================= RESPONSE =================
+    const data =
+      await res.json();
+
+    console.log(
+      "BAN RESPONSE:",
+      data
+    );
 
     // ================= SUCCESS =================
     if (res.ok) {
 
-      alert(data.message || "User banned successfully");
+      alert(
+        data.message ||
+        "User banned successfully"
+      );
 
       input.value = "";
 
     } else {
 
-      alert(data.message || "Failed to ban user");
+      alert(
+        data.message ||
+        "Failed to ban user"
+      );
     }
 
   } catch (err) {
 
-    console.log("BAN USER ERROR:", err);
+    console.log(
+      "BAN USER ERROR:",
+      err
+    );
 
-    alert("Server error");
+    alert(
+      "Server error"
+    );
   }
 }
 
