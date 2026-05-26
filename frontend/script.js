@@ -14,25 +14,56 @@ const token =
 // ================= CHECK LOGIN =================
 if (!user || !token) {
 
+  alert("Please login first");
+
   window.location.href =
     "auth.html";
 }
 
-// ================= SOCKET =================
+// ================= SOCKET.IO =================
 const socket = io(API, {
+
   transports: [
     "websocket",
     "polling"
-  ]
+  ],
+
+  secure: true
 });
 
+// ================= CURRENT USER =================
 const currentUserId =
   user._id || user.id;
 
-// ================= JOIN SOCKET =================
-socket.emit(
-  "join",
-  currentUserId
+// ================= CONNECT SOCKET =================
+socket.on(
+  "connect",
+
+  () => {
+
+    console.log(
+      "✅ Socket Connected:",
+      socket.id
+    );
+
+    socket.emit(
+      "join",
+      currentUserId
+    );
+  }
+);
+
+// ================= SOCKET ERROR =================
+socket.on(
+  "connect_error",
+
+  (err) => {
+
+    console.log(
+      "❌ SOCKET ERROR:",
+      err.message
+    );
+  }
 );
 
 // ================= PRIVATE CHAT =================
@@ -66,12 +97,14 @@ function sendMessage() {
   socket.emit(
     "sendMessage",
     {
+
       senderId:
         currentUserId,
 
       receiverId,
 
-      text: message
+      message
+
     }
   );
 
@@ -86,7 +119,13 @@ function sendMessage() {
 // RECEIVE MESSAGE
 socket.on(
   "receiveMessage",
+
   (data) => {
+
+    console.log(
+      "📩 MESSAGE RECEIVED:",
+      data
+    );
 
     const activeUser =
       document.getElementById(
@@ -99,7 +138,7 @@ socket.on(
     ) {
 
       addMessage(
-        data.text,
+        data.message,
         "received"
       );
 
@@ -112,7 +151,7 @@ socket.on(
   }
 );
 
-// ADD MESSAGE TO UI
+// ADD MESSAGE
 function addMessage(
   text,
   type
@@ -123,17 +162,22 @@ function addMessage(
       "messages"
     );
 
+  if (!container) return;
+
   const div =
     document.createElement(
       "div"
     );
 
   const baseClass =
-    "max-w-[80%] p-3 rounded-2xl text-sm shadow-sm break-words";
+    "max-w-[80%] p-3 rounded-2xl text-sm shadow-sm break-words mb-2";
 
   div.className =
+
     type === "sent"
+
       ? `${baseClass} bg-blue-500 text-white ml-auto`
+
       : `${baseClass} bg-gray-200 text-gray-800 mr-auto`;
 
   div.innerText = text;
@@ -156,6 +200,7 @@ if (messageInput) {
 
   messageInput.addEventListener(
     "keypress",
+
     (e) => {
 
       if (e.key === "Enter") {
@@ -187,15 +232,24 @@ function selectUser(id) {
 // RECEIVE GROUP MESSAGE
 socket.on(
   "groupMessage",
+
   (data) => {
+
+    console.log(
+      "👥 GROUP MESSAGE:",
+      data
+    );
 
     const box =
       document.getElementById(
         "groupMessages"
       );
 
+    if (!box) return;
+
     box.innerHTML += `
-      <div class="bg-white p-3 rounded-xl shadow-sm">
+
+      <div class="bg-white p-3 rounded-xl shadow-sm mb-2">
 
         <span class="font-bold text-indigo-600">
           ${data.username}
@@ -221,6 +275,8 @@ function sendGroupMessage() {
       "groupMessage"
     );
 
+  if (!input) return;
+
   const message =
     input.value.trim();
 
@@ -229,10 +285,15 @@ function sendGroupMessage() {
   socket.emit(
     "groupMessage",
     {
+
+      senderId:
+        currentUserId,
+
       username:
         user.username,
 
       message
+
     }
   );
 
@@ -242,19 +303,26 @@ function sendGroupMessage() {
 // ================= ONLINE USERS =================
 socket.on(
   "onlineUsers",
+
   (users) => {
+
+    console.log(
+      "🟢 ONLINE USERS:",
+      users
+    );
 
     const div =
       document.getElementById(
         "onlineUsers"
       );
 
+    if (!div) return;
+
     div.innerHTML = users
 
       .filter(
         (id) =>
-          id !==
-          currentUserId
+          id !== currentUserId
       )
 
       .map(
@@ -262,6 +330,7 @@ socket.on(
 
         <div
           onclick="selectUser('${id}')"
+
           class="
             flex
             items-center
@@ -288,9 +357,7 @@ socket.on(
   }
 );
 
-// ================= POSTS =================
-
-// LOAD POSTS
+// ================= LOAD POSTS =================
 async function loadPosts() {
 
   try {
@@ -303,19 +370,37 @@ async function loadPosts() {
     if (feed) {
 
       feed.innerHTML = `
+
         <div class="bg-white p-6 rounded-2xl text-center text-gray-400 shadow-sm">
+
           Loading posts...
+
         </div>
       `;
     }
 
     const res =
       await fetch(
-        `${API}/api/posts`
+        `${API}/api/posts`,
+        {
+
+          method: "GET",
+
+          headers: {
+
+            Authorization:
+              `Bearer ${token}`
+          }
+        }
       );
 
     const posts =
       await res.json();
+
+    console.log(
+      "📦 POSTS:",
+      posts
+    );
 
     renderPosts(posts);
 
@@ -332,7 +417,7 @@ async function loadPosts() {
   }
 }
 
-// RENDER POSTS
+// ================= RENDER POSTS =================
 function renderPosts(posts) {
 
   const feed =
@@ -340,14 +425,19 @@ function renderPosts(posts) {
       "feed"
     );
 
+  if (!feed) return;
+
   if (
     !posts ||
     posts.length === 0
   ) {
 
     feed.innerHTML = `
+
       <div class="bg-white p-10 rounded-2xl text-center text-gray-400 shadow-sm">
+
         No posts available
+
       </div>
     `;
 
@@ -358,179 +448,56 @@ function renderPosts(posts) {
 
   posts.forEach((post) => {
 
-    const isOwner =
-
-      (
-        post.userId?._id ||
-        post.userId
-      ) === currentUserId;
-
     const div =
       document.createElement(
         "div"
       );
 
     div.className =
-      "bg-white p-5 rounded-2xl shadow-sm border border-gray-200";
+      "bg-white p-5 rounded-2xl shadow-sm border border-gray-200 mb-5";
 
     div.innerHTML = `
 
-      <!-- TOP -->
-      <div class="flex items-center justify-between mb-3">
+      <div class="mb-3">
 
-        <div class="flex items-center gap-3">
+        <p class="font-bold text-gray-800">
+          ${
+            post.userId?.username ||
+            "Anonymous"
+          }
+        </p>
 
-          <img
-            src="${
-              post.userId
-                ?.profilePic
-                ? `${API}/uploads/${post.userId.profilePic}`
-                : "images/default-avatar.png"
-            }"
-            class="w-10 h-10 rounded-full object-cover border"
-          >
-
-          <div>
-
-            <p class="font-bold text-gray-800">
-              ${
-                post.userId
-                  ?.username ||
-                "Anonymous"
-              }
-            </p>
-
-            <p class="text-xs text-gray-400">
-              ${new Date(
-                post.createdAt
-              ).toLocaleString()}
-            </p>
-
-          </div>
-
-        </div>
-
-        ${
-          isOwner
-            ? `
-          <button
-            onclick="deletePost('${post._id}')"
-            class="text-red-500 hover:text-red-700 text-sm font-bold"
-          >
-            🗑 Delete
-          </button>
-        `
-            : ""
-        }
+        <p class="text-xs text-gray-400">
+          ${new Date(
+            post.createdAt
+          ).toLocaleString()}
+        </p>
 
       </div>
 
-      <!-- CAPTION -->
       <p class="text-gray-700 mb-3">
         ${post.caption || ""}
       </p>
 
-      <!-- MEDIA -->
       ${
         post.image
-          ? post.mediaType ===
-            "video"
 
-            ? `
-          <video
-            controls
-            class="rounded-xl mb-3 w-full max-h-[500px]"
-          >
-            <source
+          ? `
+            <img
               src="${API}/uploads/${post.image}"
-              type="video/mp4"
+              class="rounded-xl w-full max-h-[500px] object-cover"
             >
-          </video>
-        `
+          `
 
-            : `
-          <img
-            src="${API}/uploads/${post.image}"
-            class="rounded-xl mb-3 w-full object-cover max-h-[500px]"
-          >
-        `
           : ""
       }
-
-      <!-- ACTIONS -->
-      <div class="flex items-center gap-5 border-t pt-3">
-
-        <button
-          onclick="likePost('${post._id}')"
-          class="text-gray-600 hover:text-blue-500 flex items-center gap-1"
-        >
-          ❤️ ${
-            post.likes
-              ?.length || 0
-          }
-        </button>
-
-        <button
-          class="text-gray-600 flex items-center gap-1"
-        >
-          💬 ${
-            post.comments
-              ?.length || 0
-          }
-        </button>
-
-      </div>
-
-      <!-- COMMENTS -->
-      <div class="mt-4 space-y-2 bg-gray-50 p-3 rounded-xl">
-
-        ${
-          post.comments
-            ?.map(
-              (c) => `
-            <p class="text-sm">
-
-              <b class="text-gray-800">
-                ${
-                  c.userId
-                    ?.username ||
-                  "User"
-                }:
-              </b>
-
-              ${c.text}
-
-            </p>
-          `
-            )
-            .join("") || ""
-        }
-
-        <div class="flex gap-2 mt-2">
-
-          <input
-            id="c-${post._id}"
-            placeholder="Comment..."
-            class="flex-1 text-sm border p-2 rounded-lg outline-none"
-          >
-
-          <button
-            onclick="commentPost('${post._id}')"
-            class="text-blue-500 font-bold text-sm"
-          >
-            Send
-          </button>
-
-        </div>
-
-      </div>
     `;
 
     feed.appendChild(div);
   });
 }
 
-// CREATE POST
+// ================= CREATE POST =================
 async function createPost() {
 
   const fileInput =
@@ -574,23 +541,26 @@ async function createPost() {
       await fetch(
         `${API}/api/posts`,
         {
+
           method: "POST",
 
           headers: {
+
             Authorization:
-              token
+              `Bearer ${token}`
           },
 
           body: formData
         }
       );
 
-    if (!res.ok) {
+    const data =
+      await res.json();
 
-      throw new Error(
-        "Failed"
-      );
-    }
+    console.log(
+      "✅ CREATE POST:",
+      data
+    );
 
     captionInput.value = "";
 
@@ -615,7 +585,7 @@ async function createPost() {
   }
 }
 
-// LIKE POST
+// ================= LIKE POST =================
 async function likePost(id) {
 
   try {
@@ -623,11 +593,13 @@ async function likePost(id) {
     await fetch(
       `${API}/api/posts/${id}/like`,
       {
+
         method: "PUT",
 
         headers: {
+
           Authorization:
-            token
+            `Bearer ${token}`
         }
       }
     );
@@ -643,7 +615,7 @@ async function likePost(id) {
   }
 }
 
-// COMMENT POST
+// ================= COMMENT POST =================
 async function commentPost(id) {
 
   const input =
@@ -662,17 +634,20 @@ async function commentPost(id) {
     await fetch(
       `${API}/api/posts/${id}/comment`,
       {
+
         method: "POST",
 
         headers: {
+
           "Content-Type":
             "application/json",
 
           Authorization:
-            token
+            `Bearer ${token}`
         },
 
         body: JSON.stringify({
+
           text:
             input.value
         })
@@ -692,68 +667,8 @@ async function commentPost(id) {
   }
 }
 
-// DELETE POST
-async function deletePost(
-  postId
-) {
-
-  const confirmDelete =
-    confirm(
-      "Delete this post?"
-    );
-
-  if (!confirmDelete) {
-    return;
-  }
-
-  try {
-
-    const res =
-      await fetch(
-        `${API}/api/posts/${postId}`,
-        {
-          method: "DELETE",
-
-          headers: {
-            Authorization:
-              token
-          }
-        }
-      );
-
-    const data =
-      await res.json();
-
-    if (!res.ok) {
-
-      return alert(
-        data.message
-      );
-    }
-
-    showNotification(
-      "🗑 Post deleted"
-    );
-
-    loadPosts();
-
-  } catch (err) {
-
-    console.log(
-      "DELETE ERROR:",
-      err
-    );
-
-    alert(
-      "Failed to delete post"
-    );
-  }
-}
-
 // ================= NOTIFICATIONS =================
-function showNotification(
-  text
-) {
+function showNotification(text) {
 
   const container =
     document.getElementById(
@@ -794,15 +709,9 @@ function logout() {
     "user"
   );
 
-  localStorage.removeItem(
-    "chatUserId"
+  alert(
+    "Logged out"
   );
-
-  localStorage.removeItem(
-    "chatUsername"
-  );
-
-  alert("Logged out");
 
   window.location.href =
     "auth.html";
