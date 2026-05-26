@@ -9,11 +9,17 @@ const existingToken =
 const existingUser =
   localStorage.getItem("user");
 
-if (existingToken && existingUser) {
+// ================= AUTO LOGIN =================
+if (
+  existingToken &&
+  existingUser
+) {
 
-  // Already logged in
-  // Uncomment if you want auto redirect
+  console.log(
+    "User already logged in"
+  );
 
+  // Uncomment if needed
   // window.location.href = "home.html";
 }
 
@@ -123,6 +129,7 @@ async function register() {
     const res = await fetch(
       `${API}/register`,
       {
+
         method: "POST",
 
         headers: {
@@ -131,23 +138,26 @@ async function register() {
         },
 
         body: JSON.stringify({
+
           username,
           email,
           password
+
         })
       }
     );
 
+    // ================= RESPONSE =================
     const data =
       await res.json();
 
+    console.log(
+      "REGISTER RESPONSE:",
+      data
+    );
+
     // ================= FAILED =================
     if (!res.ok) {
-
-      console.log(
-        "REGISTER ERROR:",
-        data
-      );
 
       alert(
         data.message ||
@@ -203,6 +213,7 @@ async function register() {
     );
 
     alert(
+      err.message ||
       "Server error"
     );
   }
@@ -257,6 +268,7 @@ async function login() {
     const res = await fetch(
       `${API}/login`,
       {
+
         method: "POST",
 
         headers: {
@@ -265,22 +277,25 @@ async function login() {
         },
 
         body: JSON.stringify({
+
           email,
           password
+
         })
       }
     );
 
+    // ================= RESPONSE =================
     const data =
       await res.json();
 
+    console.log(
+      "LOGIN RESPONSE:",
+      data
+    );
+
     // ================= LOGIN FAILED =================
     if (!res.ok) {
-
-      console.log(
-        "LOGIN ERROR:",
-        data
-      );
 
       alert(
         data.message ||
@@ -310,6 +325,16 @@ async function login() {
       JSON.stringify(data.user)
     );
 
+    console.log(
+      "TOKEN SAVED:",
+      data.token
+    );
+
+    console.log(
+      "USER SAVED:",
+      data.user
+    );
+
     // ================= SUCCESS =================
     alert(
       "✅ Login successful"
@@ -327,6 +352,7 @@ async function login() {
     );
 
     alert(
+      err.message ||
       "Server error"
     );
   }
@@ -342,9 +368,12 @@ if (logPass) {
 
   logPass.addEventListener(
     "keypress",
+
     (e) => {
 
-      if (e.key === "Enter") {
+      if (
+        e.key === "Enter"
+      ) {
 
         login();
       }
@@ -362,12 +391,44 @@ if (regPass) {
 
   regPass.addEventListener(
     "keypress",
+
     (e) => {
 
-      if (e.key === "Enter") {
+      if (
+        e.key === "Enter"
+      ) {
 
         register();
       }
     }
   );
 }
+
+// ================= CONNECTION TEST =================
+async function testBackend() {
+
+  try {
+
+    const res = await fetch(
+      "https://vryza-connect-backend-production.up.railway.app"
+    );
+
+    const data =
+      await res.json();
+
+    console.log(
+      "BACKEND CONNECTED:",
+      data
+    );
+
+  } catch (err) {
+
+    console.log(
+      "BACKEND CONNECTION FAILED:",
+      err
+    );
+  }
+}
+
+// ================= RUN TEST =================
+testBackend();
