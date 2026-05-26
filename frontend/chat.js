@@ -7,9 +7,11 @@ const socket = io(API, {
   transports: ["websocket", "polling"]
 });
 
-// ================= USER SESSION =================
+// ================= USER =================
 const user =
-  JSON.parse(localStorage.getItem("user"));
+  JSON.parse(
+    localStorage.getItem("user")
+  );
 
 const token =
   localStorage.getItem("token");
@@ -17,28 +19,66 @@ const token =
 // ================= CHECK LOGIN =================
 if (!user || !token) {
 
-  alert("Not logged in");
+  alert("Please login first");
 
   window.location.href =
     "auth.html";
 }
 
+// ================= USER ID =================
+const currentUserId =
+  (
+    user._id ||
+    user.id
+  ).toString();
+
 // ================= CHAT TARGET =================
 let receiverId =
-  localStorage.getItem("chatUserId");
+  localStorage.getItem(
+    "chatUserId"
+  );
 
 let receiverName =
-  localStorage.getItem("chatUsername");
+  localStorage.getItem(
+    "chatUsername"
+  );
+
+if (receiverId) {
+  receiverId =
+    receiverId.toString();
+}
+
+// ================= DEBUG =================
+console.log(
+  "CURRENT USER:",
+  user
+);
+
+console.log(
+  "CURRENT USER ID:",
+  currentUserId
+);
+
+console.log(
+  "RECEIVER:",
+  receiverId
+);
 
 // ================= DOM =================
 const messagesContainer =
-  document.getElementById("messages");
+  document.getElementById(
+    "messages"
+  );
 
 const messageInput =
-  document.getElementById("message");
+  document.getElementById(
+    "message"
+  );
 
 const typingText =
-  document.getElementById("typing");
+  document.getElementById(
+    "typing"
+  );
 
 // ================= CHAT HEADER =================
 if (receiverName) {
@@ -49,34 +89,56 @@ if (receiverName) {
     `Chatting with ${receiverName}`;
 }
 
-// ================= SOCKET JOIN =================
+// ================= JOIN SOCKET =================
 socket.emit(
   "join",
-  user._id || user.id
+  currentUserId
 );
 
-// ================= LOAD OLD MESSAGES =================
+// ================= SOCKET CONNECT =================
+socket.on(
+  "connect",
+  () => {
+
+    console.log(
+      "SOCKET CONNECTED:",
+      socket.id
+    );
+  }
+);
+
+// ================= LOAD MESSAGES =================
 async function loadMessages() {
 
   if (!receiverId) return;
 
   try {
 
-    const res = await fetch(
-      `${API}/messages/${receiverId}`,
-      {
-        headers: {
-          token: token
+    const res =
+      await fetch(
+        `${API}/api/messages/${receiverId}`,
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+
+            userid:
+              currentUserId
+          }
         }
-      }
-    );
+      );
 
     const messages =
       await res.json();
 
-    messagesContainer.innerHTML = "";
+    console.log(
+      "LOADED MESSAGES:",
+      messages
+    );
 
-    // REMOVE EMPTY MESSAGE
+    messagesContainer.innerHTML =
+      "";
+
     const empty =
       document.getElementById(
         "emptyChat"
@@ -88,9 +150,11 @@ async function loadMessages() {
 
     messages.forEach((msg) => {
 
+      const sender =
+        msg.senderId?.toString();
+
       const type =
-        msg.senderId ===
-        (user._id || user.id)
+        sender === currentUserId
           ? "sent"
           : "received";
 
@@ -103,7 +167,7 @@ async function loadMessages() {
         );
       }
 
-      // ================= MEDIA =================
+      // ================= IMAGE/VIDEO =================
       if (msg.media) {
 
         addMediaMessage(
@@ -113,7 +177,7 @@ async function loadMessages() {
         );
       }
 
-      // ================= VOICE =================
+      // ================= AUDIO =================
       if (msg.audio) {
 
         addVoiceMessage(
@@ -128,7 +192,7 @@ async function loadMessages() {
   } catch (err) {
 
     console.log(
-      "LOAD MESSAGE ERROR:",
+      "LOAD ERROR:",
       err
     );
   }
@@ -142,36 +206,43 @@ function sendMessage() {
   const text =
     messageInput.value.trim();
 
-  if (!text || !receiverId) {
+  if (
+    !text ||
+    !receiverId
+  ) {
     return;
   }
 
   const data = {
-    senderId:
-      user._id || user.id,
 
-    receiverId,
+    senderId:
+      currentUserId,
+
+    receiverId:
+      receiverId,
 
     text
   };
 
-  // ================= SOCKET SEND =================
+  console.log(
+    "SENDING:",
+    data
+  );
+
   socket.emit(
     "sendMessage",
     data
   );
 
-  // ================= UI =================
   addMessage(
     text,
     "sent"
   );
 
-  // ================= CLEAR =================
   messageInput.value = "";
 }
 
-// ================= ENTER KEY =================
+// ================= ENTER SEND =================
 messageInput.addEventListener(
   "keypress",
   (e) => {
@@ -183,14 +254,21 @@ messageInput.addEventListener(
   }
 );
 
-// ================= RECEIVE TEXT =================
+// ================= RECEIVE MESSAGE =================
 socket.on(
   "receiveMessage",
   (data) => {
 
+    console.log(
+      "RECEIVED:",
+      data
+    );
+
     if (
-      data.senderId ===
+      data.senderId
+        .toString() ===
       receiverId
+        .toString()
     ) {
 
       addMessage(
@@ -206,15 +284,18 @@ messageInput.addEventListener(
   "input",
   () => {
 
-    if (!receiverId) return;
+    if (!receiverId)
+      return;
 
-    socket.emit("typing", {
+    socket.emit(
+      "typing",
+      {
+        senderId:
+          currentUserId,
 
-      senderId:
-        user._id || user.id,
-
-      receiverId
-    });
+        receiverId
+      }
+    );
   }
 );
 
@@ -224,8 +305,10 @@ socket.on(
   (data) => {
 
     if (
-      data.senderId !==
+      data.senderId
+        .toString() !==
       receiverId
+        .toString()
     ) {
       return;
     }
@@ -240,7 +323,8 @@ socket.on(
     window.typingTimeout =
       setTimeout(() => {
 
-        typingText.innerText = "";
+        typingText.innerText =
+          "";
 
       }, 2000);
   }
@@ -252,8 +336,10 @@ socket.on(
   (data) => {
 
     if (
-      data.senderId ===
+      data.senderId
+        .toString() ===
       receiverId
+        .toString()
     ) {
 
       addVoiceMessage(
@@ -270,8 +356,10 @@ socket.on(
   (data) => {
 
     if (
-      data.senderId ===
+      data.senderId
+        .toString() ===
       receiverId
+        .toString()
     ) {
 
       addMediaMessage(
@@ -283,13 +371,6 @@ socket.on(
   }
 );
 
-// ================= SCROLL =================
-function scrollBottom() {
-
-  messagesContainer.scrollTop =
-    messagesContainer.scrollHeight;
-}
-
 // ================= ADD TEXT =================
 function addMessage(
   text,
@@ -297,7 +378,9 @@ function addMessage(
 ) {
 
   const div =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   const base =
     "max-w-xs px-4 py-3 rounded-2xl text-sm break-words shadow-sm";
@@ -309,7 +392,9 @@ function addMessage(
 
   div.innerText = text;
 
-  messagesContainer.appendChild(div);
+  messagesContainer.appendChild(
+    div
+  );
 
   scrollBottom();
 }
@@ -321,7 +406,9 @@ function addVoiceMessage(
 ) {
 
   const div =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   const base =
     "max-w-xs p-2 rounded-xl shadow-sm";
@@ -339,7 +426,9 @@ function addVoiceMessage(
     ></audio>
   `;
 
-  messagesContainer.appendChild(div);
+  messagesContainer.appendChild(
+    div
+  );
 
   scrollBottom();
 }
@@ -352,7 +441,9 @@ function addMediaMessage(
 ) {
 
   const div =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   const base =
     "max-w-xs p-2 rounded-xl shadow-md";
@@ -368,7 +459,9 @@ function addMediaMessage(
       : `${API}/uploads/${media}`;
 
   // ================= IMAGE =================
-  if (mediaType === "image") {
+  if (
+    mediaType === "image"
+  ) {
 
     div.innerHTML = `
       <img
@@ -390,14 +483,25 @@ function addMediaMessage(
     `;
   }
 
-  messagesContainer.appendChild(div);
+  messagesContainer.appendChild(
+    div
+  );
 
   scrollBottom();
 }
 
+// ================= SCROLL =================
+function scrollBottom() {
+
+  messagesContainer.scrollTop =
+    messagesContainer.scrollHeight;
+}
+
 // ================= MEDIA UPLOAD =================
 document
-  .getElementById("mediaInput")
+  .getElementById(
+    "mediaInput"
+  )
   .addEventListener(
     "change",
     async (e) => {
@@ -422,7 +526,7 @@ document
 
       formData.append(
         "senderId",
-        user._id || user.id
+        currentUserId
       );
 
       formData.append(
@@ -434,15 +538,17 @@ document
 
         const res =
           await fetch(
-            `${API}/upload`,
+            `${API}/api/upload`,
             {
               method: "POST",
 
               headers: {
-                token: token
+                Authorization:
+                  `Bearer ${token}`
               },
 
-              body: formData
+              body:
+                formData
             }
           );
 
@@ -467,7 +573,9 @@ document
 
 // ================= VOICE =================
 let mediaRecorder;
+
 let audioChunks = [];
+
 let isRecording = false;
 
 // ================= TOGGLE RECORD =================
@@ -476,7 +584,7 @@ async function toggleRecording() {
   if (!receiverId) {
 
     alert(
-      "Select a user first"
+      "Select user first"
     );
 
     return;
@@ -517,14 +625,15 @@ async function toggleRecording() {
 
       document.getElementById(
         "micBtn"
-      ).innerText = "⏹️";
+      ).innerText =
+        "⏹️";
 
     } catch (err) {
 
       console.log(err);
 
       alert(
-        "Microphone access denied"
+        "Microphone denied"
       );
     }
 
@@ -536,7 +645,8 @@ async function toggleRecording() {
 
     document.getElementById(
       "micBtn"
-    ).innerText = "🎤";
+    ).innerText =
+      "🎤";
   }
 }
 
@@ -545,7 +655,8 @@ function sendVoiceNote() {
 
   const audioBlob =
     new Blob(audioChunks, {
-      type: "audio/webm"
+      type:
+        "audio/webm"
     });
 
   const reader =
@@ -560,11 +671,12 @@ function sendVoiceNote() {
       "sendVoice",
       {
         senderId:
-          user._id || user.id,
+          currentUserId,
 
         receiverId,
 
-        audio: base64Audio
+        audio:
+          base64Audio
       }
     );
 
@@ -584,21 +696,27 @@ socket.on(
   "onlineUsers",
   (users) => {
 
+    console.log(
+      "ONLINE USERS:",
+      users
+    );
+
     const div =
       document.getElementById(
         "onlineUsers"
       );
 
-    div.innerHTML = users
-      .filter(
-        (id) =>
-          id !==
-          (user._id || user.id)
-      )
-      .map(
-        (id) => `
+    div.innerHTML =
+      users
+        .filter(
+          (id) =>
+            id.toString() !==
+            currentUserId
+        )
+        .map(
+          (id) => `
         <div
-          onclick="startChat('${id}', 'User ${id.substring(0,4)}')"
+          onclick="startChat('${id}','User ${id.substring(0,4)}')"
           class="
             cursor-pointer
             bg-white
@@ -616,8 +734,8 @@ socket.on(
           🟢 User ${id.substring(0,8)}
         </div>
       `
-      )
-      .join("");
+        )
+        .join("");
   }
 );
 
@@ -640,7 +758,7 @@ function startChat(
   location.reload();
 }
 
-// ================= VIDEO PREVIEW =================
+// ================= VIDEO CALL =================
 const startCallBtn =
   document.getElementById(
     "startCall"
