@@ -24,6 +24,13 @@ if (!token || !currentUser) {
 // ================= CURRENT PROFILE =================
 let currentProfileId = null;
 
+// ================= AUTH HEADER =================
+const authHeaders = {
+
+  Authorization:
+    `Bearer ${token}`
+};
+
 // ================= VIEW PROFILE =================
 async function viewProfile(userId) {
 
@@ -31,30 +38,40 @@ async function viewProfile(userId) {
 
     currentProfileId = userId;
 
-    // ================= LOADING =================
+    // ================= POSTS CONTAINER =================
     const postsContainer =
       document.getElementById(
         "postsContainer"
       );
 
-    postsContainer.innerHTML = `
-      <div class="bg-white rounded-3xl p-10 text-center text-slate-400 border border-slate-200">
-        Loading profile...
-      </div>
-    `;
+    // ================= LOADING =================
+    if (postsContainer) {
 
-    // ================= FETCH =================
+      postsContainer.innerHTML = `
+        <div class="bg-white rounded-3xl p-10 text-center text-slate-400 border border-slate-200">
+          Loading profile...
+        </div>
+      `;
+    }
+
+    // ================= FETCH PROFILE =================
     const res = await fetch(
       `${API}/api/user/${userId}`,
       {
-        headers: {
-          Authorization: token
-        }
+
+        method: "GET",
+
+        headers: authHeaders
       }
     );
 
     const data =
       await res.json();
+
+    console.log(
+      "PROFILE RESPONSE:",
+      data
+    );
 
     // ================= ERROR =================
     if (!res.ok) {
@@ -67,7 +84,7 @@ async function viewProfile(userId) {
       return;
     }
 
-    // ================= USER =================
+    // ================= USER DATA =================
     const user = data.user;
 
     // ================= PROFILE IMAGE =================
@@ -76,10 +93,15 @@ async function viewProfile(userId) {
         "avatar"
       );
 
-    avatar.src =
-      user.profilePic
-        ? `${API}/uploads/${user.profilePic}`
-        : "images/default-avatar.png";
+    if (avatar) {
+
+      avatar.src =
+        user.profilePic
+
+          ? `${API}/uploads/${user.profilePic}`
+
+          : "images/default-avatar.png";
+    }
 
     // ================= COVER IMAGE =================
     const coverPreview =
@@ -91,78 +113,113 @@ async function viewProfile(userId) {
 
       coverPreview.src =
         user.coverImage
+
           ? `${API}/uploads/${user.coverImage}`
+
           : "images/default-cover.jpg";
     }
 
-    // ================= TEXT =================
-    document.getElementById(
-      "username"
-    ).innerText =
-      user.username ||
-      "Unknown User";
+    // ================= USERNAME =================
+    const username =
+      document.getElementById(
+        "username"
+      );
 
-    document.getElementById(
-      "bioText"
-    ).innerText =
-      user.bio ||
-      "No bio yet.";
+    if (username) {
 
-    document.getElementById(
-      "followersCount"
-    ).innerText =
-      user.followers?.length || 0;
+      username.innerText =
+        user.username ||
+        "Unknown User";
+    }
 
-    document.getElementById(
-      "followingCount"
-    ).innerText =
-      user.following?.length || 0;
+    // ================= BIO =================
+    const bioText =
+      document.getElementById(
+        "bioText"
+      );
+
+    if (bioText) {
+
+      bioText.innerText =
+        user.bio ||
+        "No bio yet.";
+    }
+
+    // ================= FOLLOWERS =================
+    const followersCount =
+      document.getElementById(
+        "followersCount"
+      );
+
+    if (followersCount) {
+
+      followersCount.innerText =
+        user.followers?.length || 0;
+    }
+
+    // ================= FOLLOWING =================
+    const followingCount =
+      document.getElementById(
+        "followingCount"
+      );
+
+    if (followingCount) {
+
+      followingCount.innerText =
+        user.following?.length || 0;
+    }
 
     // ================= PROFILE DETAILS =================
-    document.getElementById(
-      "profile"
-    ).innerHTML = `
+    const profile =
+      document.getElementById(
+        "profile"
+      );
 
-      <div class="bg-slate-50 rounded-2xl p-4">
-        <p class="text-slate-400 text-xs uppercase font-bold mb-1">
-          Location
-        </p>
+    if (profile) {
 
-        <p class="text-slate-700">
-          ${user.location || "Unknown"}
-        </p>
-      </div>
+      profile.innerHTML = `
 
-      <div class="bg-slate-50 rounded-2xl p-4">
-        <p class="text-slate-400 text-xs uppercase font-bold mb-1">
-          Gender
-        </p>
+        <div class="bg-slate-50 rounded-2xl p-4">
+          <p class="text-slate-400 text-xs uppercase font-bold mb-1">
+            Location
+          </p>
 
-        <p class="text-slate-700">
-          ${user.gender || "Not specified"}
-        </p>
-      </div>
+          <p class="text-slate-700">
+            ${user.location || "Unknown"}
+          </p>
+        </div>
 
-      <div class="bg-slate-50 rounded-2xl p-4">
-        <p class="text-slate-400 text-xs uppercase font-bold mb-1">
-          Age
-        </p>
+        <div class="bg-slate-50 rounded-2xl p-4">
+          <p class="text-slate-400 text-xs uppercase font-bold mb-1">
+            Gender
+          </p>
 
-        <p class="text-slate-700">
-          ${user.age || "N/A"}
-        </p>
-      </div>
+          <p class="text-slate-700">
+            ${user.gender || "Not specified"}
+          </p>
+        </div>
 
-      <div class="bg-slate-50 rounded-2xl p-4">
-        <p class="text-slate-400 text-xs uppercase font-bold mb-1">
-          About
-        </p>
+        <div class="bg-slate-50 rounded-2xl p-4">
+          <p class="text-slate-400 text-xs uppercase font-bold mb-1">
+            Age
+          </p>
 
-        <p class="text-slate-700">
-          ${user.about || "No about info yet."}
-        </p>
-      </div>
-    `;
+          <p class="text-slate-700">
+            ${user.age || "N/A"}
+          </p>
+        </div>
+
+        <div class="bg-slate-50 rounded-2xl p-4">
+          <p class="text-slate-400 text-xs uppercase font-bold mb-1">
+            About
+          </p>
+
+          <p class="text-slate-700">
+            ${user.about || "No about info yet."}
+          </p>
+        </div>
+      `;
+    }
 
     // ================= EDIT INPUTS =================
     const bio =
@@ -222,7 +279,7 @@ async function viewProfile(userId) {
 
   } catch (err) {
 
-    console.error(
+    console.log(
       "PROFILE ERROR:",
       err
     );
@@ -241,8 +298,13 @@ function renderPosts(posts) {
       "postsContainer"
     );
 
+  if (!container) return;
+
   // ================= NO POSTS =================
-  if (!posts || posts.length === 0) {
+  if (
+    !posts ||
+    posts.length === 0
+  ) {
 
     container.innerHTML = `
       <div class="bg-white rounded-3xl p-10 border border-slate-200 text-center text-slate-400">
@@ -257,16 +319,16 @@ function renderPosts(posts) {
   container.innerHTML =
     posts.map((post) => `
 
-      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mb-6">
 
         ${
           post.image
             ? `
-          <img
-            src="${API}/uploads/${post.image}"
-            class="w-full max-h-[500px] object-cover"
-          />
-        `
+            <img
+              src="${API}/uploads/${post.image}"
+              class="w-full max-h-[500px] object-cover"
+            />
+          `
             : ""
         }
 
@@ -281,6 +343,7 @@ function renderPosts(posts) {
                   ? `${API}/uploads/${post.userId.profilePic}`
                   : "images/default-avatar.png"
               }"
+
               class="w-10 h-10 rounded-full object-cover"
             />
 
@@ -313,6 +376,7 @@ function renderPosts(posts) {
 
             <button
               onclick="likePost('${post._id}')"
+
               class="
                 bg-blue-50
                 hover:bg-blue-100
@@ -337,23 +401,27 @@ function renderPosts(posts) {
 
             ${
               (post.comments || [])
+
                 .map(
                   (comment) => `
-                <div class="bg-slate-50 rounded-xl px-3 py-2 text-sm">
 
-                  <span class="font-bold text-slate-700">
-                    ${
-                      comment.userId
-                        ?.username ||
-                      "User"
-                    }:
-                  </span>
+                  <div class="bg-slate-50 rounded-xl px-3 py-2 text-sm">
 
-                  ${comment.text}
+                    <span class="font-bold text-slate-700">
 
-                </div>
-              `
+                      ${
+                        comment.userId
+                          ?.username || "User"
+                      }:
+
+                    </span>
+
+                    ${comment.text}
+
+                  </div>
+                `
                 )
+
                 .join("")
             }
 
@@ -364,7 +432,9 @@ function renderPosts(posts) {
 
             <input
               id="comment-${post._id}"
+
               placeholder="Write a comment..."
+
               class="
                 flex-1
                 bg-slate-50
@@ -378,6 +448,7 @@ function renderPosts(posts) {
 
             <button
               onclick="commentPost('${post._id}')"
+
               class="
                 bg-blue-600
                 hover:bg-blue-700
@@ -395,6 +466,7 @@ function renderPosts(posts) {
           </div>
 
         </div>
+
       </div>
 
     `).join("");
@@ -475,11 +547,10 @@ async function updateProfile() {
     const res = await fetch(
       `${API}/api/user/profile`,
       {
+
         method: "PUT",
 
-        headers: {
-          Authorization: token
-        },
+        headers: authHeaders,
 
         body: formData
       }
@@ -487,6 +558,11 @@ async function updateProfile() {
 
     const data =
       await res.json();
+
+    console.log(
+      "UPDATE PROFILE:",
+      data
+    );
 
     // ================= ERROR =================
     if (!res.ok) {
@@ -511,7 +587,7 @@ async function updateProfile() {
 
   } catch (err) {
 
-    console.error(
+    console.log(
       "UPDATE PROFILE ERROR:",
       err
     );
@@ -522,10 +598,8 @@ async function updateProfile() {
   }
 }
 
-// ================= COMMENT =================
-async function commentPost(
-  postId
-) {
+// ================= COMMENT POST =================
+async function commentPost(postId) {
 
   try {
 
@@ -543,14 +617,16 @@ async function commentPost(
     const res = await fetch(
       `${API}/api/posts/${postId}/comment`,
       {
+
         method: "POST",
 
         headers: {
+
           "Content-Type":
             "application/json",
 
           Authorization:
-            token
+            `Bearer ${token}`
         },
 
         body: JSON.stringify({
@@ -578,7 +654,7 @@ async function commentPost(
 
   } catch (err) {
 
-    console.error(
+    console.log(
       "COMMENT ERROR:",
       err
     );
@@ -590,20 +666,20 @@ async function commentPost(
 }
 
 // ================= LIKE POST =================
-async function likePost(
-  postId
-) {
+async function likePost(postId) {
 
   try {
 
     await fetch(
       `${API}/api/posts/${postId}/like`,
       {
+
         method: "PUT",
 
         headers: {
+
           Authorization:
-            token
+            `Bearer ${token}`
         }
       }
     );
@@ -615,7 +691,7 @@ async function likePost(
 
   } catch (err) {
 
-    console.error(
+    console.log(
       "LIKE ERROR:",
       err
     );
@@ -642,6 +718,7 @@ function messageUser() {
 
   localStorage.setItem(
     "chatUsername",
+
     document.getElementById(
       "username"
     ).innerText
@@ -652,7 +729,7 @@ function messageUser() {
     "chat.html";
 }
 
-// ================= LOAD OWN PROFILE =================
+// ================= LOAD PROFILE =================
 viewProfile(
   currentUser._id ||
   currentUser.id
