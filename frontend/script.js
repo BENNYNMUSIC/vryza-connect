@@ -1,65 +1,135 @@
-const API = "http://localhost:5000";
+// ================= API =================
+const API =
+  "https://vryza-connect-backend-production.up.railway.app";
 
 // ================= USER SESSION =================
-const user = JSON.parse(localStorage.getItem("user"));
-const token = localStorage.getItem("token");
+const user =
+  JSON.parse(
+    localStorage.getItem("user")
+  );
 
+const token =
+  localStorage.getItem("token");
+
+// ================= CHECK LOGIN =================
 if (!user || !token) {
-  window.location.href = "auth.html";
+
+  window.location.href =
+    "auth.html";
 }
 
 // ================= SOCKET =================
-const socket = io(API);
+const socket = io(API, {
+  transports: [
+    "websocket",
+    "polling"
+  ]
+});
 
-const currentUserId = user._id || user.id;
+const currentUserId =
+  user._id || user.id;
 
-// JOIN SOCKET
-socket.emit("join", currentUserId);
+// ================= JOIN SOCKET =================
+socket.emit(
+  "join",
+  currentUserId
+);
 
 // ================= PRIVATE CHAT =================
 
 // SEND MESSAGE
 function sendMessage() {
-  const messageInput = document.getElementById("message");
-  const receiverInput = document.getElementById("receiverId");
 
-  const message = messageInput.value.trim();
-  const receiverId = receiverInput.value;
+  const messageInput =
+    document.getElementById(
+      "message"
+    );
 
-  if (!message || !receiverId) return;
+  const receiverInput =
+    document.getElementById(
+      "receiverId"
+    );
 
-  socket.emit("sendMessage", {
-    senderId: currentUserId,
-    receiverId,
-    message
-  });
+  const message =
+    messageInput.value.trim();
 
-  addMessage(message, "sent");
+  const receiverId =
+    receiverInput.value;
+
+  if (
+    !message ||
+    !receiverId
+  ) {
+    return;
+  }
+
+  socket.emit(
+    "sendMessage",
+    {
+      senderId:
+        currentUserId,
+
+      receiverId,
+
+      text: message
+    }
+  );
+
+  addMessage(
+    message,
+    "sent"
+  );
 
   messageInput.value = "";
 }
 
 // RECEIVE MESSAGE
-socket.on("receiveMessage", (data) => {
-  const activeUser =
-    document.getElementById("receiverId").value;
+socket.on(
+  "receiveMessage",
+  (data) => {
 
-  if (data.senderId === activeUser) {
-    addMessage(data.message, "received");
-  } else {
-    showNotification("💬 New message received");
+    const activeUser =
+      document.getElementById(
+        "receiverId"
+      ).value;
+
+    if (
+      data.senderId ===
+      activeUser
+    ) {
+
+      addMessage(
+        data.text,
+        "received"
+      );
+
+    } else {
+
+      showNotification(
+        "💬 New message received"
+      );
+    }
   }
-});
+);
 
 // ADD MESSAGE TO UI
-function addMessage(text, type) {
-  const container =
-    document.getElementById("messages");
+function addMessage(
+  text,
+  type
+) {
 
-  const div = document.createElement("div");
+  const container =
+    document.getElementById(
+      "messages"
+    );
+
+  const div =
+    document.createElement(
+      "div"
+    );
 
   const baseClass =
-    "max-w-[80%] p-2 rounded-lg text-sm shadow-sm break-words";
+    "max-w-[80%] p-3 rounded-2xl text-sm shadow-sm break-words";
 
   div.className =
     type === "sent"
@@ -68,138 +138,272 @@ function addMessage(text, type) {
 
   div.innerText = text;
 
-  container.appendChild(div);
+  container.appendChild(
+    div
+  );
 
   container.scrollTop =
     container.scrollHeight;
 }
 
+// ENTER KEY SEND
+const messageInput =
+  document.getElementById(
+    "message"
+  );
+
+if (messageInput) {
+
+  messageInput.addEventListener(
+    "keypress",
+    (e) => {
+
+      if (e.key === "Enter") {
+
+        sendMessage();
+      }
+    }
+  );
+}
+
 // SELECT USER
 function selectUser(id) {
-  document.getElementById("receiverId").value = id;
 
-  document.getElementById("messages").innerHTML = "";
+  document.getElementById(
+    "receiverId"
+  ).value = id;
+
+  document.getElementById(
+    "messages"
+  ).innerHTML = "";
+
+  showNotification(
+    "✅ Chat selected"
+  );
 }
 
 // ================= GROUP CHAT =================
 
 // RECEIVE GROUP MESSAGE
-socket.on("groupMessage", (data) => {
-  const box =
-    document.getElementById("groupMessages");
+socket.on(
+  "groupMessage",
+  (data) => {
 
-  box.innerHTML += `
-    <div class="bg-white p-3 rounded-xl shadow-sm">
-      <span class="font-bold text-indigo-600">
-        ${data.username}
-      </span>
+    const box =
+      document.getElementById(
+        "groupMessages"
+      );
 
-      <p class="text-slate-700 mt-1">
-        ${data.message}
-      </p>
-    </div>
-  `;
+    box.innerHTML += `
+      <div class="bg-white p-3 rounded-xl shadow-sm">
 
-  box.scrollTop = box.scrollHeight;
-});
+        <span class="font-bold text-indigo-600">
+          ${data.username}
+        </span>
+
+        <p class="text-slate-700 mt-1">
+          ${data.message}
+        </p>
+
+      </div>
+    `;
+
+    box.scrollTop =
+      box.scrollHeight;
+  }
+);
 
 // SEND GROUP MESSAGE
 function sendGroupMessage() {
-  const input =
-    document.getElementById("groupMessage");
 
-  const message = input.value.trim();
+  const input =
+    document.getElementById(
+      "groupMessage"
+    );
+
+  const message =
+    input.value.trim();
 
   if (!message) return;
 
-  socket.emit("groupMessage", {
-    username: user.username,
-    message
-  });
+  socket.emit(
+    "groupMessage",
+    {
+      username:
+        user.username,
+
+      message
+    }
+  );
 
   input.value = "";
 }
 
 // ================= ONLINE USERS =================
+socket.on(
+  "onlineUsers",
+  (users) => {
 
-socket.on("onlineUsers", (users) => {
-  const div =
-    document.getElementById("onlineUsers");
+    const div =
+      document.getElementById(
+        "onlineUsers"
+      );
 
-  div.innerHTML = users
-    .filter((id) => id !== currentUserId)
+    div.innerHTML = users
 
-    .map(
-      (id) => `
-      <div
-        onclick="selectUser('${id}')"
-        class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg cursor-pointer transition"
-      >
-        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+      .filter(
+        (id) =>
+          id !==
+          currentUserId
+      )
 
-        <span class="text-sm font-medium text-gray-700">
-          User_${id.substring(0, 5)}
-        </span>
-      </div>
-    `
-    )
-    .join("");
-});
+      .map(
+        (id) => `
+
+        <div
+          onclick="selectUser('${id}')"
+          class="
+            flex
+            items-center
+            gap-2
+            p-3
+            hover:bg-gray-100
+            rounded-xl
+            cursor-pointer
+            transition
+          "
+        >
+
+          <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+
+          <span class="text-sm font-medium text-gray-700">
+            User_${id.substring(0, 5)}
+          </span>
+
+        </div>
+      `
+      )
+
+      .join("");
+  }
+);
 
 // ================= POSTS =================
 
 // LOAD POSTS
 async function loadPosts() {
-  try {
-    const res = await fetch(`${API}/api/posts`);
 
-    const posts = await res.json();
+  try {
+
+    const feed =
+      document.getElementById(
+        "feed"
+      );
+
+    if (feed) {
+
+      feed.innerHTML = `
+        <div class="bg-white p-6 rounded-2xl text-center text-gray-400 shadow-sm">
+          Loading posts...
+        </div>
+      `;
+    }
+
+    const res =
+      await fetch(
+        `${API}/api/posts`
+      );
+
+    const posts =
+      await res.json();
 
     renderPosts(posts);
 
   } catch (err) {
-    console.log(err);
+
+    console.log(
+      "LOAD POSTS ERROR:",
+      err
+    );
+
+    showNotification(
+      "❌ Failed to load posts"
+    );
   }
 }
 
 // RENDER POSTS
 function renderPosts(posts) {
+
   const feed =
-    document.getElementById("feed");
+    document.getElementById(
+      "feed"
+    );
+
+  if (
+    !posts ||
+    posts.length === 0
+  ) {
+
+    feed.innerHTML = `
+      <div class="bg-white p-10 rounded-2xl text-center text-gray-400 shadow-sm">
+        No posts available
+      </div>
+    `;
+
+    return;
+  }
 
   feed.innerHTML = "";
 
   posts.forEach((post) => {
 
     const isOwner =
-      (post.userId?._id || post.userId) === currentUserId;
+
+      (
+        post.userId?._id ||
+        post.userId
+      ) === currentUserId;
 
     const div =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     div.className =
       "bg-white p-5 rounded-2xl shadow-sm border border-gray-200";
 
     div.innerHTML = `
-      
+
       <!-- TOP -->
       <div class="flex items-center justify-between mb-3">
 
         <div class="flex items-center gap-3">
 
           <img
-            src="${API}/uploads/${post.userId?.profilePic || "default.png"}"
+            src="${
+              post.userId
+                ?.profilePic
+                ? `${API}/uploads/${post.userId.profilePic}`
+                : "images/default-avatar.png"
+            }"
             class="w-10 h-10 rounded-full object-cover border"
           >
 
           <div>
 
             <p class="font-bold text-gray-800">
-              ${post.userId?.username || "Anonymous"}
+              ${
+                post.userId
+                  ?.username ||
+                "Anonymous"
+              }
             </p>
 
             <p class="text-xs text-gray-400">
-              ${new Date(post.createdAt).toLocaleString()}
+              ${new Date(
+                post.createdAt
+              ).toLocaleString()}
             </p>
 
           </div>
@@ -229,7 +433,9 @@ function renderPosts(posts) {
       <!-- MEDIA -->
       ${
         post.image
-          ? post.mediaType === "video"
+          ? post.mediaType ===
+            "video"
+
             ? `
           <video
             controls
@@ -241,6 +447,7 @@ function renderPosts(posts) {
             >
           </video>
         `
+
             : `
           <img
             src="${API}/uploads/${post.image}"
@@ -257,13 +464,19 @@ function renderPosts(posts) {
           onclick="likePost('${post._id}')"
           class="text-gray-600 hover:text-blue-500 flex items-center gap-1"
         >
-          ❤️ ${post.likes?.length || 0}
+          ❤️ ${
+            post.likes
+              ?.length || 0
+          }
         </button>
 
         <button
           class="text-gray-600 flex items-center gap-1"
         >
-          💬 ${post.comments?.length || 0}
+          💬 ${
+            post.comments
+              ?.length || 0
+          }
         </button>
 
       </div>
@@ -276,11 +489,17 @@ function renderPosts(posts) {
             ?.map(
               (c) => `
             <p class="text-sm">
+
               <b class="text-gray-800">
-                ${c.userId?.username || "User"}:
+                ${
+                  c.userId
+                    ?.username ||
+                  "User"
+                }:
               </b>
 
               ${c.text}
+
             </p>
           `
             )
@@ -313,22 +532,31 @@ function renderPosts(posts) {
 
 // CREATE POST
 async function createPost() {
+
   const fileInput =
-    document.getElementById("imageFile");
+    document.getElementById(
+      "imageFile"
+    );
 
   const captionInput =
-    document.getElementById("caption");
+    document.getElementById(
+      "caption"
+    );
 
   if (
-    !captionInput.value &&
+    !captionInput.value.trim() &&
     !fileInput.files[0]
   ) {
     return;
   }
 
-  const formData = new FormData();
+  const formData =
+    new FormData();
 
-  if (fileInput.files[0]) {
+  if (
+    fileInput.files[0]
+  ) {
+
     formData.append(
       "image",
       fileInput.files[0]
@@ -341,47 +569,65 @@ async function createPost() {
   );
 
   try {
-    const res = await fetch(
-      `${API}/api/posts`,
-      {
-        method: "POST",
 
-        headers: {
-          Authorization: token
-        },
+    const res =
+      await fetch(
+        `${API}/api/posts`,
+        {
+          method: "POST",
 
-        body: formData
-      }
-    );
+          headers: {
+            Authorization:
+              token
+          },
+
+          body: formData
+        }
+      );
 
     if (!res.ok) {
-      throw new Error("Failed");
+
+      throw new Error(
+        "Failed"
+      );
     }
 
     captionInput.value = "";
+
     fileInput.value = "";
 
     loadPosts();
 
-    showNotification("✅ Post created");
+    showNotification(
+      "✅ Post created"
+    );
 
   } catch (err) {
-    console.log(err);
 
-    showNotification("❌ Failed to post");
+    console.log(
+      "CREATE POST ERROR:",
+      err
+    );
+
+    showNotification(
+      "❌ Failed to post"
+    );
   }
 }
 
 // LIKE POST
 async function likePost(id) {
+
   try {
+
     await fetch(
       `${API}/api/posts/${id}/like`,
       {
         method: "PUT",
 
         headers: {
-          Authorization: token
+          Authorization:
+            token
         }
       }
     );
@@ -389,30 +635,46 @@ async function likePost(id) {
     loadPosts();
 
   } catch (err) {
-    console.log(err);
+
+    console.log(
+      "LIKE ERROR:",
+      err
+    );
   }
 }
 
 // COMMENT POST
 async function commentPost(id) {
-  const input =
-    document.getElementById(`c-${id}`);
 
-  if (!input.value.trim()) return;
+  const input =
+    document.getElementById(
+      `c-${id}`
+    );
+
+  if (
+    !input.value.trim()
+  ) {
+    return;
+  }
 
   try {
+
     await fetch(
       `${API}/api/posts/${id}/comment`,
       {
         method: "POST",
 
         headers: {
-          "Content-Type": "application/json",
-          Authorization: token
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            token
         },
 
         body: JSON.stringify({
-          text: input.value
+          text:
+            input.value
         })
       }
     );
@@ -422,85 +684,129 @@ async function commentPost(id) {
     loadPosts();
 
   } catch (err) {
-    console.log(err);
+
+    console.log(
+      "COMMENT ERROR:",
+      err
+    );
   }
 }
 
 // DELETE POST
-async function deletePost(postId) {
+async function deletePost(
+  postId
+) {
 
   const confirmDelete =
-    confirm("Delete this post?");
+    confirm(
+      "Delete this post?"
+    );
 
-  if (!confirmDelete) return;
+  if (!confirmDelete) {
+    return;
+  }
 
   try {
 
-    const res = await fetch(
-      `${API}/api/posts/${postId}`,
-      {
-        method: "DELETE",
+    const res =
+      await fetch(
+        `${API}/api/posts/${postId}`,
+        {
+          method: "DELETE",
 
-        headers: {
-          Authorization: token
+          headers: {
+            Authorization:
+              token
+          }
         }
-      }
-    );
+      );
 
-    const data = await res.json();
+    const data =
+      await res.json();
 
     if (!res.ok) {
-      return alert(data.message);
+
+      return alert(
+        data.message
+      );
     }
 
-    showNotification("🗑 Post deleted");
+    showNotification(
+      "🗑 Post deleted"
+    );
 
     loadPosts();
 
   } catch (err) {
 
-    console.log(err);
+    console.log(
+      "DELETE ERROR:",
+      err
+    );
 
-    alert("Failed to delete post");
+    alert(
+      "Failed to delete post"
+    );
   }
 }
 
 // ================= NOTIFICATIONS =================
-
-function showNotification(text) {
+function showNotification(
+  text
+) {
 
   const container =
-    document.getElementById("notifications");
+    document.getElementById(
+      "notifications"
+    );
+
+  if (!container) return;
 
   const div =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   div.className =
     "fixed top-5 right-5 bg-black text-white px-4 py-3 rounded-xl shadow-lg z-50";
 
   div.innerText = text;
 
-  container.appendChild(div);
+  container.appendChild(
+    div
+  );
 
   setTimeout(() => {
+
     div.remove();
+
   }, 3000);
 }
 
 // ================= LOGOUT =================
-
 function logout() {
 
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  localStorage.removeItem("chatUserId");
-  localStorage.removeItem("chatUsername");
+  localStorage.removeItem(
+    "token"
+  );
+
+  localStorage.removeItem(
+    "user"
+  );
+
+  localStorage.removeItem(
+    "chatUserId"
+  );
+
+  localStorage.removeItem(
+    "chatUsername"
+  );
 
   alert("Logged out");
 
-  window.location.href = "auth.html";
+  window.location.href =
+    "auth.html";
 }
 
 // ================= START =================
-
 loadPosts();

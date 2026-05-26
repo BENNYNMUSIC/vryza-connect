@@ -1,55 +1,348 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
   <title>Settings - Vryza+</title>
+
+  <!-- ================= TAILWIND ================= -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- ================= FONT ================= -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- ================= FAVICON ================= -->
+  <link
+    rel="shortcut icon"
+    href="images/vryza connect.png"
+    type="image/png"
+  />
+
+  <style>
+
+    body {
+      font-family: "Inter", sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 20px;
+    }
+
+  </style>
+
 </head>
 
-<body id="body" class="bg-slate-100 min-h-screen p-8">
+<body
+  id="body"
+  class="bg-slate-100 min-h-screen"
+>
 
-  <div class="max-w-2xl mx-auto bg-white p-6 rounded-3xl shadow">
+  <!-- ================= NAVBAR ================= -->
+  <nav class="
+    bg-white
+    border-b
+    border-slate-200
+    shadow-sm
+    sticky
+    top-0
+    z-50
+  ">
 
-    <h1 class="text-3xl font-bold mb-6">
-      ⚙️ Settings
-    </h1>
+    <div class="
+      max-w-6xl
+      mx-auto
+      px-6
+      py-4
+      flex
+      items-center
+      justify-between
+    ">
 
-    <!-- THEME -->
-    <div class="mb-6">
-      <h2 class="font-bold mb-2">Theme</h2>
+      <!-- LOGO -->
+      <div class="flex items-center gap-3">
 
-      <button onclick="setDark()"
-      class="bg-black text-white px-4 py-2 rounded-xl mr-2">
-        Dark
-      </button>
+        <div class="
+          bg-gradient-to-tr
+          from-blue-600
+          to-indigo-500
+          p-2
+          rounded-xl
+        ">
 
-      <button onclick="setLight()"
-      class="bg-gray-200 px-4 py-2 rounded-xl">
-        Light
-      </button>
+          <img
+            src="images/vryza connect.png"
+            class="w-7 h-7 invert brightness-200"
+          />
+
+        </div>
+
+        <h1 class="
+          text-2xl
+          font-black
+          text-slate-800
+        ">
+          Vryza<span class="text-blue-600">+</span>
+        </h1>
+
+      </div>
+
+      <!-- NAV -->
+      <div class="
+        flex
+        items-center
+        gap-4
+      ">
+
+        <button
+          onclick="window.location.href='home.html'"
+          class="
+            text-slate-600
+            hover:text-blue-600
+            font-semibold
+            transition
+          "
+        >
+          🏠 Home
+        </button>
+
+        <button
+          onclick="window.location.href='profile.html'"
+          class="
+            text-slate-600
+            hover:text-blue-600
+            font-semibold
+            transition
+          "
+        >
+          👤 Profile
+        </button>
+
+        <button
+          onclick="window.location.href='chat.html'"
+          class="
+            text-slate-600
+            hover:text-blue-600
+            font-semibold
+            transition
+          "
+        >
+          💬 Chat
+        </button>
+
+      </div>
+
     </div>
 
-    <!-- SUPPORT -->
-    <div class="mb-6">
-      <h2 class="font-bold mb-2">Contact Support</h2>
+  </nav>
 
-      <textarea id="supportMessage"
-      placeholder="Describe your problem..."
-      class="w-full border p-3 rounded-xl"></textarea>
+  <!-- ================= PAGE ================= -->
+  <main class="
+    max-w-3xl
+    mx-auto
+    p-6
+  ">
 
-      <button onclick="sendSupport()"
-      class="mt-3 bg-blue-600 text-white px-4 py-2 rounded-xl">
-        Send Message
-      </button>
+    <!-- CARD -->
+    <div class="
+      theme-card
+      bg-white
+      rounded-3xl
+      shadow-sm
+      border
+      border-slate-200
+      overflow-hidden
+    ">
+
+      <!-- HEADER -->
+      <div class="
+        px-8
+        py-6
+        border-b
+        border-slate-100
+      ">
+
+        <h1 class="
+          text-3xl
+          font-black
+          text-slate-800
+        ">
+          ⚙️ Settings
+        </h1>
+
+        <p class="
+          text-slate-400
+          mt-1
+        ">
+          Customize your Vryza+ experience
+        </p>
+
+      </div>
+
+      <!-- CONTENT -->
+      <div class="
+        p-8
+        space-y-8
+      ">
+
+        <!-- THEME -->
+        <div>
+
+          <h2 class="
+            text-lg
+            font-bold
+            text-slate-800
+            mb-4
+          ">
+            🎨 Theme
+          </h2>
+
+          <div class="
+            flex
+            gap-3
+          ">
+
+            <!-- DARK -->
+            <button
+              onclick="setDark()"
+              class="
+                bg-slate-900
+                hover:bg-black
+                text-white
+                px-5
+                py-3
+                rounded-2xl
+                font-semibold
+                transition
+              "
+            >
+              🌙 Dark Mode
+            </button>
+
+            <!-- LIGHT -->
+            <button
+              onclick="setLight()"
+              class="
+                bg-slate-200
+                hover:bg-slate-300
+                text-slate-700
+                px-5
+                py-3
+                rounded-2xl
+                font-semibold
+                transition
+              "
+            >
+              ☀️ Light Mode
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- SUPPORT -->
+        <div>
+
+          <h2 class="
+            text-lg
+            font-bold
+            text-slate-800
+            mb-4
+          ">
+            💬 Contact Support
+          </h2>
+
+          <textarea
+            id="supportMessage"
+            placeholder="Describe your problem..."
+            class="
+              w-full
+              min-h-[140px]
+              bg-slate-50
+              border
+              border-slate-200
+              rounded-2xl
+              p-4
+              outline-none
+              focus:ring-2
+              focus:ring-blue-200
+              resize-none
+            "
+          ></textarea>
+
+          <button
+            id="supportBtn"
+            onclick="sendSupport()"
+            class="
+              mt-4
+              bg-blue-600
+              hover:bg-blue-700
+              text-white
+              px-6
+              py-3
+              rounded-2xl
+              font-semibold
+              shadow-lg
+              shadow-blue-100
+              transition
+            "
+          >
+            Send Message
+          </button>
+
+        </div>
+
+        <!-- ACCOUNT -->
+        <div>
+
+          <h2 class="
+            text-lg
+            font-bold
+            text-slate-800
+            mb-4
+          ">
+            🔒 Account
+          </h2>
+
+          <button
+            onclick="logout()"
+            class="
+              w-full
+              bg-red-500
+              hover:bg-red-600
+              text-white
+              p-4
+              rounded-2xl
+              font-bold
+              transition
+            "
+          >
+            Logout
+          </button>
+
+        </div>
+
+      </div>
+
     </div>
 
-    <!-- LOGOUT -->
-    <button onclick="logout()"
-    class="w-full bg-red-500 text-white p-3 rounded-2xl font-bold">
-      Logout
-    </button>
+  </main>
 
-  </div>
-
+  <!-- ================= SETTINGS JS ================= -->
   <script src="settings.js"></script>
 
 </body>

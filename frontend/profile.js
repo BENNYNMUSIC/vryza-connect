@@ -1,5 +1,27 @@
-const API = "http://localhost:5000";
+// ================= API =================
+const API =
+  "https://vryza-connect-backend-production.up.railway.app";
 
+// ================= TOKEN =================
+const token =
+  localStorage.getItem("token");
+
+// ================= USER =================
+const currentUser =
+  JSON.parse(
+    localStorage.getItem("user")
+  );
+
+// ================= CHECK LOGIN =================
+if (!token || !currentUser) {
+
+  alert("Please login first");
+
+  window.location.href =
+    "auth.html";
+}
+
+// ================= CURRENT PROFILE =================
 let currentProfileId = null;
 
 // ================= VIEW PROFILE =================
@@ -9,90 +31,205 @@ async function viewProfile(userId) {
 
     currentProfileId = userId;
 
-    const res = await fetch(`${API}/api/user/${userId}`);
+    // ================= LOADING =================
+    const postsContainer =
+      document.getElementById(
+        "postsContainer"
+      );
 
-    const data = await res.json();
+    postsContainer.innerHTML = `
+      <div class="bg-white rounded-3xl p-10 text-center text-slate-400 border border-slate-200">
+        Loading profile...
+      </div>
+    `;
 
+    // ================= FETCH =================
+    const res = await fetch(
+      `${API}/api/user/${userId}`,
+      {
+        headers: {
+          Authorization: token
+        }
+      }
+    );
+
+    const data =
+      await res.json();
+
+    // ================= ERROR =================
     if (!res.ok) {
-      alert(data.message || "Failed to load profile");
+
+      alert(
+        data.message ||
+        "Failed to load profile"
+      );
+
       return;
     }
 
     // ================= USER =================
     const user = data.user;
 
-    // ================= IMAGES =================
-    document.getElementById("avatar").src =
+    // ================= PROFILE IMAGE =================
+    const avatar =
+      document.getElementById(
+        "avatar"
+      );
+
+    avatar.src =
       user.profilePic
         ? `${API}/uploads/${user.profilePic}`
         : "images/default-avatar.png";
 
-    // COVER
-    if (user.coverImage) {
-      document.getElementById("coverPreview").src =
-        `${API}/uploads/${user.coverImage}`;
+    // ================= COVER IMAGE =================
+    const coverPreview =
+      document.getElementById(
+        "coverPreview"
+      );
+
+    if (coverPreview) {
+
+      coverPreview.src =
+        user.coverImage
+          ? `${API}/uploads/${user.coverImage}`
+          : "images/default-cover.jpg";
     }
 
     // ================= TEXT =================
-    document.getElementById("username").innerText =
-      user.username || "Unknown User";
+    document.getElementById(
+      "username"
+    ).innerText =
+      user.username ||
+      "Unknown User";
 
-    document.getElementById("bioText").innerText =
-      user.bio || "No bio yet.";
+    document.getElementById(
+      "bioText"
+    ).innerText =
+      user.bio ||
+      "No bio yet.";
 
-    document.getElementById("followersCount").innerText =
+    document.getElementById(
+      "followersCount"
+    ).innerText =
       user.followers?.length || 0;
 
-    document.getElementById("followingCount").innerText =
+    document.getElementById(
+      "followingCount"
+    ).innerText =
       user.following?.length || 0;
 
     // ================= PROFILE DETAILS =================
-    document.getElementById("profile").innerHTML = `
+    document.getElementById(
+      "profile"
+    ).innerHTML = `
+
       <div class="bg-slate-50 rounded-2xl p-4">
-        <p class="text-slate-400 text-xs uppercase font-bold mb-1">Location</p>
-        <p>${user.location || "Unknown"}</p>
+        <p class="text-slate-400 text-xs uppercase font-bold mb-1">
+          Location
+        </p>
+
+        <p class="text-slate-700">
+          ${user.location || "Unknown"}
+        </p>
       </div>
 
       <div class="bg-slate-50 rounded-2xl p-4">
-        <p class="text-slate-400 text-xs uppercase font-bold mb-1">Gender</p>
-        <p>${user.gender || "Not specified"}</p>
+        <p class="text-slate-400 text-xs uppercase font-bold mb-1">
+          Gender
+        </p>
+
+        <p class="text-slate-700">
+          ${user.gender || "Not specified"}
+        </p>
       </div>
 
       <div class="bg-slate-50 rounded-2xl p-4">
-        <p class="text-slate-400 text-xs uppercase font-bold mb-1">Age</p>
-        <p>${user.age || "N/A"}</p>
+        <p class="text-slate-400 text-xs uppercase font-bold mb-1">
+          Age
+        </p>
+
+        <p class="text-slate-700">
+          ${user.age || "N/A"}
+        </p>
       </div>
 
       <div class="bg-slate-50 rounded-2xl p-4">
-        <p class="text-slate-400 text-xs uppercase font-bold mb-1">About</p>
-        <p>${user.about || "No about info yet."}</p>
+        <p class="text-slate-400 text-xs uppercase font-bold mb-1">
+          About
+        </p>
+
+        <p class="text-slate-700">
+          ${user.about || "No about info yet."}
+        </p>
       </div>
     `;
 
-    // ================= EDIT FIELDS =================
-    document.getElementById("bio").value =
-      user.bio || "";
+    // ================= EDIT INPUTS =================
+    const bio =
+      document.getElementById(
+        "bio"
+      );
 
-    document.getElementById("age").value =
-      user.age || "";
+    const age =
+      document.getElementById(
+        "age"
+      );
 
-    document.getElementById("location").value =
-      user.location || "";
+    const location =
+      document.getElementById(
+        "location"
+      );
 
-    document.getElementById("about").value =
-      user.about || "";
+    const about =
+      document.getElementById(
+        "about"
+      );
 
-    document.getElementById("gender").value =
-      user.gender || "";
+    const gender =
+      document.getElementById(
+        "gender"
+      );
+
+    if (bio) {
+      bio.value =
+        user.bio || "";
+    }
+
+    if (age) {
+      age.value =
+        user.age || "";
+    }
+
+    if (location) {
+      location.value =
+        user.location || "";
+    }
+
+    if (about) {
+      about.value =
+        user.about || "";
+    }
+
+    if (gender) {
+      gender.value =
+        user.gender || "";
+    }
 
     // ================= POSTS =================
-    renderPosts(data.posts);
+    renderPosts(
+      data.posts || []
+    );
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+      "PROFILE ERROR:",
+      err
+    );
 
-    alert("Error loading profile");
+    alert(
+      "Error loading profile"
+    );
   }
 }
 
@@ -100,9 +237,12 @@ async function viewProfile(userId) {
 function renderPosts(posts) {
 
   const container =
-    document.getElementById("postsContainer");
+    document.getElementById(
+      "postsContainer"
+    );
 
-  if (!posts.length) {
+  // ================= NO POSTS =================
+  if (!posts || posts.length === 0) {
 
     container.innerHTML = `
       <div class="bg-white rounded-3xl p-10 border border-slate-200 text-center text-slate-400">
@@ -113,116 +253,151 @@ function renderPosts(posts) {
     return;
   }
 
-  container.innerHTML = posts.map(post => `
+  // ================= POSTS =================
+  container.innerHTML =
+    posts.map((post) => `
 
-    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
 
-      ${post.image ? `
-        <img
-          src="${API}/uploads/${post.image}"
-          class="w-full max-h-[500px] object-cover"
-        >
-      ` : ""}
-
-      <div class="p-5">
-
-        <div class="flex items-center gap-3 mb-4">
-
+        ${
+          post.image
+            ? `
           <img
-            src="${
-              post.userId?.profilePic
-                ? `${API}/uploads/${post.userId.profilePic}`
-                : "images/default-avatar.png"
-            }"
-            class="w-10 h-10 rounded-full object-cover"
-          >
+            src="${API}/uploads/${post.image}"
+            class="w-full max-h-[500px] object-cover"
+          />
+        `
+            : ""
+        }
 
-          <div>
-            <p class="font-bold text-slate-800">
-              ${post.userId?.username || "Unknown"}
-            </p>
+        <div class="p-5">
 
-            <p class="text-xs text-slate-400">
-              ${new Date(post.createdAt).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
+          <!-- USER -->
+          <div class="flex items-center gap-3 mb-4">
 
-        <p class="text-slate-700 mb-4">
-          ${post.caption || ""}
-        </p>
+            <img
+              src="${
+                post.userId?.profilePic
+                  ? `${API}/uploads/${post.userId.profilePic}`
+                  : "images/default-avatar.png"
+              }"
+              class="w-10 h-10 rounded-full object-cover"
+            />
 
-        <!-- LIKES -->
-        <div class="flex items-center gap-2 mb-4">
+            <div>
 
-          <button
-            onclick="likePost('${post._id}')"
-            class="
-              bg-blue-50
-              hover:bg-blue-100
-              text-blue-600
-              px-4
-              py-2
-              rounded-xl
-              text-sm
-              font-semibold
-              transition
-            "
-          >
-            ❤️ ${post.likes.length}
-          </button>
-        </div>
+              <p class="font-bold text-slate-800">
+                ${
+                  post.userId?.username ||
+                  "Unknown"
+                }
+              </p>
 
-        <!-- COMMENTS -->
-        <div class="space-y-2 mb-4">
+              <p class="text-xs text-slate-400">
+                ${new Date(
+                  post.createdAt
+                ).toLocaleDateString()}
+              </p>
 
-          ${(post.comments || []).map(comment => `
-            <div class="bg-slate-50 rounded-xl px-3 py-2 text-sm">
-              <span class="font-bold text-slate-700">
-                ${comment.userId?.username || "User"}:
-              </span>
-              ${comment.text}
             </div>
-          `).join("")}
-        </div>
 
-        <!-- COMMENT INPUT -->
-        <div class="flex gap-2">
+          </div>
 
-          <input
-            id="comment-${post._id}"
-            placeholder="Write a comment..."
-            class="
-              flex-1
-              bg-slate-50
-              rounded-xl
-              px-4
-              py-2
-              text-sm
-              outline-none
-            "
-          >
+          <!-- CAPTION -->
+          <p class="text-slate-700 mb-4">
+            ${post.caption || ""}
+          </p>
 
-          <button
-            onclick="commentPost('${post._id}')"
-            class="
-              bg-blue-600
-              hover:bg-blue-700
-              text-white
-              px-4
-              rounded-xl
-              text-sm
-              font-semibold
-              transition
-            "
-          >
-            Send
-          </button>
+          <!-- LIKE -->
+          <div class="flex items-center gap-2 mb-4">
+
+            <button
+              onclick="likePost('${post._id}')"
+              class="
+                bg-blue-50
+                hover:bg-blue-100
+                text-blue-600
+                px-4
+                py-2
+                rounded-xl
+                text-sm
+                font-semibold
+                transition
+              "
+            >
+              ❤️ ${
+                post.likes?.length || 0
+              }
+            </button>
+
+          </div>
+
+          <!-- COMMENTS -->
+          <div class="space-y-2 mb-4">
+
+            ${
+              (post.comments || [])
+                .map(
+                  (comment) => `
+                <div class="bg-slate-50 rounded-xl px-3 py-2 text-sm">
+
+                  <span class="font-bold text-slate-700">
+                    ${
+                      comment.userId
+                        ?.username ||
+                      "User"
+                    }:
+                  </span>
+
+                  ${comment.text}
+
+                </div>
+              `
+                )
+                .join("")
+            }
+
+          </div>
+
+          <!-- COMMENT INPUT -->
+          <div class="flex gap-2">
+
+            <input
+              id="comment-${post._id}"
+              placeholder="Write a comment..."
+              class="
+                flex-1
+                bg-slate-50
+                rounded-xl
+                px-4
+                py-2
+                text-sm
+                outline-none
+              "
+            />
+
+            <button
+              onclick="commentPost('${post._id}')"
+              class="
+                bg-blue-600
+                hover:bg-blue-700
+                text-white
+                px-4
+                rounded-xl
+                text-sm
+                font-semibold
+                transition
+              "
+            >
+              Send
+            </button>
+
+          </div>
+
         </div>
       </div>
-    </div>
 
-  `).join("");
+    `).join("");
 }
 
 // ================= UPDATE PROFILE =================
@@ -230,137 +405,255 @@ async function updateProfile() {
 
   try {
 
-    const formData = new FormData();
+    const formData =
+      new FormData();
 
+    // ================= FILES =================
     const profilePic =
-      document.getElementById("profilePic").files[0];
+      document.getElementById(
+        "profilePic"
+      )?.files[0];
 
     const coverImage =
-      document.getElementById("coverImage").files[0];
+      document.getElementById(
+        "coverImage"
+      )?.files[0];
 
     if (profilePic) {
-      formData.append("profilePic", profilePic);
+
+      formData.append(
+        "profilePic",
+        profilePic
+      );
     }
 
     if (coverImage) {
-      formData.append("coverImage", coverImage);
+
+      formData.append(
+        "coverImage",
+        coverImage
+      );
     }
 
+    // ================= TEXT =================
     formData.append(
       "bio",
-      document.getElementById("bio").value
+      document.getElementById(
+        "bio"
+      )?.value || ""
     );
 
     formData.append(
       "age",
-      document.getElementById("age").value
+      document.getElementById(
+        "age"
+      )?.value || ""
     );
 
     formData.append(
       "location",
-      document.getElementById("location").value
+      document.getElementById(
+        "location"
+      )?.value || ""
     );
 
     formData.append(
       "about",
-      document.getElementById("about").value
+      document.getElementById(
+        "about"
+      )?.value || ""
     );
 
     formData.append(
       "gender",
-      document.getElementById("gender").value
+      document.getElementById(
+        "gender"
+      )?.value || ""
     );
 
-    const res = await fetch(`${API}/api/user/profile`, {
-      method: "PUT",
-      headers: {
-        Authorization: localStorage.getItem("token")
-      },
-      body: formData
-    });
+    // ================= REQUEST =================
+    const res = await fetch(
+      `${API}/api/user/profile`,
+      {
+        method: "PUT",
 
-    const data = await res.json();
+        headers: {
+          Authorization: token
+        },
 
+        body: formData
+      }
+    );
+
+    const data =
+      await res.json();
+
+    // ================= ERROR =================
     if (!res.ok) {
-      alert(data.message || "Update failed");
+
+      alert(
+        data.message ||
+        "Update failed"
+      );
+
       return;
     }
 
-    alert("✅ Profile updated");
+    // ================= SUCCESS =================
+    alert(
+      "✅ Profile updated"
+    );
 
-    viewProfile(currentProfileId);
+    // ================= REFRESH =================
+    viewProfile(
+      currentProfileId
+    );
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+      "UPDATE PROFILE ERROR:",
+      err
+    );
 
-    alert("Profile update failed");
+    alert(
+      "Profile update failed"
+    );
   }
 }
 
 // ================= COMMENT =================
-async function commentPost(postId) {
+async function commentPost(
+  postId
+) {
 
   try {
 
     const input =
-      document.getElementById(`comment-${postId}`);
+      document.getElementById(
+        `comment-${postId}`
+      );
 
-    const text = input.value.trim();
+    const text =
+      input.value.trim();
 
     if (!text) return;
 
+    // ================= REQUEST =================
     const res = await fetch(
       `${API}/api/posts/${postId}/comment`,
       {
         method: "POST",
+
         headers: {
-          "Content-Type": "application/json",
-          Authorization: localStorage.getItem("token")
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            token
         },
-        body: JSON.stringify({ text })
+
+        body: JSON.stringify({
+          text
+        })
       }
     );
 
+    // ================= ERROR =================
     if (!res.ok) {
-      alert("Comment failed");
+
+      alert(
+        "Comment failed"
+      );
+
       return;
     }
 
     input.value = "";
 
-    viewProfile(currentProfileId);
+    // ================= REFRESH =================
+    viewProfile(
+      currentProfileId
+    );
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+      "COMMENT ERROR:",
+      err
+    );
 
-    alert("Error posting comment");
+    alert(
+      "Error posting comment"
+    );
   }
 }
 
 // ================= LIKE POST =================
-async function likePost(postId) {
+async function likePost(
+  postId
+) {
 
   try {
 
-    await fetch(`${API}/api/posts/${postId}/like`, {
-      method: "PUT",
-      headers: {
-        Authorization: localStorage.getItem("token")
-      }
-    });
+    await fetch(
+      `${API}/api/posts/${postId}/like`,
+      {
+        method: "PUT",
 
-    viewProfile(currentProfileId);
+        headers: {
+          Authorization:
+            token
+        }
+      }
+    );
+
+    // ================= REFRESH =================
+    viewProfile(
+      currentProfileId
+    );
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+      "LIKE ERROR:",
+      err
+    );
   }
 }
 
 // ================= MESSAGE USER =================
 function messageUser() {
 
-  window.location.href = "chat.html";
+  if (!currentProfileId) {
+
+    alert(
+      "No user selected"
+    );
+
+    return;
+  }
+
+  // ================= SAVE CHAT USER =================
+  localStorage.setItem(
+    "chatUserId",
+    currentProfileId
+  );
+
+  localStorage.setItem(
+    "chatUsername",
+    document.getElementById(
+      "username"
+    ).innerText
+  );
+
+  // ================= REDIRECT =================
+  window.location.href =
+    "chat.html";
 }
+
+// ================= LOAD OWN PROFILE =================
+viewProfile(
+  currentUser._id ||
+  currentUser.id
+);
