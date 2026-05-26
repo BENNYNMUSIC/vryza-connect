@@ -1,7 +1,25 @@
-const API = "http://localhost:5000/api/auth";
+// ================= API =================
+const API =
+  "https://vryza-connect-backend-production.up.railway.app/api/auth";
+
+// ================= CHECK EXISTING LOGIN =================
+const existingToken =
+  localStorage.getItem("token");
+
+const existingUser =
+  localStorage.getItem("user");
+
+if (existingToken && existingUser) {
+
+  // Already logged in
+  // Uncomment if you want auto redirect
+
+  // window.location.href = "home.html";
+}
 
 // ================= TOGGLE FORMS =================
 function showSignup() {
+
   document
     .getElementById("loginBox")
     .classList.add("hidden");
@@ -12,6 +30,7 @@ function showSignup() {
 }
 
 function showLogin() {
+
   document
     .getElementById("signupBox")
     .classList.add("hidden");
@@ -23,29 +42,92 @@ function showLogin() {
 
 // ================= REGISTER =================
 async function register() {
+
   try {
 
+    // ================= INPUTS =================
     const username =
-      document.getElementById("regUser").value.trim();
+      document
+        .getElementById("regUser")
+        .value
+        .trim();
 
     const email =
-      document.getElementById("regEmail").value.trim();
+      document
+        .getElementById("regEmail")
+        .value
+        .trim();
 
     const password =
-      document.getElementById("regPass").value.trim();
+      document
+        .getElementById("regPass")
+        .value
+        .trim();
 
-    // VALIDATION
-    if (!username || !email || !password) {
-      return alert("Please fill all fields");
+    // ================= VALIDATION =================
+    if (
+      !username ||
+      !email ||
+      !password
+    ) {
+
+      alert(
+        "Please fill all fields"
+      );
+
+      return;
     }
 
+    // ================= EMAIL VALIDATION =================
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (
+      !emailRegex.test(email)
+    ) {
+
+      alert(
+        "Enter valid email"
+      );
+
+      return;
+    }
+
+    // ================= PASSWORD VALIDATION =================
+    if (
+      password.length < 6
+    ) {
+
+      alert(
+        "Password must be at least 6 characters"
+      );
+
+      return;
+    }
+
+    // ================= BUTTON =================
+    const registerBtn =
+      document.getElementById(
+        "registerBtn"
+      );
+
+    if (registerBtn) {
+
+      registerBtn.disabled = true;
+
+      registerBtn.innerText =
+        "Creating...";
+    }
+
+    // ================= API REQUEST =================
     const res = await fetch(
       `${API}/register`,
       {
         method: "POST",
 
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type":
+            "application/json"
         },
 
         body: JSON.stringify({
@@ -56,57 +138,130 @@ async function register() {
       }
     );
 
-    const data = await res.json();
+    const data =
+      await res.json();
 
-    // REGISTER FAILED
+    // ================= FAILED =================
     if (!res.ok) {
-      console.log(data);
 
-      return alert(
-        data.message || "Registration failed"
+      console.log(
+        "REGISTER ERROR:",
+        data
       );
+
+      alert(
+        data.message ||
+        "Registration failed"
+      );
+
+      if (registerBtn) {
+
+        registerBtn.disabled = false;
+
+        registerBtn.innerText =
+          "Register";
+      }
+
+      return;
     }
 
-    alert("✅ Account created successfully");
+    // ================= SUCCESS =================
+    alert(
+      "✅ Account created successfully"
+    );
 
-    // CLEAR INPUTS
-    document.getElementById("regUser").value = "";
-    document.getElementById("regEmail").value = "";
-    document.getElementById("regPass").value = "";
+    // ================= CLEAR INPUTS =================
+    document.getElementById(
+      "regUser"
+    ).value = "";
 
-    // SWITCH TO LOGIN
+    document.getElementById(
+      "regEmail"
+    ).value = "";
+
+    document.getElementById(
+      "regPass"
+    ).value = "";
+
+    // ================= RESET BUTTON =================
+    if (registerBtn) {
+
+      registerBtn.disabled = false;
+
+      registerBtn.innerText =
+        "Register";
+    }
+
+    // ================= SWITCH TO LOGIN =================
     showLogin();
 
   } catch (err) {
 
-    console.log(err);
+    console.log(
+      "REGISTER SERVER ERROR:",
+      err
+    );
 
-    alert("Server error");
+    alert(
+      "Server error"
+    );
   }
 }
 
 // ================= LOGIN =================
 async function login() {
+
   try {
 
+    // ================= INPUTS =================
     const email =
-      document.getElementById("logEmail").value.trim();
+      document
+        .getElementById("logEmail")
+        .value
+        .trim();
 
     const password =
-      document.getElementById("logPass").value.trim();
+      document
+        .getElementById("logPass")
+        .value
+        .trim();
 
-    // VALIDATION
-    if (!email || !password) {
-      return alert("Please fill all fields");
+    // ================= VALIDATION =================
+    if (
+      !email ||
+      !password
+    ) {
+
+      alert(
+        "Please fill all fields"
+      );
+
+      return;
     }
 
+    // ================= BUTTON =================
+    const loginBtn =
+      document.getElementById(
+        "loginBtn"
+      );
+
+    if (loginBtn) {
+
+      loginBtn.disabled = true;
+
+      loginBtn.innerText =
+        "Logging in...";
+    }
+
+    // ================= API REQUEST =================
     const res = await fetch(
       `${API}/login`,
       {
         method: "POST",
 
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type":
+            "application/json"
         },
 
         body: JSON.stringify({
@@ -116,38 +271,103 @@ async function login() {
       }
     );
 
-    const data = await res.json();
+    const data =
+      await res.json();
 
-    // LOGIN FAILED
+    // ================= LOGIN FAILED =================
     if (!res.ok) {
-      console.log(data);
 
-      return alert(
-        data.message || "Login failed"
+      console.log(
+        "LOGIN ERROR:",
+        data
       );
+
+      alert(
+        data.message ||
+        "Login failed"
+      );
+
+      if (loginBtn) {
+
+        loginBtn.disabled = false;
+
+        loginBtn.innerText =
+          "Login";
+      }
+
+      return;
     }
 
-    // SAVE TOKEN
+    // ================= SAVE TOKEN =================
     localStorage.setItem(
       "token",
       data.token
     );
 
-    // SAVE USER
+    // ================= SAVE USER =================
     localStorage.setItem(
       "user",
       JSON.stringify(data.user)
     );
 
-    alert("✅ Login successful");
+    // ================= SUCCESS =================
+    alert(
+      "✅ Login successful"
+    );
 
-    // REDIRECT
-    window.location.href = "home.html";
+    // ================= REDIRECT =================
+    window.location.href =
+      "home.html";
 
   } catch (err) {
 
-    console.log(err);
+    console.log(
+      "LOGIN SERVER ERROR:",
+      err
+    );
 
-    alert("Server error");
+    alert(
+      "Server error"
+    );
   }
+}
+
+// ================= ENTER KEY LOGIN =================
+const logPass =
+  document.getElementById(
+    "logPass"
+  );
+
+if (logPass) {
+
+  logPass.addEventListener(
+    "keypress",
+    (e) => {
+
+      if (e.key === "Enter") {
+
+        login();
+      }
+    }
+  );
+}
+
+// ================= ENTER KEY REGISTER =================
+const regPass =
+  document.getElementById(
+    "regPass"
+  );
+
+if (regPass) {
+
+  regPass.addEventListener(
+    "keypress",
+    (e) => {
+
+      if (e.key === "Enter") {
+
+        register();
+      }
+    }
+  );
 }

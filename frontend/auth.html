@@ -1,15 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>vryza connect</title>
-  <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon">
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Vryza Connect</title>
+
+  <link
+    rel="shortcut icon"
+    href="images/vryza connect.png"
+    type="image/x-icon"
+  />
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
+      padding: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      height: 100vh;
+      background: linear-gradient(
+        135deg,
+        #0f172a,
+        #1e293b
+      );
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -17,27 +37,30 @@
     }
 
     .container {
-      width: 350px;
+      width: 100%;
+      max-width: 380px;
       background: #1e293b;
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 0 25px rgba(0,0,0,0.6);
+      padding: 30px;
+      border-radius: 18px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
     }
 
     h2 {
       text-align: center;
       margin-bottom: 20px;
+      color: #ffffff;
     }
 
     input {
       width: 100%;
-      padding: 10px;
-      margin: 8px 0;
+      padding: 12px;
+      margin-top: 10px;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       outline: none;
       background: #334155;
       color: white;
+      font-size: 15px;
     }
 
     input::placeholder {
@@ -46,12 +69,13 @@
 
     button {
       width: 100%;
-      padding: 10px;
-      margin-top: 10px;
+      padding: 12px;
+      margin-top: 15px;
       border: none;
       border-radius: 10px;
       background: #22c55e;
       color: white;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
       transition: 0.3s;
@@ -61,47 +85,129 @@
       background: #16a34a;
     }
 
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
     .toggle {
       text-align: center;
-      margin-top: 15px;
-      cursor: pointer;
+      margin-top: 18px;
       color: #38bdf8;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .toggle:hover {
+      text-decoration: underline;
     }
 
     .hidden {
       display: none;
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #38bdf8;
     }
   </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container">
 
-  <!-- LOGIN -->
-  <div id="loginBox">
-    <h2>Login</h2>
-    <input id="logEmail" placeholder="Email">
-    <input id="logPass" type="password" placeholder="Password">
-    <button onclick="login()">Login</button>
+    <div class="logo">
+      Vryza Connect
+    </div>
 
-    <div class="toggle" onclick="showSignup()">Don't have an account? Sign up</div>
+    <!-- LOGIN BOX -->
+    <div id="loginBox">
+
+      <h2>Login</h2>
+
+      <input
+        type="email"
+        id="logEmail"
+        placeholder="Email"
+        autocomplete="email"
+      />
+
+      <input
+        type="password"
+        id="logPass"
+        placeholder="Password"
+        autocomplete="current-password"
+      />
+
+      <button
+        id="loginBtn"
+        onclick="login()"
+      >
+        Login
+      </button>
+
+      <div
+        class="toggle"
+        onclick="showSignup()"
+      >
+        Don't have an account? Sign Up
+      </div>
+
+    </div>
+
+    <!-- SIGNUP BOX -->
+    <div
+      id="signupBox"
+      class="hidden"
+    >
+
+      <h2>Create Account</h2>
+
+      <input
+        type="text"
+        id="regUser"
+        placeholder="Username"
+        autocomplete="username"
+      />
+
+      <input
+        type="email"
+        id="regEmail"
+        placeholder="Email"
+        autocomplete="email"
+      />
+
+      <input
+        type="password"
+        id="regPass"
+        placeholder="Password"
+        autocomplete="new-password"
+      />
+
+      <button
+        id="registerBtn"
+        onclick="register()"
+      >
+        Register
+      </button>
+
+      <div
+        class="toggle"
+        onclick="showLogin()"
+      >
+        Already have an account? Login
+      </div>
+
+    </div>
+
   </div>
 
-  <!-- SIGNUP -->
-  <div id="signupBox" class="hidden">
-    <h2>Sign Up</h2>
-    <input id="regUser" placeholder="Username">
-    <input id="regEmail" placeholder="Email">
-    <input id="regPass" type="password" placeholder="Password">
-    <button onclick="register()">Sign Up</button>
-
-    <div class="toggle" onclick="showLogin()">Already have an account? Login</div>
-  </div>
-
-</div>
-
-<script src="loggin.js"></script>
+  <!-- JS -->
+  <script src="loggin.js"></script>
 
 </body>
 </html>
