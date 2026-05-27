@@ -4,8 +4,35 @@ const API =
 
 // ================= SOCKET =================
 const socket = io(API, {
-  transports: ["websocket", "polling"]
+
+  transports: [
+    "websocket",
+    "polling"
+  ]
 });
+
+// ================= SOCKET DEBUG =================
+socket.on(
+  "connect",
+  () => {
+
+    console.log(
+      "🟢 SOCKET CONNECTED:",
+      socket.id
+    );
+  }
+);
+
+socket.on(
+  "connect_error",
+  (err) => {
+
+    console.log(
+      "❌ SOCKET ERROR:",
+      err.message
+    );
+  }
+);
 
 // ================= USER =================
 const user =
@@ -19,13 +46,15 @@ const token =
 // ================= CHECK LOGIN =================
 if (!user || !token) {
 
-  alert("Please login first");
+  alert(
+    "Please login first"
+  );
 
   window.location.href =
     "auth.html";
 }
 
-// ================= USER ID =================
+// ================= CURRENT USER =================
 const currentUserId =
   (
     user._id ||
@@ -44,25 +73,10 @@ let receiverName =
   );
 
 if (receiverId) {
+
   receiverId =
     receiverId.toString();
 }
-
-// ================= DEBUG =================
-console.log(
-  "CURRENT USER:",
-  user
-);
-
-console.log(
-  "CURRENT USER ID:",
-  currentUserId
-);
-
-console.log(
-  "RECEIVER:",
-  receiverId
-);
 
 // ================= DOM =================
 const messagesContainer =
@@ -80,7 +94,7 @@ const typingText =
     "typing"
   );
 
-// ================= CHAT HEADER =================
+// ================= HEADER =================
 if (receiverName) {
 
   document.getElementById(
@@ -89,28 +103,17 @@ if (receiverName) {
     `Chatting with ${receiverName}`;
 }
 
-// ================= JOIN SOCKET =================
+// ================= JOIN =================
 socket.emit(
   "join",
   currentUserId
 );
 
-// ================= SOCKET CONNECT =================
-socket.on(
-  "connect",
-  () => {
-
-    console.log(
-      "SOCKET CONNECTED:",
-      socket.id
-    );
-  }
-);
-
-// ================= LOAD MESSAGES =================
+// ================= LOAD OLD MESSAGES =================
 async function loadMessages() {
 
-  if (!receiverId) return;
+  if (!receiverId)
+    return;
 
   try {
 
@@ -118,7 +121,9 @@ async function loadMessages() {
       await fetch(
         `${API}/api/messages/${receiverId}`,
         {
+
           headers: {
+
             Authorization:
               `Bearer ${token}`,
 
@@ -132,60 +137,53 @@ async function loadMessages() {
       await res.json();
 
     console.log(
-      "LOADED MESSAGES:",
+      "MESSAGES:",
       messages
     );
 
     messagesContainer.innerHTML =
       "";
 
-    const empty =
-      document.getElementById(
-        "emptyChat"
-      );
+    messages.forEach(
+      (msg) => {
 
-    if (empty) {
-      empty.remove();
-    }
+        const sender =
+          msg.senderId?.toString();
 
-    messages.forEach((msg) => {
+        const type =
+          sender === currentUserId
+            ? "sent"
+            : "received";
 
-      const sender =
-        msg.senderId?.toString();
+        // ================= TEXT =================
+        if (msg.text) {
 
-      const type =
-        sender === currentUserId
-          ? "sent"
-          : "received";
+          addMessage(
+            msg.text,
+            type
+          );
+        }
 
-      // ================= TEXT =================
-      if (msg.text) {
+        // ================= MEDIA =================
+        if (msg.media) {
 
-        addMessage(
-          msg.text,
-          type
-        );
+          addMediaMessage(
+            msg.media,
+            msg.mediaType,
+            type
+          );
+        }
+
+        // ================= AUDIO =================
+        if (msg.audio) {
+
+          addVoiceMessage(
+            msg.audio,
+            type
+          );
+        }
       }
-
-      // ================= IMAGE/VIDEO =================
-      if (msg.media) {
-
-        addMediaMessage(
-          msg.media,
-          msg.mediaType,
-          type
-        );
-      }
-
-      // ================= AUDIO =================
-      if (msg.audio) {
-
-        addVoiceMessage(
-          msg.audio,
-          type
-        );
-      }
-    });
+    );
 
     scrollBottom();
 
@@ -213,25 +211,17 @@ function sendMessage() {
     return;
   }
 
-  const data = {
-
-    senderId:
-      currentUserId,
-
-    receiverId:
-      receiverId,
-
-    text
-  };
-
-  console.log(
-    "SENDING:",
-    data
-  );
-
   socket.emit(
     "sendMessage",
-    data
+    {
+
+      senderId:
+        currentUserId,
+
+      receiverId,
+
+      message: text
+    }
   );
 
   addMessage(
@@ -239,7 +229,8 @@ function sendMessage() {
     "sent"
   );
 
-  messageInput.value = "";
+  messageInput.value =
+    "";
 }
 
 // ================= ENTER SEND =================
@@ -247,7 +238,9 @@ messageInput.addEventListener(
   "keypress",
   (e) => {
 
-    if (e.key === "Enter") {
+    if (
+      e.key === "Enter"
+    ) {
 
       sendMessage();
     }
@@ -272,7 +265,7 @@ socket.on(
     ) {
 
       addMessage(
-        data.text,
+        data.message,
         "received"
       );
     }
@@ -290,6 +283,7 @@ messageInput.addEventListener(
     socket.emit(
       "typing",
       {
+
         senderId:
           currentUserId,
 
@@ -330,26 +324,6 @@ socket.on(
   }
 );
 
-// ================= RECEIVE VOICE =================
-socket.on(
-  "receiveVoice",
-  (data) => {
-
-    if (
-      data.senderId
-        .toString() ===
-      receiverId
-        .toString()
-    ) {
-
-      addVoiceMessage(
-        data.audio,
-        "received"
-      );
-    }
-  }
-);
-
 // ================= RECEIVE MEDIA =================
 socket.on(
   "receiveMedia",
@@ -365,6 +339,26 @@ socket.on(
       addMediaMessage(
         data.media,
         data.mediaType,
+        "received"
+      );
+    }
+  }
+);
+
+// ================= RECEIVE VOICE =================
+socket.on(
+  "receiveVoice",
+  (data) => {
+
+    if (
+      data.senderId
+        .toString() ===
+      receiverId
+        .toString()
+    ) {
+
+      addVoiceMessage(
+        data.audio,
         "received"
       );
     }
@@ -390,7 +384,63 @@ function addMessage(
       ? `${base} bg-blue-600 text-white ml-auto`
       : `${base} bg-gray-200 text-gray-800 mr-auto`;
 
-  div.innerText = text;
+  div.innerText =
+    text;
+
+  messagesContainer.appendChild(
+    div
+  );
+
+  scrollBottom();
+}
+
+// ================= ADD MEDIA =================
+function addMediaMessage(
+  media,
+  mediaType,
+  type
+) {
+
+  const div =
+    document.createElement(
+      "div"
+    );
+
+  const base =
+    "max-w-xs p-2 rounded-xl shadow-sm";
+
+  div.className =
+    type === "sent"
+      ? `${base} bg-blue-600 ml-auto`
+      : `${base} bg-gray-200 mr-auto`;
+
+  const mediaUrl =
+    media.startsWith("http")
+      ? media
+      : `${API}/uploads/${media}`;
+
+  if (
+    mediaType === "image"
+  ) {
+
+    div.innerHTML = `
+      <img
+        src="${mediaUrl}"
+        class="rounded-xl max-w-full"
+      />
+    `;
+
+  } else {
+
+    div.innerHTML = `
+      <video
+        controls
+        class="rounded-xl max-w-full"
+      >
+        <source src="${mediaUrl}">
+      </video>
+    `;
+  }
 
   messagesContainer.appendChild(
     div
@@ -422,66 +472,9 @@ function addVoiceMessage(
     <audio
       controls
       src="${audio}"
-      class="w-full h-10"
+      class="w-full"
     ></audio>
   `;
-
-  messagesContainer.appendChild(
-    div
-  );
-
-  scrollBottom();
-}
-
-// ================= ADD MEDIA =================
-function addMediaMessage(
-  media,
-  mediaType,
-  type
-) {
-
-  const div =
-    document.createElement(
-      "div"
-    );
-
-  const base =
-    "max-w-xs p-2 rounded-xl shadow-md";
-
-  div.className =
-    type === "sent"
-      ? `${base} bg-blue-600 ml-auto`
-      : `${base} bg-gray-200 mr-auto`;
-
-  const mediaUrl =
-    media.startsWith("http")
-      ? media
-      : `${API}/uploads/${media}`;
-
-  // ================= IMAGE =================
-  if (
-    mediaType === "image"
-  ) {
-
-    div.innerHTML = `
-      <img
-        src="${mediaUrl}"
-        class="rounded-lg max-w-full block"
-      />
-    `;
-
-  } else {
-
-    // ================= VIDEO =================
-    div.innerHTML = `
-      <video
-        controls
-        class="rounded-lg max-w-full"
-      >
-        <source src="${mediaUrl}">
-      </video>
-    `;
-  }
 
   messagesContainer.appendChild(
     div
@@ -502,7 +495,7 @@ document
   .getElementById(
     "mediaInput"
   )
-  .addEventListener(
+  ?.addEventListener(
     "change",
     async (e) => {
 
@@ -540,9 +533,11 @@ document
           await fetch(
             `${API}/api/upload`,
             {
+
               method: "POST",
 
               headers: {
+
                 Authorization:
                   `Bearer ${token}`
               },
@@ -576,7 +571,8 @@ let mediaRecorder;
 
 let audioChunks = [];
 
-let isRecording = false;
+let isRecording =
+  false;
 
 // ================= TOGGLE RECORD =================
 async function toggleRecording() {
@@ -584,7 +580,7 @@ async function toggleRecording() {
   if (!receiverId) {
 
     alert(
-      "Select user first"
+      "Select a user first"
     );
 
     return;
@@ -654,10 +650,13 @@ async function toggleRecording() {
 function sendVoiceNote() {
 
   const audioBlob =
-    new Blob(audioChunks, {
-      type:
-        "audio/webm"
-    });
+    new Blob(
+      audioChunks,
+      {
+        type:
+          "audio/webm"
+      }
+    );
 
   const reader =
     new FileReader();
@@ -670,6 +669,7 @@ function sendVoiceNote() {
     socket.emit(
       "sendVoice",
       {
+
         senderId:
           currentUserId,
 
@@ -694,7 +694,8 @@ function sendVoiceNote() {
 // ================= ONLINE USERS =================
 socket.on(
   "onlineUsers",
-  (users) => {
+
+  async (users) => {
 
     console.log(
       "ONLINE USERS:",
@@ -706,36 +707,113 @@ socket.on(
         "onlineUsers"
       );
 
-    div.innerHTML =
-      users
-        .filter(
-          (id) =>
-            id.toString() !==
-            currentUserId
-        )
-        .map(
-          (id) => `
+    if (!div) return;
+
+    div.innerHTML = "";
+
+    for (const id of users) {
+
+      if (
+        id.toString() ===
+        currentUserId
+      ) {
+        continue;
+      }
+
+      let username =
+        "Unknown User";
+
+      let profilePic = "";
+
+      try {
+
+        const res =
+          await fetch(
+            `${API}/api/users/${id}`,
+            {
+
+              headers: {
+
+                Authorization:
+                  `Bearer ${token}`
+              }
+            }
+          );
+
+        const data =
+          await res.json();
+
+        username =
+          data.username ||
+          "User";
+
+        profilePic =
+          data.profilePic || "";
+
+      } catch (err) {
+
+        console.log(
+          "USER FETCH ERROR:",
+          err
+        );
+      }
+
+      div.innerHTML += `
+
         <div
-          onclick="startChat('${id}','User ${id.substring(0,4)}')"
+          onclick="startChat('${id}','${username}')"
+
           class="
             cursor-pointer
             bg-white
             border
             border-green-200
-            px-4
-            py-3
+            p-3
             rounded-2xl
-            text-green-600
-            font-semibold
             hover:bg-green-50
             transition
+            flex
+            items-center
+            gap-3
           "
         >
-          🟢 User ${id.substring(0,8)}
+
+          <div
+            class="
+              w-12
+              h-12
+              rounded-full
+              overflow-hidden
+              bg-slate-200
+              flex
+              items-center
+              justify-center
+            "
+          >
+
+            ${
+              profilePic
+              ? `<img src="${profilePic}" class="w-full h-full object-cover" />`
+              : "👤"
+            }
+
+          </div>
+
+          <div>
+
+            <h3 class="font-bold text-slate-700">
+              ${username}
+            </h3>
+
+            <p class="text-xs text-green-500">
+              🟢 Online
+            </p>
+
+          </div>
+
         </div>
-      `
-        )
-        .join("");
+      `;
+    }
   }
 );
 
@@ -785,7 +863,9 @@ if (startCallBtn) {
           await navigator
             .mediaDevices
             .getUserMedia({
+
               video: true,
+
               audio: true
             });
 

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>User Profile</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-slate-100 min-h-screen">
+
+  <div
+    id="profile"
+    class="
+      max-w-2xl
+      mx-auto
+      mt-10
+      bg-white
+      rounded-3xl
+      shadow-sm
+      border
+      border-slate-200
+      p-8
+    "
+  >
+
+    Loading profile...
+
+  </div>
+
+  <script>
+
+    const API =
+      "https://vryza-connect-backend-production.up.railway.app";
+
+    const token =
+      localStorage.getItem("token");
+
+    const currentUser =
+      JSON.parse(
+        localStorage.getItem("user")
+      );
+
+    const profileUserId =
+      localStorage.getItem(
+        "profileUserId"
+      );
+
+    async function loadProfile() {
+
+      try {
+
+        const res =
+          await fetch(
+            `${API}/api/users/${profileUserId}`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`
+              }
+            }
+          );
+
+        const user =
+          await res.json();
+
+        console.log(user);
+
+        document.getElementById(
+          "profile"
+        ).innerHTML = `
+
+          <div class="flex items-center gap-4">
+
+            <div
+              class="
+                w-20
+                h-20
+                rounded-full
+                bg-blue-600
+                text-white
+                flex
+                items-center
+                justify-center
+                text-2xl
+                font-bold
+              "
+            >
+              ${user.username?.charAt(0) || "U"}
+            </div>
+
+            <div>
+
+              <h1 class="text-3xl font-black">
+                ${user.username}
+              </h1>
+
+              <p class="text-slate-500">
+                ${user.email || ""}
+              </p>
+
+            </div>
+
+          </div>
+
+          <button
+            onclick="followUser()"
+            class="
+              mt-8
+              bg-blue-600
+              hover:bg-blue-700
+              text-white
+              px-6
+              py-3
+              rounded-2xl
+              font-bold
+            "
+          >
+            Follow
+          </button>
+        `;
+      }
+
+      catch (err) {
+
+        console.log(err);
+      }
+    }
+
+    // ================= FOLLOW =================
+    async function followUser() {
+
+      try {
+
+        const res =
+          await fetch(
+            `${API}/api/users/follow/${profileUserId}`,
+            {
+              method: "POST",
+
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+
+                "Content-Type":
+                  "application/json"
+              },
+
+              body: JSON.stringify({
+                currentUserId:
+                  currentUser._id
+              })
+            }
+          );
+
+        const data =
+          await res.json();
+
+        console.log(data);
+
+        alert(
+          "Followed user"
+        );
+
+      } catch (err) {
+
+        console.log(err);
+      }
+    }
+
+    loadProfile();
+
+  </script>
+
+</body>
+</html>

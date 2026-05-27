@@ -64,8 +64,28 @@ const receiverInput =
     "receiverId"
   );
 
+const feedDiv =
+  document.getElementById(
+    "feed"
+  );
+
 // ================= CHAT TARGET =================
-let selectedUserId = null;
+let selectedUserId =
+  null;
+
+// ================= OPEN PROFILE =================
+function openProfile(
+  userId
+) {
+
+  localStorage.setItem(
+    "profileUserId",
+    userId
+  );
+
+  window.location.href =
+    "user.html";
+}
 
 // ================= ONLINE USERS =================
 socket.on(
@@ -73,7 +93,7 @@ socket.on(
   (users) => {
 
     console.log(
-      "ONLINE:",
+      "ONLINE USERS:",
       users
     );
 
@@ -109,31 +129,67 @@ socket.on(
         `;
 
         div.innerHTML = `
-          <div>
-            <p class="font-semibold text-slate-700">
+          <div
+            class="flex-1"
+          >
+            <p
+              class="
+                font-semibold
+                text-slate-700
+              "
+            >
               User ${id.substring(0,6)}
             </p>
 
-            <p class="text-xs text-green-500">
+            <p
+              class="
+                text-xs
+                text-green-500
+              "
+            >
               Online
             </p>
           </div>
 
-          <button
+          <div
             class="
-              bg-blue-600
-              text-white
-              px-3
-              py-1
-              rounded-xl
-              text-xs
+              flex
+              items-center
+              gap-2
             "
           >
-            Chat
-          </button>
+
+            <button
+              class="
+                profileBtn
+                bg-slate-200
+                hover:bg-slate-300
+                px-3
+                py-1
+                rounded-xl
+                text-xs
+              "
+            >
+              Profile
+            </button>
+
+            <button
+              class="
+                bg-blue-600
+                text-white
+                px-3
+                py-1
+                rounded-xl
+                text-xs
+              "
+            >
+              Chat
+            </button>
+
+          </div>
         `;
 
-        // ================= CLICK =================
+        // ================= CHAT =================
         div.addEventListener(
           "click",
           () => {
@@ -151,12 +207,261 @@ socket.on(
           }
         );
 
+        // ================= PROFILE =================
+        div.querySelector(
+          ".profileBtn"
+        )
+        .addEventListener(
+          "click",
+          (e) => {
+
+            e.stopPropagation();
+
+            openProfile(id);
+          }
+        );
+
         onlineUsersDiv.appendChild(
           div
         );
       });
   }
 );
+
+// ================= LOAD POSTS =================
+async function loadPosts() {
+
+  try {
+
+    const res =
+      await fetch(
+        `${API}/api/posts`,
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`
+          }
+        }
+      );
+
+    const posts =
+      await res.json();
+
+    console.log(
+      "POSTS:",
+      posts
+    );
+
+    feedDiv.innerHTML =
+      "";
+
+    posts.reverse().forEach(
+      (post) => {
+
+        const div =
+          document.createElement(
+            "div"
+          );
+
+        div.className = `
+          bg-white
+          rounded-3xl
+          border
+          border-slate-200
+          shadow-sm
+          overflow-hidden
+        `;
+
+        const image =
+          post.image
+            ? `
+            <img
+              src="${API}/uploads/${post.image}"
+              class="
+                w-full
+                max-h-[500px]
+                object-cover
+              "
+            />
+          `
+            : "";
+
+        div.innerHTML = `
+          <div
+            class="
+              p-5
+            "
+          >
+
+            <!-- USER -->
+            <div
+              class="
+                flex
+                items-center
+                justify-between
+                mb-4
+              "
+            >
+
+              <div
+                onclick="openProfile('${post.userId}')"
+                class="
+                  flex
+                  items-center
+                  gap-3
+                  cursor-pointer
+                "
+              >
+
+                <div
+                  class="
+                    w-12
+                    h-12
+                    rounded-full
+                    bg-blue-600
+                    text-white
+                    flex
+                    items-center
+                    justify-center
+                    font-bold
+                  "
+                >
+                  ${
+                    post.username
+                      ?.charAt(0)
+                      ?.toUpperCase() ||
+                    "U"
+                  }
+                </div>
+
+                <div>
+
+                  <p
+                    class="
+                      font-bold
+                      text-slate-800
+                    "
+                  >
+                    ${
+                      post.username ||
+                      "User"
+                    }
+                  </p>
+
+                  <p
+                    class="
+                      text-xs
+                      text-slate-400
+                    "
+                  >
+                    Click to view profile
+                  </p>
+
+                </div>
+
+              </div>
+
+              <!-- FOLLOW -->
+              <button
+                onclick="followUser('${post.userId}')"
+                class="
+                  bg-blue-600
+                  hover:bg-blue-700
+                  text-white
+                  px-4
+                  py-2
+                  rounded-xl
+                  text-sm
+                  font-semibold
+                "
+              >
+                Follow
+              </button>
+
+            </div>
+
+            <!-- CAPTION -->
+            <p
+              class="
+                text-slate-700
+                mb-4
+                whitespace-pre-wrap
+              "
+            >
+              ${
+                post.caption ||
+                ""
+              }
+            </p>
+
+          </div>
+
+          ${image}
+        `;
+
+        feedDiv.appendChild(
+          div
+        );
+      });
+
+  } catch (err) {
+
+    console.log(
+      "LOAD POSTS ERROR:",
+      err
+    );
+  }
+}
+
+loadPosts();
+
+// ================= FOLLOW USER =================
+async function followUser(
+  targetUserId
+) {
+
+  try {
+
+    const res =
+      await fetch(
+        `${API}/api/users/follow/${targetUserId}`,
+        {
+          method: "POST",
+
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            currentUserId
+          })
+        }
+      );
+
+    const data =
+      await res.json();
+
+    console.log(
+      "FOLLOW:",
+      data
+    );
+
+    alert(
+      "User followed"
+    );
+
+  } catch (err) {
+
+    console.log(
+      "FOLLOW ERROR:",
+      err
+    );
+  }
+}
 
 // ================= LOAD MESSAGES =================
 async function loadMessages() {
@@ -183,29 +488,27 @@ async function loadMessages() {
     const messages =
       await res.json();
 
-    console.log(
-      "MESSAGES:",
-      messages
-    );
-
     messagesDiv.innerHTML =
       "";
 
-    messages.forEach((msg) => {
+    messages.forEach(
+      (msg) => {
 
-      const sender =
-        msg.senderId?.toString();
+        const sender =
+          msg.senderId?.toString();
 
-      const type =
-        sender === currentUserId
-          ? "sent"
-          : "received";
+        const type =
+          sender ===
+          currentUserId
+            ? "sent"
+            : "received";
 
-      addMessage(
-        msg.text,
-        type
-      );
-    });
+        addMessage(
+          msg.text,
+          type
+        );
+      }
+    );
 
     scrollBottom();
 
@@ -252,18 +555,11 @@ function sendMessage() {
     text
   };
 
-  console.log(
-    "SEND:",
-    data
-  );
-
-  // ================= SOCKET =================
   socket.emit(
     "sendMessage",
     data
   );
 
-  // ================= UI =================
   addMessage(
     text,
     "sent"
@@ -276,11 +572,6 @@ function sendMessage() {
 socket.on(
   "receiveMessage",
   (data) => {
-
-    console.log(
-      "PRIVATE MESSAGE:",
-      data
-    );
 
     if (
       data.senderId
@@ -333,7 +624,8 @@ function addMessage(
         text-sm
       `;
 
-  div.innerText = text;
+  div.innerText =
+    text;
 
   messagesDiv.appendChild(
     div
@@ -427,7 +719,13 @@ function addGroupMessage(
       `;
 
   div.innerHTML = `
-    <div class="text-xs font-bold mb-1">
+    <div
+      class="
+        text-xs
+        font-bold
+        mb-1
+      "
+    >
       ${data.username}
     </div>
 
@@ -443,36 +741,6 @@ function addGroupMessage(
   groupMessagesDiv.scrollTop =
     groupMessagesDiv.scrollHeight;
 }
-
-// ================= ENTER SEND =================
-document
-  .getElementById("message")
-  .addEventListener(
-    "keypress",
-    (e) => {
-
-      if (e.key === "Enter") {
-
-        sendMessage();
-      }
-    }
-  );
-
-// ================= GROUP ENTER =================
-document
-  .getElementById(
-    "groupMessage"
-  )
-  .addEventListener(
-    "keypress",
-    (e) => {
-
-      if (e.key === "Enter") {
-
-        sendGroupMessage();
-      }
-    }
-  );
 
 // ================= CREATE POST =================
 async function createPost() {
@@ -558,6 +826,42 @@ async function createPost() {
     );
   }
 }
+
+// ================= ENTER SEND =================
+document
+  .getElementById(
+    "message"
+  )
+  .addEventListener(
+    "keypress",
+    (e) => {
+
+      if (
+        e.key === "Enter"
+      ) {
+
+        sendMessage();
+      }
+    }
+  );
+
+// ================= GROUP ENTER =================
+document
+  .getElementById(
+    "groupMessage"
+  )
+  .addEventListener(
+    "keypress",
+    (e) => {
+
+      if (
+        e.key === "Enter"
+      ) {
+
+        sendGroupMessage();
+      }
+    }
+  );
 
 // ================= SCROLL =================
 function scrollBottom() {
