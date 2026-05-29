@@ -1,282 +1,168 @@
-// ================= API =================
-const API_URL =
-  "https://vryza-connect-backend-production.up.railway.app";
+// ================= API CONFIGURATION =================
+const API_URL = "https://vryza-connect-backend-production.up.railway.app";
 
-// ================= TOKEN =================
-const token =
-  localStorage.getItem("token");
+// ================= SECURITY HANDSHAKE TOKEN =================
+const token = localStorage.getItem("token");
 
-// ================= CHECK LOGIN =================
+// ================= SECURE ROUTE GUARD CHECK =================
 if (!token) {
-
   alert("Please login first");
-
-  window.location.href =
-    "auth.html";
+  window.location.href = "auth.html";
 }
 
-// ================= USERS CONTAINER =================
-const container =
-  document.getElementById("users");
+// ================= UI DOM CONTAINER REFERENCE =================
+const container = document.getElementById("users");
 
-// ================= FETCH USERS =================
+// ================= FETCH ALL USERS (SYNCED WITH BACKEND) =================
 async function fetchUsers() {
-
   try {
-
-    // ================= LOADING =================
+    // 1. Render Loading State
     container.innerHTML = `
       <div class="text-center text-gray-500 py-10">
-        Loading users...
+        <span class="animate-pulse">Loading users...</span>
       </div>
     `;
 
-    // ================= REQUEST =================
-    const res = await fetch(
-      `${API_URL}/admin/users`,
-      {
-
-        method: "GET",
-
-        headers: {
-
-          "Content-Type":
-            "application/json",
-
-          Authorization:
-            `Bearer ${token}`
-        }
+    // 2. Dispatch Fetch Request
+    const res = await fetch(`${API_URL}/admin/users`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
       }
-    );
+    });
 
-    // ================= RESPONSE =================
-    const users =
-      await res.json();
+    const data = await res.json();
+    console.log("📥 USERS NETWORK RESPONSE:", data);
 
-    console.log(
-      "USERS RESPONSE:",
-      users
-    );
-
-    // ================= ERROR =================
-    if (!res.ok) {
-
+    // 3. Handle Network and Backend Validation Failures
+    if (!res.ok || data.success === false) {
       container.innerHTML = `
-        <div class="text-center text-red-500 py-10">
-          ${users.message || "Failed to load users"}
+        <div class="text-center text-red-500 py-10 font-medium">
+          ⚠️ ${data.message || "Failed to load users"}
         </div>
       `;
-
       return;
     }
 
-    // ================= NO USERS =================
-    if (
-      !users ||
-      users.length === 0
-    ) {
+    // Extract the users array from the backend payload object safely
+    const usersList = data.users || [];
 
+    // 4. Handle Empty Database Conditions Safely
+    if (usersList.length === 0) {
       container.innerHTML = `
-        <div class="text-center text-gray-500 py-10">
-          No users found
+        <div class="text-center text-gray-400 py-10">
+          No users found in system directories.
         </div>
       `;
-
       return;
     }
 
-    // ================= CLEAR =================
+    // 5. Clear Out Existing HTML Content Nodes Before Injecting
     container.innerHTML = "";
 
-    // ================= LOOP USERS =================
-    users.forEach((user) => {
+    // 6. Build and Append Dynamic User Profiles to the Feed Container
+    usersList.forEach((user) => {
+      const card = document.createElement("div");
+      card.className = "bg-white p-5 rounded-2xl shadow border border-gray-100 mb-4 transition hover:shadow-md";
 
-      const div =
-        document.createElement("div");
+      // Dynamically style the user badge based on their system security roles
+      const isAdminRole = user.role === "admin";
+      const badgeStyles = isAdminRole 
+        ? "bg-purple-100 text-purple-700 font-bold" 
+        : "bg-blue-100 text-blue-600 font-semibold";
 
-      div.className =
-        "bg-white p-5 rounded-2xl shadow border border-gray-100 mb-4";
-
-      div.innerHTML = `
-
+      card.innerHTML = `
         <div class="flex items-center justify-between mb-4">
-
           <div>
-
             <h3 class="font-bold text-lg text-gray-800">
-              ${user.username || "Unknown User"}
+              ${user.username || "Anonymous Account"}
             </h3>
-
             <p class="text-sm text-gray-500">
-              ${user.email || "No Email"}
+              ${user.email || "No Email Provided"}
             </p>
-
           </div>
-
-          <div class="
-            text-xs
-            px-3
-            py-1
-            rounded-full
-            bg-blue-100
-            text-blue-600
-            font-semibold
-          ">
-            USER
+          <div class="text-xs px-3 py-1 rounded-full uppercase tracking-wider ${badgeStyles}">
+            ${user.role || "user"}
           </div>
-
         </div>
 
         <div class="flex items-center gap-2">
-
           <input
             type="number"
-            placeholder="Ban minutes"
+            placeholder="Ban duration (minutes)"
             id="ban-${user._id}"
-
-            class="
-              flex-1
-              border
-              border-gray-300
-              rounded-xl
-              px-4
-              py-3
-              outline-none
-              focus:ring-2
-              focus:ring-red-200
-            "
+            min="1"
+            class="flex-1 border border-gray-300 rounded-xl px-4 py-3 outline-none transition focus:ring-2 focus:ring-red-200 focus:border-red-400"
           />
-
           <button
             onclick="banUser('${user._id}')"
-
-            class="
-              bg-red-500
-              hover:bg-red-600
-              text-white
-              px-5
-              py-3
-              rounded-xl
-              font-semibold
-              transition
-            "
+            class="bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-xl font-semibold tracking-wide transition transform active:scale-95"
           >
-            Ban
+            Ban User
           </button>
-
         </div>
       `;
 
-      container.appendChild(div);
+      container.appendChild(card);
     });
 
   } catch (err) {
-
-    console.log(
-      "FETCH USERS ERROR:",
-      err
-    );
-
+    console.error("❌ CRITICAL FRONTEND FETCH ERROR:", err);
     container.innerHTML = `
-      <div class="text-center text-red-500 py-10">
-        Server error while loading users
+      <div class="text-center text-red-500 py-10 font-semibold">
+        Server connection lost. Please try refreshing.
       </div>
     `;
   }
 }
 
-// ================= BAN USER =================
+// ================= DISPATCH BAN ACTION (SYNCED WITH BACKEND) =================
 async function banUser(userId) {
-
   try {
+    const inputElement = document.getElementById(`ban-${userId}`);
+    if (!inputElement) return;
 
-    const input =
-      document.getElementById(
-        `ban-${userId}`
-      );
+    const rawMinutes = inputElement.value.trim();
 
-    const minutes =
-      input.value.trim();
-
-    // ================= VALIDATION =================
-    if (
-      !minutes ||
-      Number(minutes) <= 0
-    ) {
-
-      alert(
-        "Enter valid ban minutes"
-      );
-
+    // 1. Client-Side Input Validation Guard
+    if (!rawMinutes || Number(rawMinutes) <= 0) {
+      alert("Please specify a valid number of minutes greater than 0.");
       return;
     }
 
-    // ================= REQUEST =================
-    const res = await fetch(
-      `${API_URL}/admin/ban-user`,
-      {
+    // 2. Dispatch Ban Action to the Refactored Admin Endpoint Route
+    const res = await fetch(`${API_URL}/admin/ban-user`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        userId: userId,
+        durationMinutes: Number(rawMinutes)
+      })
+    });
 
-        method: "POST",
+    const data = await res.json();
+    console.log("📤 BAN NETWORK DISPATCH RESPONSE:", data);
 
-        headers: {
-
-          "Content-Type":
-            "application/json",
-
-          Authorization:
-            `Bearer ${token}`
-        },
-
-        body: JSON.stringify({
-
-          userId:
-            userId,
-
-          durationMinutes:
-            Number(minutes)
-        })
-      }
-    );
-
-    // ================= RESPONSE =================
-    const data =
-      await res.json();
-
-    console.log(
-      "BAN RESPONSE:",
-      data
-    );
-
-    // ================= SUCCESS =================
-    if (res.ok) {
-
-      alert(
-        data.message ||
-        "User banned successfully"
-      );
-
-      input.value = "";
-
+    // 3. Handle Backend Response States Accurately
+    if (res.ok && data.success !== false) {
+      alert(data.message || "User was successfully locked out.");
+      inputElement.value = ""; // Flush the input box on successful operation
     } else {
-
-      alert(
-        data.message ||
-        "Failed to ban user"
-      );
+      alert(data.message || "Administrative ban execution failed.");
     }
 
   } catch (err) {
-
-    console.log(
-      "BAN USER ERROR:",
-      err
-    );
-
-    alert(
-      "Server error"
-    );
+    console.error("❌ CRITICAL FRONTEND BAN ACTION TRANSACTION ERROR:", err);
+    alert("Connection error. Could not contact administration cluster.");
   }
 }
 
-// ================= START =================
+// Make sure functions are mounted globally on window so your inline string templates can execute them
+window.banUser = banUser;
+
+// ================= INITIAL RUN ON LOAD =================
 fetchUsers();

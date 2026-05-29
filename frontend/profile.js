@@ -1,736 +1,323 @@
-// ================= API =================
-const API =
-  "https://vryza-connect-backend-production.up.railway.app";
+// ================= MASTER SERVER PATHWAY LOCATORS =================
+const API = "https://vryza-connect-backend-production.up.railway.app";
 
-// ================= TOKEN =================
-const token =
-  localStorage.getItem("token");
-
-// ================= USER =================
-const currentUser =
-  JSON.parse(
-    localStorage.getItem("user")
-  );
-
-// ================= CHECK LOGIN =================
-if (!token || !currentUser) {
-
-  alert("Please login first");
-
-  window.location.href =
-    "auth.html";
-}
-
-// ================= CURRENT PROFILE =================
 let currentProfileId = null;
 
-// ================= AUTH HEADER =================
-const authHeaders = {
-
-  Authorization:
-    `Bearer ${token}`
-};
-
-// ================= VIEW PROFILE =================
+// ================= FETCH AND VIEW PROFILE =================
 async function viewProfile(userId) {
-
-  try {
-
-    currentProfileId = userId;
-
-    // ================= POSTS CONTAINER =================
-    const postsContainer =
-      document.getElementById(
-        "postsContainer"
-      );
-
-    // ================= LOADING =================
-    if (postsContainer) {
-
-      postsContainer.innerHTML = `
-        <div class="bg-white rounded-3xl p-10 text-center text-slate-400 border border-slate-200">
-          Loading profile...
-        </div>
-      `;
-    }
-
-    // ================= FETCH PROFILE =================
-    const res = await fetch(
-      `${API}/api/user/${userId}`,
-      {
-
-        method: "GET",
-
-        headers: authHeaders
-      }
-    );
-
-    const data =
-      await res.json();
-
-    console.log(
-      "PROFILE RESPONSE:",
-      data
-    );
-
-    // ================= ERROR =================
-    if (!res.ok) {
-
-      alert(
-        data.message ||
-        "Failed to load profile"
-      );
-
-      return;
-    }
-
-    // ================= USER DATA =================
-    const user = data.user;
-
-    // ================= PROFILE IMAGE =================
-    const avatar =
-      document.getElementById(
-        "avatar"
-      );
-
-    if (avatar) {
-
-      avatar.src =
-        user.profilePic
-
-          ? `${API}/uploads/${user.profilePic}`
-
-          : "images/default-avatar.png";
-    }
-
-    // ================= COVER IMAGE =================
-    const coverPreview =
-      document.getElementById(
-        "coverPreview"
-      );
-
-    if (coverPreview) {
-
-      coverPreview.src =
-        user.coverImage
-
-          ? `${API}/uploads/${user.coverImage}`
-
-          : "images/default-cover.jpg";
-    }
-
-    // ================= USERNAME =================
-    const username =
-      document.getElementById(
-        "username"
-      );
-
-    if (username) {
-
-      username.innerText =
-        user.username ||
-        "Unknown User";
-    }
-
-    // ================= BIO =================
-    const bioText =
-      document.getElementById(
-        "bioText"
-      );
-
-    if (bioText) {
-
-      bioText.innerText =
-        user.bio ||
-        "No bio yet.";
-    }
-
-    // ================= FOLLOWERS =================
-    const followersCount =
-      document.getElementById(
-        "followersCount"
-      );
-
-    if (followersCount) {
-
-      followersCount.innerText =
-        user.followers?.length || 0;
-    }
-
-    // ================= FOLLOWING =================
-    const followingCount =
-      document.getElementById(
-        "followingCount"
-      );
-
-    if (followingCount) {
-
-      followingCount.innerText =
-        user.following?.length || 0;
-    }
-
-    // ================= PROFILE DETAILS =================
-    const profile =
-      document.getElementById(
-        "profile"
-      );
-
-    if (profile) {
-
-      profile.innerHTML = `
-
-        <div class="bg-slate-50 rounded-2xl p-4">
-          <p class="text-slate-400 text-xs uppercase font-bold mb-1">
-            Location
-          </p>
-
-          <p class="text-slate-700">
-            ${user.location || "Unknown"}
-          </p>
-        </div>
-
-        <div class="bg-slate-50 rounded-2xl p-4">
-          <p class="text-slate-400 text-xs uppercase font-bold mb-1">
-            Gender
-          </p>
-
-          <p class="text-slate-700">
-            ${user.gender || "Not specified"}
-          </p>
-        </div>
-
-        <div class="bg-slate-50 rounded-2xl p-4">
-          <p class="text-slate-400 text-xs uppercase font-bold mb-1">
-            Age
-          </p>
-
-          <p class="text-slate-700">
-            ${user.age || "N/A"}
-          </p>
-        </div>
-
-        <div class="bg-slate-50 rounded-2xl p-4">
-          <p class="text-slate-400 text-xs uppercase font-bold mb-1">
-            About
-          </p>
-
-          <p class="text-slate-700">
-            ${user.about || "No about info yet."}
-          </p>
-        </div>
-      `;
-    }
-
-    // ================= EDIT INPUTS =================
-    const bio =
-      document.getElementById(
-        "bio"
-      );
-
-    const age =
-      document.getElementById(
-        "age"
-      );
-
-    const location =
-      document.getElementById(
-        "location"
-      );
-
-    const about =
-      document.getElementById(
-        "about"
-      );
-
-    const gender =
-      document.getElementById(
-        "gender"
-      );
-
-    if (bio) {
-      bio.value =
-        user.bio || "";
-    }
-
-    if (age) {
-      age.value =
-        user.age || "";
-    }
-
-    if (location) {
-      location.value =
-        user.location || "";
-    }
-
-    if (about) {
-      about.value =
-        user.about || "";
-    }
-
-    if (gender) {
-      gender.value =
-        user.gender || "";
-    }
-
-    // ================= POSTS =================
-    renderPosts(
-      data.posts || []
-    );
-
-  } catch (err) {
-
-    console.log(
-      "PROFILE ERROR:",
-      err
-    );
-
-    alert(
-      "Error loading profile"
-    );
-  }
-}
-
-// ================= RENDER POSTS =================
-function renderPosts(posts) {
-
-  const container =
-    document.getElementById(
-      "postsContainer"
-    );
-
-  if (!container) return;
-
-  // ================= NO POSTS =================
-  if (
-    !posts ||
-    posts.length === 0
-  ) {
-
-    container.innerHTML = `
-      <div class="bg-white rounded-3xl p-10 border border-slate-200 text-center text-slate-400">
-        No posts yet
-      </div>
-    `;
-
+  if (!userId || userId === "undefined" || userId === "null") {
+    console.warn("⚠️ VIEW PROFILE EXECUTED WITHOUT VALID PEER TARGET TARGET");
     return;
   }
 
-  // ================= POSTS =================
-  container.innerHTML =
-    posts.map((post) => `
-
-      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mb-6">
-
-        ${
-          post.image
-            ? `
-            <img
-              src="${API}/uploads/${post.image}"
-              class="w-full max-h-[500px] object-cover"
-            />
-          `
-            : ""
-        }
-
-        <div class="p-5">
-
-          <!-- USER -->
-          <div class="flex items-center gap-3 mb-4">
-
-            <img
-              src="${
-                post.userId?.profilePic
-                  ? `${API}/uploads/${post.userId.profilePic}`
-                  : "images/default-avatar.png"
-              }"
-
-              class="w-10 h-10 rounded-full object-cover"
-            />
-
-            <div>
-
-              <p class="font-bold text-slate-800">
-                ${
-                  post.userId?.username ||
-                  "Unknown"
-                }
-              </p>
-
-              <p class="text-xs text-slate-400">
-                ${new Date(
-                  post.createdAt
-                ).toLocaleDateString()}
-              </p>
-
-            </div>
-
-          </div>
-
-          <!-- CAPTION -->
-          <p class="text-slate-700 mb-4">
-            ${post.caption || ""}
-          </p>
-
-          <!-- LIKE -->
-          <div class="flex items-center gap-2 mb-4">
-
-            <button
-              onclick="likePost('${post._id}')"
-
-              class="
-                bg-blue-50
-                hover:bg-blue-100
-                text-blue-600
-                px-4
-                py-2
-                rounded-xl
-                text-sm
-                font-semibold
-                transition
-              "
-            >
-              ❤️ ${
-                post.likes?.length || 0
-              }
-            </button>
-
-          </div>
-
-          <!-- COMMENTS -->
-          <div class="space-y-2 mb-4">
-
-            ${
-              (post.comments || [])
-
-                .map(
-                  (comment) => `
-
-                  <div class="bg-slate-50 rounded-xl px-3 py-2 text-sm">
-
-                    <span class="font-bold text-slate-700">
-
-                      ${
-                        comment.userId
-                          ?.username || "User"
-                      }:
-
-                    </span>
-
-                    ${comment.text}
-
-                  </div>
-                `
-                )
-
-                .join("")
-            }
-
-          </div>
-
-          <!-- COMMENT INPUT -->
-          <div class="flex gap-2">
-
-            <input
-              id="comment-${post._id}"
-
-              placeholder="Write a comment..."
-
-              class="
-                flex-1
-                bg-slate-50
-                rounded-xl
-                px-4
-                py-2
-                text-sm
-                outline-none
-              "
-            />
-
-            <button
-              onclick="commentPost('${post._id}')"
-
-              class="
-                bg-blue-600
-                hover:bg-blue-700
-                text-white
-                px-4
-                rounded-xl
-                text-sm
-                font-semibold
-                transition
-              "
-            >
-              Send
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    `).join("");
-}
-
-// ================= UPDATE PROFILE =================
-async function updateProfile() {
-
   try {
+    currentProfileId = userId;
+    const token = localStorage.getItem("token");
 
-    const formData =
-      new FormData();
-
-    // ================= FILES =================
-    const profilePic =
-      document.getElementById(
-        "profilePic"
-      )?.files[0];
-
-    const coverImage =
-      document.getElementById(
-        "coverImage"
-      )?.files[0];
-
-    if (profilePic) {
-
-      formData.append(
-        "profilePic",
-        profilePic
-      );
-    }
-
-    if (coverImage) {
-
-      formData.append(
-        "coverImage",
-        coverImage
-      );
-    }
-
-    // ================= TEXT =================
-    formData.append(
-      "bio",
-      document.getElementById(
-        "bio"
-      )?.value || ""
-    );
-
-    formData.append(
-      "age",
-      document.getElementById(
-        "age"
-      )?.value || ""
-    );
-
-    formData.append(
-      "location",
-      document.getElementById(
-        "location"
-      )?.value || ""
-    );
-
-    formData.append(
-      "about",
-      document.getElementById(
-        "about"
-      )?.value || ""
-    );
-
-    formData.append(
-      "gender",
-      document.getElementById(
-        "gender"
-      )?.value || ""
-    );
-
-    // ================= REQUEST =================
-    const res = await fetch(
-      `${API}/api/user/profile`,
-      {
-
-        method: "PUT",
-
-        headers: authHeaders,
-
-        body: formData
+    // Connects safely with endpoint mapping architectures
+    const res = await fetch(`${API}/api/user/${userId}`, {
+      method: "GET",
+      headers: {
+        "Authorization": token ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : ""
       }
-    );
+    });
 
-    const data =
-      await res.json();
+    const data = await res.json();
 
-    console.log(
-      "UPDATE PROFILE:",
-      data
-    );
-
-    // ================= ERROR =================
     if (!res.ok) {
-
-      alert(
-        data.message ||
-        "Update failed"
-      );
-
+      alert(data.message || "Failed to load target profile information cluster.");
       return;
     }
 
-    // ================= SUCCESS =================
-    alert(
-      "✅ Profile updated"
-    );
+    // Unpack data envelopes safely
+    const user = data.user || data;
+    const associatedPosts = data.posts || [];
 
-    // ================= REFRESH =================
-    viewProfile(
-      currentProfileId
-    );
+    // ================= IMAGES RE-INDEXING PATHWAYS =================
+    const avatarEl = document.getElementById("avatar");
+    if (avatarEl) {
+      avatarEl.src = user.profilePic
+        ? (user.profilePic.startsWith("http") ? user.profilePic : `${API}/uploads/${user.profilePic}`)
+        : "images/default-avatar.png";
+    }
+
+    const coverEl = document.getElementById("coverPreview");
+    if (coverEl && user.coverImage) {
+      coverEl.src = user.coverImage.startsWith("http") 
+        ? user.coverImage 
+        : `${API}/uploads/${user.coverImage}`;
+    }
+
+    // ================= STRUCTURAL TEXT RENDERING =================
+    const usernameEl = document.getElementById("username");
+    if (usernameEl) usernameEl.innerText = user.username || "Unknown User";
+
+    const bioTextEl = document.getElementById("bioText");
+    if (bioTextEl) bioTextEl.innerText = user.bio || "No bio configured yet.";
+
+    const followersEl = document.getElementById("followersCount");
+    if (followersEl) followersEl.innerText = user.followers?.length || 0;
+
+    const followingEl = document.getElementById("followingCount");
+    if (followingEl) followingEl.innerText = user.following?.length || 0;
+
+    // ================= STATIC DETAILS CARD OVERLAY =================
+    const profileContainer = document.getElementById("profile");
+    if (profileContainer) {
+      profileContainer.innerHTML = `
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner">
+          <p class="text-slate-400 text-xs uppercase font-black tracking-wider mb-1">Location</p>
+          <p class="text-slate-700 font-semibold text-sm">${user.location || "Unknown"}</p>
+        </div>
+
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner">
+          <p class="text-slate-400 text-xs uppercase font-black tracking-wider mb-1">Gender</p>
+          <p class="text-slate-700 font-semibold text-sm">${user.gender || "Not specified"}</p>
+        </div>
+
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner">
+          <p class="text-slate-400 text-xs uppercase font-black tracking-wider mb-1">Age</p>
+          <p class="text-slate-700 font-semibold text-sm">${user.age || "N/A"}</p>
+        </div>
+
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner">
+          <p class="text-slate-400 text-xs uppercase font-black tracking-wider mb-1">About</p>
+          <p class="text-slate-700 text-sm leading-relaxed">${user.about || "No informational description provided."}</p>
+        </div>
+      `;
+    }
+
+    // ================= UPDATE VALUE ATTRIBUTES ON INPUT FORMS SAFELY =================
+    const bioInput = document.getElementById("bio");
+    if (bioInput) bioInput.value = user.bio || "";
+
+    const ageInput = document.getElementById("age");
+    if (ageInput) ageInput.value = user.age || "";
+
+    const locationInput = document.getElementById("location");
+    if (locationInput) locationInput.value = user.location || "";
+
+    const aboutInput = document.getElementById("about");
+    if (aboutInput) aboutInput.value = user.about || "";
+
+    const genderInput = document.getElementById("gender");
+    if (genderInput) genderInput.value = user.gender || "";
+
+    // ================= DISPLAY USER POSTS COLLECTION =================
+    renderPosts(associatedPosts);
 
   } catch (err) {
-
-    console.log(
-      "UPDATE PROFILE ERROR:",
-      err
-    );
-
-    alert(
-      "Profile update failed"
-    );
+    console.error("❌ PROFILE EXTRACTION FAULT:", err);
+    alert("Critical transit error extracting targeted user profile.");
   }
 }
 
-// ================= COMMENT POST =================
+// ================= RENDER INTERACTION FEED LAYOUT =================
+function renderPosts(posts) {
+  const container = document.getElementById("postsContainer");
+  if (!container) return;
+
+  if (!posts || !posts.length) {
+    container.innerHTML = `
+      <div class="bg-white rounded-3xl p-10 border border-slate-200 text-center text-slate-400 italic text-sm">
+        No active timeline entries broadcasted by this account yet.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = posts.map(post => {
+    const postAuthor = post.userId || {};
+    const hasLiked = post.likes?.includes(String(JSON.parse(localStorage.getItem("user"))?._id || JSON.parse(localStorage.getItem("user"))?.id));
+
+    return `
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden my-4">
+        ${post.image ? `
+          <div class="bg-slate-50 border-b border-slate-100">
+            <img src="${API}/uploads/${post.image}" class="w-full max-h-[500px] object-cover block" loading="lazy">
+          </div>
+        ` : ""}
+
+        <div class="p-5">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
+              ${postAuthor.profilePic 
+                ? `<img src="${postAuthor.profilePic.startsWith("http") ? postAuthor.profilePic : `${API}/uploads/${postAuthor.profilePic}`}" class="w-full h-full object-cover"/>`
+                : `<span class="font-bold text-slate-500">${(postAuthor.username || "U").charAt(0).toUpperCase()}</span>`
+              }
+            </div>
+
+            <div>
+              <p class="font-bold text-slate-800 text-sm">${postAuthor.username || "Anonymous User"}</p>
+              <p class="text-[11px] text-slate-400">${post.createdAt ? new Date(post.createdAt).toLocaleDateString() : "Recent"}</p>
+            </div>
+          </div>
+
+          <p class="text-slate-700 text-sm leading-relaxed mb-4">${post.caption || ""}</p>
+
+          <div class="flex items-center gap-2 mb-4 border-t border-b border-slate-50 py-2">
+            <button onclick="likePost('${post._id || post.id}')" 
+              class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200
+              ${hasLiked ? "bg-pink-50 text-pink-600 hover:bg-pink-100" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}">
+              ❤️ <span>${post.likes?.length || 0}</span>
+            </button>
+          </div>
+
+          <div class="space-y-2 mb-4 max-h-48 overflow-y-auto pr-1">
+            ${(post.comments || []).map(comment => {
+              const commentAuthor = comment.userId || {};
+              return `
+                <div class="bg-slate-50 rounded-xl px-3 py-2 text-xs text-slate-600 border border-slate-100/50">
+                  <span class="font-bold text-slate-800">${commentAuthor.username || "User"}:</span>
+                  <span class="ml-1">${comment.text || comment.message || ""}</span>
+                </div>
+              `;
+            }).join("")}
+          </div>
+
+          <div class="flex gap-2 border border-slate-200/80 p-1 rounded-xl bg-slate-50/30 focus-within:bg-white focus-within:border-blue-400 transition-all shadow-sm">
+            <input id="comment-${post._id || post.id}" placeholder="Write a comment..." 
+              class="flex-1 bg-transparent px-3 py-1.5 text-xs outline-none text-slate-700">
+            <button onclick="commentPost('${post._id || post.id}')" 
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm transition">
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ================= BROADCAST RECOMPILED DATA MANIFEST =================
+async function updateProfile() {
+  try {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+
+    const profilePicFile = document.getElementById("profilePic")?.files?.[0];
+    const coverImageFile = document.getElementById("coverImage")?.files?.[0];
+
+    if (profilePicFile) formData.append("profilePic", profilePicFile);
+    if (coverImageFile) formData.append("coverImage", coverImageFile);
+
+    // Capture standard form input fields safely
+    const bioVal = document.getElementById("bio")?.value || "";
+    const ageVal = document.getElementById("age")?.value || "";
+    const locVal = document.getElementById("location")?.value || "";
+    const abtVal = document.getElementById("about")?.value || "";
+    const genVal = document.getElementById("gender")?.value || "";
+
+    formData.append("bio", bioVal);
+    formData.append("age", ageVal);
+    formData.append("location", locVal);
+    formData.append("about", abtVal);
+    formData.append("gender", genVal);
+
+    const res = await fetch(`${API}/api/user/profile`, {
+      method: "PUT",
+      headers: {
+        "Authorization": token ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : ""
+      },
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Transmission updating routines rejected by database firewall.");
+      return;
+    }
+
+    alert("✅ Profile updated successfully!");
+    viewProfile(currentProfileId);
+
+  } catch (err) {
+    console.error("❌ FORM TRANSMISSION STRUCTURING FAULT:", err);
+    alert("Profile storage parsing operation encountered an exception error.");
+  }
+}
+
+// ================= ENGAGE COMMENT SUBMISSION LOOP =================
 async function commentPost(postId) {
+  if (!postId) return;
 
   try {
-
-    const input =
-      document.getElementById(
-        `comment-${postId}`
-      );
-
-    const text =
-      input.value.trim();
+    const token = localStorage.getItem("token");
+    const input = document.getElementById(`comment-${postId}`);
+    const text = input?.value.trim();
 
     if (!text) return;
 
-    // ================= REQUEST =================
-    const res = await fetch(
-      `${API}/api/posts/${postId}/comment`,
-      {
+    // Connect with backend comment mapping routes
+    const res = await fetch(`${API}/api/posts/${postId}/comment`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : ""
+      },
+      body: JSON.stringify({ text: text })
+    });
 
-        method: "POST",
-
-        headers: {
-
-          "Content-Type":
-            "application/json",
-
-          Authorization:
-            `Bearer ${token}`
-        },
-
-        body: JSON.stringify({
-          text
-        })
-      }
-    );
-
-    // ================= ERROR =================
     if (!res.ok) {
-
-      alert(
-        "Comment failed"
-      );
-
+      alert("Comment synchronization failed.");
       return;
     }
 
-    input.value = "";
-
-    // ================= REFRESH =================
-    viewProfile(
-      currentProfileId
-    );
+    if (input) input.value = "";
+    viewProfile(currentProfileId);
 
   } catch (err) {
-
-    console.log(
-      "COMMENT ERROR:",
-      err
-    );
-
-    alert(
-      "Error posting comment"
-    );
+    console.error("❌ LEAVE COMMENT PACKET DISPATCH FAILURE:", err);
+    alert("Comment pipeline experienced a route interception error.");
   }
 }
 
-// ================= LIKE POST =================
+// ================= TOGGLE METRIC LIKE COUNT STATIONS =================
 async function likePost(postId) {
+  if (!postId) return;
 
   try {
-
-    await fetch(
-      `${API}/api/posts/${postId}/like`,
-      {
-
-        method: "PUT",
-
-        headers: {
-
-          Authorization:
-            `Bearer ${token}`
-        }
+    const token = localStorage.getItem("token");
+    
+    // Connects seamlessly to backend payload specifications
+    await fetch(`${API}/api/posts/${postId}/like`, {
+      method: "PUT",
+      headers: {
+        "Authorization": token ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : ""
       }
-    );
+    });
 
-    // ================= REFRESH =================
-    viewProfile(
-      currentProfileId
-    );
+    viewProfile(currentProfileId);
 
   } catch (err) {
-
-    console.log(
-      "LIKE ERROR:",
-      err
-    );
+    console.error("❌ LIKE CONDUIT PACKET TRANSMISSION ERROR:", err);
   }
 }
 
-// ================= MESSAGE USER =================
+// ================= EXTRUDED NAVIGATION CHANNELS =================
 function messageUser() {
-
-  if (!currentProfileId) {
-
-    alert(
-      "No user selected"
-    );
-
-    return;
-  }
-
-  // ================= SAVE CHAT USER =================
-  localStorage.setItem(
-    "chatUserId",
-    currentProfileId
-  );
-
-  localStorage.setItem(
-    "chatUsername",
-
-    document.getElementById(
-      "username"
-    ).innerText
-  );
-
-  // ================= REDIRECT =================
-  window.location.href =
-    "chat.html";
+  window.location.href = "chat.html";
 }
 
-// ================= LOAD PROFILE =================
-viewProfile(
-  currentUser._id ||
-  currentUser.id
-);
+// ================= GLOBAL SCOPE WINDOW REGISTER HOOKS =================
+window.viewProfile = viewProfile;
+window.renderPosts = renderPosts;
+window.updateProfile = updateProfile;
+window.commentPost = commentPost;
+window.likePost = likePost;
+window.messageUser = messageUser;
+
+// ================= BOOTSTRAP AUTO RUN ENGINE =================
+document.addEventListener("DOMContentLoaded", () => {
+  const activeTargetId = localStorage.getItem("profileUserId");
+  
+  if (activeTargetId) {
+    viewProfile(String(activeTargetId));
+  } else {
+    // Fall back cleanly to self dashboard identity state patterns if peer context is missing
+    const userPayload = JSON.parse(localStorage.getItem("user") || "{}");
+    const fallbackId = userPayload._id || userPayload.id;
+    if (fallbackId) viewProfile(String(fallbackId));
+  }
+});

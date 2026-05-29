@@ -1,434 +1,205 @@
-// ================= API =================
-const API =
-  "https://vryza-connect-backend-production.up.railway.app/api/auth";
+// ================= API ENDPOINT PATHWAY MARKERS =================
+const API = "https://vryza-connect-backend-production.up.railway.app/api/auth";
 
-// ================= CHECK EXISTING LOGIN =================
-const existingToken =
-  localStorage.getItem("token");
+// ================= ESTABLISH STATE SESSION CACHE =================
+const existingToken = localStorage.getItem("token");
+const existingUser = localStorage.getItem("user");
 
-const existingUser =
-  localStorage.getItem("user");
-
-// ================= AUTO LOGIN =================
-if (
-  existingToken &&
-  existingUser
-) {
-
-  console.log(
-    "User already logged in"
-  );
-
-  // Uncomment if needed
-  // window.location.href = "home.html";
+// ================= SECURE ACTIVE SESSION ROUTE GUARD =================
+if (existingToken && existingUser) {
+  console.log("🔄 Active system session discovered. Forwarding to timeline...");
+  // Safe redirect guard: checks to ensure the client is not already viewing the dashboard path
+  if (!window.location.href.includes("home.html")) {
+     window.location.href = "home.html";
+  }
 }
 
-// ================= TOGGLE FORMS =================
+// ================= WORKFLOW CONTAINER TOGGLES =================
 function showSignup() {
-
-  document
-    .getElementById("loginBox")
-    .classList.add("hidden");
-
-  document
-    .getElementById("signupBox")
-    .classList.remove("hidden");
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("signupBox").classList.remove("hidden");
 }
 
 function showLogin() {
-
-  document
-    .getElementById("signupBox")
-    .classList.add("hidden");
-
-  document
-    .getElementById("loginBox")
-    .classList.remove("hidden");
+  document.getElementById("signupBox").classList.add("hidden");
+  document.getElementById("loginBox").classList.remove("hidden");
 }
 
-// ================= REGISTER =================
+// ================= DISPATCH NEW ACCOUNT REGISTRATION =================
 async function register() {
-
+  const registerBtn = document.getElementById("registerBtn");
+  
   try {
+    // Gather and trim layout input fields
+    const username = document.getElementById("regUser").value.trim();
+    const email = document.getElementById("regEmail").value.trim();
+    const password = document.getElementById("regPass").value.trim();
 
-    // ================= INPUTS =================
-    const username =
-      document
-        .getElementById("regUser")
-        .value
-        .trim();
-
-    const email =
-      document
-        .getElementById("regEmail")
-        .value
-        .trim();
-
-    const password =
-      document
-        .getElementById("regPass")
-        .value
-        .trim();
-
-    // ================= VALIDATION =================
-    if (
-      !username ||
-      !email ||
-      !password
-    ) {
-
-      alert(
-        "Please fill all fields"
-      );
-
+    // 1. Mandatory Presence Data Guards
+    if (!username || !email || !password) {
+      alert("Form submission incomplete. Please fill out all fields.");
       return;
     }
 
-    // ================= EMAIL VALIDATION =================
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (
-      !emailRegex.test(email)
-    ) {
-
-      alert(
-        "Enter valid email"
-      );
-
+    // 2. Client Side Format Validations
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert("Invalid email layout structure. Please fix.");
       return;
     }
 
-    // ================= PASSWORD VALIDATION =================
-    if (
-      password.length < 6
-    ) {
-
-      alert(
-        "Password must be at least 6 characters"
-      );
-
+    if (password.length < 6) {
+      alert("Security constraint error: Passwords must contain at least 6 characters.");
       return;
     }
 
-    // ================= BUTTON =================
-    const registerBtn =
-      document.getElementById(
-        "registerBtn"
-      );
-
+    // 3. UI State Preservation Loading Feedback
     if (registerBtn) {
-
       registerBtn.disabled = true;
-
-      registerBtn.innerText =
-        "Creating...";
+      registerBtn.innerText = "Processing...";
     }
 
-    // ================= API REQUEST =================
-    const res = await fetch(
-      `${API}/register`,
-      {
+    // 4. Dispatch Network Request
+    const res = await fetch(`${API}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email, password })
+    });
 
-        method: "POST",
+    const data = await res.json();
+    console.log("📥 REGISTER SYSTEM INTERCEPT:", data);
 
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-
-        body: JSON.stringify({
-
-          username,
-          email,
-          password
-
-        })
-      }
-    );
-
-    // ================= RESPONSE =================
-    const data =
-      await res.json();
-
-    console.log(
-      "REGISTER RESPONSE:",
-      data
-    );
-
-    // ================= FAILED =================
-    if (!res.ok) {
-
-      alert(
-        data.message ||
-        "Registration failed"
-      );
-
+    // 5. Handle Network Error and Logical Rejections Synchronously
+    if (!res.ok || data.success === false) {
+      alert(data.message || "Registration operation rejected by validation cluster.");
       if (registerBtn) {
-
         registerBtn.disabled = false;
-
-        registerBtn.innerText =
-          "Register";
+        registerBtn.innerText = "Register";
       }
-
       return;
     }
 
-    // ================= SUCCESS =================
-    alert(
-      "✅ Account created successfully"
-    );
+    // 6. Complete Success Execution Pipeline
+    alert("✅ Registration successful! Please log into your new profile.");
+    
+    // Clear registration fields completely
+    document.getElementById("regUser").value = "";
+    document.getElementById("regEmail").value = "";
+    document.getElementById("regPass").value = "";
 
-    // ================= CLEAR INPUTS =================
-    document.getElementById(
-      "regUser"
-    ).value = "";
-
-    document.getElementById(
-      "regEmail"
-    ).value = "";
-
-    document.getElementById(
-      "regPass"
-    ).value = "";
-
-    // ================= RESET BUTTON =================
     if (registerBtn) {
-
       registerBtn.disabled = false;
-
-      registerBtn.innerText =
-        "Register";
+      registerBtn.innerText = "Register";
     }
 
-    // ================= SWITCH TO LOGIN =================
     showLogin();
 
   } catch (err) {
-
-    console.log(
-      "REGISTER SERVER ERROR:",
-      err
-    );
-
-    alert(
-      err.message ||
-      "Server error"
-    );
+    console.error("❌ REGISTRATION TRANSACTION CRITICAL FAILURE:", err);
+    alert("Connection to authentication servers dropped. Please retry.");
+    if (registerBtn) {
+      registerBtn.disabled = false;
+      registerBtn.innerText = "Register";
+    }
   }
 }
 
-// ================= LOGIN =================
+// ================= EXECUTE USER SESSION AUTHENTICATION =================
 async function login() {
+  const loginBtn = document.getElementById("loginBtn");
 
   try {
+    const email = document.getElementById("logEmail").value.trim();
+    const password = document.getElementById("logPass").value.trim();
 
-    // ================= INPUTS =================
-    const email =
-      document
-        .getElementById("logEmail")
-        .value
-        .trim();
-
-    const password =
-      document
-        .getElementById("logPass")
-        .value
-        .trim();
-
-    // ================= VALIDATION =================
-    if (
-      !email ||
-      !password
-    ) {
-
-      alert(
-        "Please fill all fields"
-      );
-
+    if (!email || !password) {
+      alert("Identity values required. Please provide email and password.");
       return;
     }
-
-    // ================= BUTTON =================
-    const loginBtn =
-      document.getElementById(
-        "loginBtn"
-      );
 
     if (loginBtn) {
-
       loginBtn.disabled = true;
-
-      loginBtn.innerText =
-        "Logging in...";
+      loginBtn.innerText = "Verifying...";
     }
 
-    // ================= API REQUEST =================
-    const res = await fetch(
-      `${API}/login`,
-      {
+    const res = await fetch(`${API}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
 
-        method: "POST",
+    const data = await res.json();
+    console.log("📥 LOGIN SYSTEM INTERCEPT:", data);
 
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-
-        body: JSON.stringify({
-
-          email,
-          password
-
-        })
-      }
-    );
-
-    // ================= RESPONSE =================
-    const data =
-      await res.json();
-
-    console.log(
-      "LOGIN RESPONSE:",
-      data
-    );
-
-    // ================= LOGIN FAILED =================
-    if (!res.ok) {
-
-      alert(
-        data.message ||
-        "Login failed"
-      );
-
+    // Core validation check maps response states accurately
+    if (!res.ok || data.success === false) {
+      alert(data.message || "Access denied. Invalid credentials provided.");
       if (loginBtn) {
-
         loginBtn.disabled = false;
-
-        loginBtn.innerText =
-          "Login";
+        loginBtn.innerText = "Login";
       }
-
       return;
     }
 
-    // ================= SAVE TOKEN =================
-    localStorage.setItem(
-      "token",
-      data.token
-    );
+    // Extract values safely, supporting both direct wrapping and explicit 'data' containers
+    const targetToken = data.token || (data.data && data.data.token);
+    const targetUser = data.user || (data.data && data.data.user);
 
-    // ================= SAVE USER =================
-    localStorage.setItem(
-      "user",
-      JSON.stringify(data.user)
-    );
+    if (!targetToken || !targetUser) {
+      throw new Error("Malformed application token authentication structure received from cluster.");
+    }
 
-    console.log(
-      "TOKEN SAVED:",
-      data.token
-    );
+    // 7. Write Verification Keys to Client Storage
+    localStorage.setItem("token", targetToken);
+    localStorage.setItem("user", JSON.stringify(targetUser));
 
-    console.log(
-      "USER SAVED:",
-      data.user
-    );
+    console.log("🔑 Handshake token cached successfully.");
 
-    // ================= SUCCESS =================
-    alert(
-      "✅ Login successful"
-    );
-
-    // ================= REDIRECT =================
-    window.location.href =
-      "home.html";
+    alert("✅ Login authorized successfully.");
+    window.location.href = "home.html";
 
   } catch (err) {
-
-    console.log(
-      "LOGIN SERVER ERROR:",
-      err
-    );
-
-    alert(
-      err.message ||
-      "Server error"
-    );
+    console.error("❌ CLIENT IDENTITY TRANSACTION EXCEPTION:", err);
+    alert(err.message || "Internal network portal pipeline failure.");
+    if (loginBtn) {
+      loginBtn.disabled = false;
+      loginBtn.innerText = "Login";
+    }
   }
 }
 
-// ================= ENTER KEY LOGIN =================
-const logPass =
-  document.getElementById(
-    "logPass"
-  );
-
-if (logPass) {
-
-  logPass.addEventListener(
-    "keypress",
-
-    (e) => {
-
-      if (
-        e.key === "Enter"
-      ) {
-
-        login();
-      }
-    }
-  );
+// ================= MOUNT INTERACTIVE KEY LISTENERS =================
+const logPassElement = document.getElementById("logPass");
+if (logPassElement) {
+  logPassElement.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") login();
+  });
 }
 
-// ================= ENTER KEY REGISTER =================
-const regPass =
-  document.getElementById(
-    "regPass"
-  );
-
-if (regPass) {
-
-  regPass.addEventListener(
-    "keypress",
-
-    (e) => {
-
-      if (
-        e.key === "Enter"
-      ) {
-
-        register();
-      }
-    }
-  );
+const regPassElement = document.getElementById("regPass");
+if (regPassElement) {
+  regPassElement.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") register();
+  });
 }
 
-// ================= CONNECTION TEST =================
+// ================= INTEGRITY MONITOR CONNECTION TEST =================
 async function testBackend() {
-
   try {
-
-    const res = await fetch(
-      "https://vryza-connect-backend-production.up.railway.app"
-    );
-
-    const data =
-      await res.json();
-
-    console.log(
-      "BACKEND CONNECTED:",
-      data
-    );
-
+    const rootUrl = API.replace("/api/auth", "");
+    const res = await fetch(rootUrl);
+    const data = await res.json();
+    console.log("🌐 System Core Pipeline Status:", data);
   } catch (err) {
-
-    console.log(
-      "BACKEND CONNECTION FAILED:",
-      err
-    );
+    console.warn("⚠️ Pipeline warning: Host connection diagnostic ping failed.", err.message);
   }
 }
 
-// ================= RUN TEST =================
+// Map workflow targets onto the global browser window runtime layout
+window.showSignup = showSignup;
+window.showLogin = showLogin;
+window.register = register;
+window.login = login;
+
+// Run diagnostics on load
 testBackend();

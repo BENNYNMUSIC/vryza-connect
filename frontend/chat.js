@@ -1,887 +1,464 @@
-// ================= API =================
-const API =
-  "https://vryza-connect-backend-production.up.railway.app";
+// ================= MASTER SERVER PATHWAY LOCATORS =================
+const API = "https://vryza-connect-backend-production.up.railway.app";
 
-// ================= SOCKET =================
+// ================= ESTABLISH REALTIME NETWORK CONDUIT =================
 const socket = io(API, {
-
-  transports: [
-    "websocket",
-    "polling"
-  ]
+  transports: ["websocket", "polling"],
+  secure: true
 });
 
-// ================= SOCKET DEBUG =================
-socket.on(
-  "connect",
-  () => {
+// ================= DIAGNOSTIC LINK MONITORING =================
+socket.on("connect", () => {
+  console.log("🟢 ENGINE: Realtime synchronization terminal online. ID:", socket.id);
+});
 
-    console.log(
-      "🟢 SOCKET CONNECTED:",
-      socket.id
-    );
-  }
-);
+socket.on("connect_error", (err) => {
+  console.warn("❌ ENGINE: Synchronization terminal dropped connection.", err.message);
+});
 
-socket.on(
-  "connect_error",
-  (err) => {
+// ================= ACCOUNT PROFILE STATE VALIDATION =================
+const user = JSON.parse(localStorage.getItem("user"));
+const token = localStorage.getItem("token");
 
-    console.log(
-      "❌ SOCKET ERROR:",
-      err.message
-    );
-  }
-);
-
-// ================= USER =================
-const user =
-  JSON.parse(
-    localStorage.getItem("user")
-  );
-
-const token =
-  localStorage.getItem("token");
-
-// ================= CHECK LOGIN =================
 if (!user || !token) {
-
-  alert(
-    "Please login first"
-  );
-
-  window.location.href =
-    "auth.html";
+  alert("Identity handshake missing. Please authenticate.");
+  window.location.href = "auth.html";
 }
 
-// ================= CURRENT USER =================
-const currentUserId =
-  (
-    user._id ||
-    user.id
-  ).toString();
+const currentUserId = (user._id || user.id).toString();
 
-// ================= CHAT TARGET =================
-let receiverId =
-  localStorage.getItem(
-    "chatUserId"
-  );
+// ================= ACTIVE CONVERSATION TARGETING =================
+let receiverId = localStorage.getItem("chatUserId");
+let receiverName = localStorage.getItem("chatUsername");
 
-let receiverName =
-  localStorage.getItem(
-    "chatUsername"
-  );
+if (receiverId) receiverId = receiverId.toString();
 
-if (receiverId) {
+// ================= UI DOM ELEMENT POOL HOOKS =================
+const messagesContainer = document.getElementById("messages");
+const messageInput = document.getElementById("message");
+const typingText = document.getElementById("typing");
+const chatWithHeader = document.getElementById("chatWith");
+const startCallBtn = document.getElementById("startCall");
+const videoArea = document.getElementById("videoArea");
 
-  receiverId =
-    receiverId.toString();
+// Sync initial header label text cleanly on boot sequence load
+function updateChatHeader() {
+  if (chatWithHeader) {
+    chatWithHeader.innerText = receiverName ? `Chatting with ${receiverName}` : "Select a conversation";
+  }
 }
+updateChatHeader();
 
-// ================= DOM =================
-const messagesContainer =
-  document.getElementById(
-    "messages"
-  );
+// ================= INITIALIZE CONVERSATION CHANNEL ROUTE =================
+socket.emit("join", currentUserId);
 
-const messageInput =
-  document.getElementById(
-    "message"
-  );
-
-const typingText =
-  document.getElementById(
-    "typing"
-  );
-
-// ================= HEADER =================
-if (receiverName) {
-
-  document.getElementById(
-    "chatWith"
-  ).innerText =
-    `Chatting with ${receiverName}`;
-}
-
-// ================= JOIN =================
-socket.emit(
-  "join",
-  currentUserId
-);
-
-// ================= LOAD OLD MESSAGES =================
+// ================= BACKEND STORAGE RESYNC LOGIC =================
 async function loadMessages() {
-
-  if (!receiverId)
-    return;
+  if (!receiverId || !messagesContainer) return;
 
   try {
+    messagesContainer.innerHTML = `
+      <div class="text-center text-slate-400 py-4 italic animate-pulse">
+        Synchronizing encrypted timeline data...
+      </div>
+    `;
 
-    const res =
-      await fetch(
-        `${API}/api/messages/${receiverId}`,
-        {
-
-          headers: {
-
-            Authorization:
-              `Bearer ${token}`,
-
-            userid:
-              currentUserId
-          }
-        }
-      );
-
-    const messages =
-      await res.json();
-
-    console.log(
-      "MESSAGES:",
-      messages
-    );
-
-    messagesContainer.innerHTML =
-      "";
-
-    messages.forEach(
-      (msg) => {
-
-        const sender =
-          msg.senderId?.toString();
-
-        const type =
-          sender === currentUserId
-            ? "sent"
-            : "received";
-
-        // ================= TEXT =================
-        if (msg.text) {
-
-          addMessage(
-            msg.text,
-            type
-          );
-        }
-
-        // ================= MEDIA =================
-        if (msg.media) {
-
-          addMediaMessage(
-            msg.media,
-            msg.mediaType,
-            type
-          );
-        }
-
-        // ================= AUDIO =================
-        if (msg.audio) {
-
-          addVoiceMessage(
-            msg.audio,
-            type
-          );
-        }
+    const res = await fetch(`${API}/api/messages/${receiverId}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "userid": currentUserId,
+        "Content-Type": "application/json"
       }
-    );
+    });
+
+    const data = await res.json();
+    console.log("📥 TIMELINE DATA ARCHIVE RECEIVED:", data);
+
+    if (!res.ok || data.success === false) {
+      messagesContainer.innerHTML = `
+        <div class="text-center text-red-400 py-4 font-semibold">
+          ⚠️ Timeline synchronization failed.
+        </div>
+      `;
+      return;
+    }
+
+    const historicalFeed = data.messages || data;
+    messagesContainer.innerHTML = "";
+
+    // If conversation is empty, show the placeholder layout node cleanly
+    if (!Array.isArray(historicalFeed) || historicalFeed.length === 0) {
+      messagesContainer.innerHTML = `
+        <div id="emptyChat" class="text-center text-slate-400 text-sm mt-10 italic">
+          Start chatting with someone online
+        </div>
+      `;
+      return;
+    }
+
+    historicalFeed.forEach((msg) => {
+      const sender = (msg.senderId || msg.sender)?.toString();
+      const type = sender === currentUserId ? "sent" : "received";
+
+      if (msg.text) addMessage(msg.text, type);
+      if (msg.media) addMediaMessage(msg.media, msg.mediaType, type);
+      if (msg.audio) addVoiceMessage(msg.audio, type);
+    });
 
     scrollBottom();
 
   } catch (err) {
-
-    console.log(
-      "LOAD ERROR:",
-      err
-    );
+    console.error("❌ CRITICAL CONVERSATION RECOVERY TRAVERSAL ERROR:", err);
   }
 }
 
-loadMessages();
-
-// ================= SEND MESSAGE =================
+// ================= TRANSIT CHAT CONTENT BLOCKS =================
 function sendMessage() {
+  if (!messageInput) return;
+  const text = messageInput.value.trim();
 
-  const text =
-    messageInput.value.trim();
+  if (!text || !receiverId) return;
 
-  if (
-    !text ||
-    !receiverId
-  ) {
-    return;
-  }
+  // Remove placeholder if present before pushing new item fragments
+  const emptyChatPlaceholder = document.getElementById("emptyChat");
+  if (emptyChatPlaceholder) emptyChatPlaceholder.remove();
 
-  socket.emit(
-    "sendMessage",
-    {
+  // Real-time broadcast dispatch
+  socket.emit("sendMessage", {
+    senderId: currentUserId,
+    receiverId: receiverId,
+    message: text
+  });
 
-      senderId:
-        currentUserId,
-
-      receiverId,
-
-      message: text
-    }
-  );
-
-  addMessage(
-    text,
-    "sent"
-  );
-
-  messageInput.value =
-    "";
+  addMessage(text, "sent");
+  messageInput.value = "";
 }
 
-// ================= ENTER SEND =================
-messageInput.addEventListener(
-  "keypress",
-  (e) => {
+// Attach physical device keypress hooks
+if (messageInput) {
+  messageInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
 
-    if (
-      e.key === "Enter"
-    ) {
+  // Native throttle updates typing patterns cleanly
+  messageInput.addEventListener("input", () => {
+    if (!receiverId) return;
+    socket.emit("typing", { senderId: currentUserId, receiverId });
+  });
+}
 
-      sendMessage();
-    }
+// ================= SOCKET EVENT HOOK RECEIVERS =================
+socket.on("receiveMessage", (data) => {
+  console.log("💬 LIVE TEXT INTERCEPT:", data);
+  const incomingSender = (data.senderId || data.sender)?.toString();
+  if (incomingSender === receiverId) {
+    const emptyChatPlaceholder = document.getElementById("emptyChat");
+    if (emptyChatPlaceholder) emptyChatPlaceholder.remove();
+    
+    addMessage(data.message || data.text, "received");
   }
-);
+});
 
-// ================= RECEIVE MESSAGE =================
-socket.on(
-  "receiveMessage",
-  (data) => {
+socket.on("userTyping", (data) => {
+  const typingSender = data.senderId?.toString();
+  if (typingSender !== receiverId) return;
 
-    console.log(
-      "RECEIVED:",
-      data
-    );
+  if (typingText) typingText.innerText = `${receiverName} is writing...`;
 
-    if (
-      data.senderId
-        .toString() ===
-      receiverId
-        .toString()
-    ) {
+  clearTimeout(window.typingTimeout);
+  window.typingTimeout = setTimeout(() => {
+    if (typingText) typingText.innerText = "";
+  }, 2000);
+});
 
-      addMessage(
-        data.message,
-        "received"
-      );
-    }
+socket.on("receiveMedia", (data) => {
+  console.log("🖼️ LIVE MULTIMEDIA INTERCEPT:", data);
+  const mediaSender = data.senderId?.toString();
+  if (mediaSender === receiverId) {
+    const emptyChatPlaceholder = document.getElementById("emptyChat");
+    if (emptyChatPlaceholder) emptyChatPlaceholder.remove();
+
+    addMediaMessage(data.media, data.mediaType, "received");
   }
-);
+});
 
-// ================= TYPING =================
-messageInput.addEventListener(
-  "input",
-  () => {
+socket.on("receiveVoice", (data) => {
+  console.log("🎙️ LIVE AUDIO INTERCEPT:", data);
+  const voiceSender = data.senderId?.toString();
+  if (voiceSender === receiverId) {
+    const emptyChatPlaceholder = document.getElementById("emptyChat");
+    if (emptyChatPlaceholder) emptyChatPlaceholder.remove();
 
-    if (!receiverId)
-      return;
-
-    socket.emit(
-      "typing",
-      {
-
-        senderId:
-          currentUserId,
-
-        receiverId
-      }
-    );
+    addVoiceMessage(data.audio || data.fileUrl, "received");
   }
-);
+});
 
-// ================= RECEIVE TYPING =================
-socket.on(
-  "userTyping",
-  (data) => {
+// ================= DOM ELEMENT INJECTION BUILDERS =================
+function addMessage(text, type) {
+  if (!messagesContainer) return;
+  const div = document.createElement("div");
+  const base = "max-w-xs px-4 py-2.5 rounded-2xl text-sm break-words shadow-sm my-1.5 inline-block clear-both transition-all";
 
-    if (
-      data.senderId
-        .toString() !==
-      receiverId
-        .toString()
-    ) {
-      return;
-    }
+  div.className = type === "sent"
+    ? `${base} bg-blue-600 text-white float-right rounded-tr-none`
+    : `${base} bg-gray-200 text-gray-800 float-left rounded-tl-none`;
 
-    typingText.innerText =
-      `${receiverName} is typing...`;
-
-    clearTimeout(
-      window.typingTimeout
-    );
-
-    window.typingTimeout =
-      setTimeout(() => {
-
-        typingText.innerText =
-          "";
-
-      }, 2000);
-  }
-);
-
-// ================= RECEIVE MEDIA =================
-socket.on(
-  "receiveMedia",
-  (data) => {
-
-    if (
-      data.senderId
-        .toString() ===
-      receiverId
-        .toString()
-    ) {
-
-      addMediaMessage(
-        data.media,
-        data.mediaType,
-        "received"
-      );
-    }
-  }
-);
-
-// ================= RECEIVE VOICE =================
-socket.on(
-  "receiveVoice",
-  (data) => {
-
-    if (
-      data.senderId
-        .toString() ===
-      receiverId
-        .toString()
-    ) {
-
-      addVoiceMessage(
-        data.audio,
-        "received"
-      );
-    }
-  }
-);
-
-// ================= ADD TEXT =================
-function addMessage(
-  text,
-  type
-) {
-
-  const div =
-    document.createElement(
-      "div"
-    );
-
-  const base =
-    "max-w-xs px-4 py-3 rounded-2xl text-sm break-words shadow-sm";
-
-  div.className =
-    type === "sent"
-      ? `${base} bg-blue-600 text-white ml-auto`
-      : `${base} bg-gray-200 text-gray-800 mr-auto`;
-
-  div.innerText =
-    text;
-
-  messagesContainer.appendChild(
-    div
-  );
-
+  div.innerText = text;
+  messagesContainer.appendChild(div);
   scrollBottom();
 }
 
-// ================= ADD MEDIA =================
-function addMediaMessage(
-  media,
-  mediaType,
-  type
-) {
+function addMediaMessage(media, mediaType, type) {
+  if (!messagesContainer) return;
+  const div = document.createElement("div");
+  const base = "max-w-xs p-1.5 rounded-2xl shadow-sm my-1.5 clear-both inline-block";
 
-  const div =
-    document.createElement(
-      "div"
-    );
+  div.className = type === "sent" ? `${base} bg-blue-600 float-right` : `${base} bg-gray-200 float-left`;
 
-  const base =
-    "max-w-xs p-2 rounded-xl shadow-sm";
+  const mediaUrl = media.startsWith("http") ? media : `${API}/uploads/${media}`;
 
-  div.className =
-    type === "sent"
-      ? `${base} bg-blue-600 ml-auto`
-      : `${base} bg-gray-200 mr-auto`;
-
-  const mediaUrl =
-    media.startsWith("http")
-      ? media
-      : `${API}/uploads/${media}`;
-
-  if (
-    mediaType === "image"
-  ) {
-
-    div.innerHTML = `
-      <img
-        src="${mediaUrl}"
-        class="rounded-xl max-w-full"
-      />
-    `;
-
+  if (mediaType === "image" || (!mediaType && !media.endsWith(".mp4"))) {
+    div.innerHTML = `<img src="${mediaUrl}" class="rounded-xl max-w-full max-h-60 object-cover block" loading="lazy" />`;
   } else {
-
-    div.innerHTML = `
-      <video
-        controls
-        class="rounded-xl max-w-full"
-      >
-        <source src="${mediaUrl}">
-      </video>
-    `;
+    div.innerHTML = `<video controls class="rounded-xl max-w-full max-h-60 block"><source src="${mediaUrl}"></video>`;
   }
 
-  messagesContainer.appendChild(
-    div
-  );
-
+  messagesContainer.appendChild(div);
   scrollBottom();
 }
 
-// ================= ADD VOICE =================
-function addVoiceMessage(
-  audio,
-  type
-) {
+function addVoiceMessage(audio, type) {
+  if (!messagesContainer) return;
+  const div = document.createElement("div");
+  const base = "w-64 p-2 rounded-2xl shadow-sm my-1.5 clear-both inline-block";
 
-  const div =
-    document.createElement(
-      "div"
-    );
+  div.className = type === "sent" ? `${base} bg-blue-600 float-right` : `${base} bg-gray-200 float-left`;
+  
+  const audioUrl = audio.startsWith("data:") || audio.startsWith("http") ? audio : `${API}/uploads/${audio}`;
 
-  const base =
-    "max-w-xs p-2 rounded-xl shadow-sm";
-
-  div.className =
-    type === "sent"
-      ? `${base} bg-blue-600 ml-auto`
-      : `${base} bg-gray-200 mr-auto`;
-
-  div.innerHTML = `
-    <audio
-      controls
-      src="${audio}"
-      class="w-full"
-    ></audio>
-  `;
-
-  messagesContainer.appendChild(
-    div
-  );
-
+  div.innerHTML = `<audio controls src="${audioUrl}" class="w-full block focus:outline-none"></audio>`;
+  messagesContainer.appendChild(div);
   scrollBottom();
 }
 
-// ================= SCROLL =================
 function scrollBottom() {
-
-  messagesContainer.scrollTop =
-    messagesContainer.scrollHeight;
+  if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// ================= MEDIA UPLOAD =================
-document
-  .getElementById(
-    "mediaInput"
-  )
-  ?.addEventListener(
-    "change",
-    async (e) => {
+// ================= ASYNC BINARY MULTIMEDIA FILE DISPATCH =================
+const mediaInputElement = document.getElementById("mediaInput");
+if (mediaInputElement) {
+  mediaInputElement.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file || !receiverId) return;
 
-      const file =
-        e.target.files[0];
-
-      if (
-        !file ||
-        !receiverId
-      ) {
-        return;
-      }
-
-      const formData =
-        new FormData();
-
-      formData.append(
-        "file",
-        file
-      );
-
-      formData.append(
-        "senderId",
-        currentUserId
-      );
-
-      formData.append(
-        "receiverId",
-        receiverId
-      );
-
-      try {
-
-        const res =
-          await fetch(
-            `${API}/api/upload`,
-            {
-
-              method: "POST",
-
-              headers: {
-
-                Authorization:
-                  `Bearer ${token}`
-              },
-
-              body:
-                formData
-            }
-          );
-
-        const data =
-          await res.json();
-
-        addMediaMessage(
-          data.media,
-          data.mediaType,
-          "sent"
-        );
-
-      } catch (err) {
-
-        console.log(
-          "UPLOAD ERROR:",
-          err
-        );
-      }
-    }
-  );
-
-// ================= VOICE =================
-let mediaRecorder;
-
-let audioChunks = [];
-
-let isRecording =
-  false;
-
-// ================= TOGGLE RECORD =================
-async function toggleRecording() {
-
-  if (!receiverId) {
-
-    alert(
-      "Select a user first"
-    );
-
-    return;
-  }
-
-  if (!isRecording) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("senderId", currentUserId);
+    formData.append("receiverId", receiverId);
 
     try {
+      const res = await fetch(`${API}/api/upload`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData
+      });
 
-      const stream =
-        await navigator
-          .mediaDevices
-          .getUserMedia({
-            audio: true
-          });
+      const data = await res.json();
+      if (res.ok && data.success !== false) {
+        const emptyChatPlaceholder = document.getElementById("emptyChat");
+        if (emptyChatPlaceholder) emptyChatPlaceholder.remove();
 
-      mediaRecorder =
-        new MediaRecorder(
-          stream
-        );
+        addMediaMessage(data.media, data.mediaType, "sent");
+      } else {
+        alert(data.message || "File transmission rejected by storage engine.");
+      }
+    } catch (err) {
+      console.error("❌ CONTENT DISPATCH FAILURE:", err);
+    }
+  });
+}
 
+// ================= AUDIO CAPTURE SYSTEM LAYER =================
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+
+async function toggleRecording() {
+  if (!receiverId) {
+    alert("Please establish an active channel profile target first.");
+    return;
+  }
+
+  const micBtn = document.getElementById("micBtn");
+
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
       audioChunks = [];
 
-      mediaRecorder.ondataavailable =
-        (e) => {
-
-          audioChunks.push(
-            e.data
-          );
-        };
-
-      mediaRecorder.onstop =
-        sendVoiceNote;
-
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = sendVoiceNote;
+      
       mediaRecorder.start();
-
       isRecording = true;
-
-      document.getElementById(
-        "micBtn"
-      ).innerText =
-        "⏹️";
-
+      if (micBtn) micBtn.innerText = "⏹️";
     } catch (err) {
-
-      console.log(err);
-
-      alert(
-        "Microphone denied"
-      );
+      alert("Microphone hardware channel configuration permission denied.");
     }
-
   } else {
-
-    mediaRecorder.stop();
-
+    if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
     isRecording = false;
-
-    document.getElementById(
-      "micBtn"
-    ).innerText =
-      "🎤";
+    if (micBtn) micBtn.innerText = "🎤";
   }
 }
 
-// ================= SEND VOICE =================
 function sendVoiceNote() {
-
-  const audioBlob =
-    new Blob(
-      audioChunks,
-      {
-        type:
-          "audio/webm"
-      }
-    );
-
-  const reader =
-    new FileReader();
+  const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+  const reader = new FileReader();
 
   reader.onload = () => {
+    const base64Audio = reader.result;
+    socket.emit("sendVoice", {
+      senderId: currentUserId,
+      receiverId: receiverId,
+      audio: base64Audio
+    });
 
-    const base64Audio =
-      reader.result;
+    const emptyChatPlaceholder = document.getElementById("emptyChat");
+    if (emptyChatPlaceholder) emptyChatPlaceholder.remove();
 
-    socket.emit(
-      "sendVoice",
-      {
-
-        senderId:
-          currentUserId,
-
-        receiverId,
-
-        audio:
-          base64Audio
-      }
-    );
-
-    addVoiceMessage(
-      base64Audio,
-      "sent"
-    );
+    addVoiceMessage(base64Audio, "sent");
   };
-
-  reader.readAsDataURL(
-    audioBlob
-  );
+  reader.readAsDataURL(audioBlob);
 }
 
-// ================= ONLINE USERS =================
-socket.on(
-  "onlineUsers",
+// ================= DIRECTORY DISCOVERY AND ACTIVE USER MANAGEMENT =================
+socket.on("onlineUsers", async (usersList) => {
+  console.log("🌐 REFRESH DIRECTORY SNAPSHOT:", usersList);
+  const targetOutputDiv = document.getElementById("onlineUsers");
+  if (!targetOutputDiv) return;
 
-  async (users) => {
+  const fragment = document.createDocumentFragment();
 
-    console.log(
-      "ONLINE USERS:",
-      users
-    );
+  for (const id of usersList) {
+    if (id.toString() === currentUserId) continue;
 
-    const div =
-      document.getElementById(
-        "onlineUsers"
-      );
+    let username = "Active Peer";
+    let profilePic = "";
 
-    if (!div) return;
-
-    div.innerHTML = "";
-
-    for (const id of users) {
-
-      if (
-        id.toString() ===
-        currentUserId
-      ) {
-        continue;
-      }
-
-      let username =
-        "Unknown User";
-
-      let profilePic = "";
-
-      try {
-
-        const res =
-          await fetch(
-            `${API}/api/users/${id}`,
-            {
-
-              headers: {
-
-                Authorization:
-                  `Bearer ${token}`
-              }
-            }
-          );
-
-        const data =
-          await res.json();
-
-        username =
-          data.username ||
-          "User";
-
-        profilePic =
-          data.profilePic || "";
-
-      } catch (err) {
-
-        console.log(
-          "USER FETCH ERROR:",
-          err
-        );
-      }
-
-      div.innerHTML += `
-
-        <div
-          onclick="startChat('${id}','${username}')"
-
-          class="
-            cursor-pointer
-            bg-white
-            border
-            border-green-200
-            p-3
-            rounded-2xl
-            hover:bg-green-50
-            transition
-            flex
-            items-center
-            gap-3
-          "
-        >
-
-          <div
-            class="
-              w-12
-              h-12
-              rounded-full
-              overflow-hidden
-              bg-slate-200
-              flex
-              items-center
-              justify-center
-            "
-          >
-
-            ${
-              profilePic
-              ? `<img src="${profilePic}" class="w-full h-full object-cover" />`
-              : "👤"
-            }
-
-          </div>
-
-          <div>
-
-            <h3 class="font-bold text-slate-700">
-              ${username}
-            </h3>
-
-            <p class="text-xs text-green-500">
-              🟢 Online
-            </p>
-
-          </div>
-
-        </div>
-      `;
+    try {
+      const res = await fetch(`${API}/api/users/${id}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      
+      const profileData = data.user || data;
+      username = profileData.username || "Account Profile";
+      profilePic = profileData.profilePic || "";
+    } catch (err) {
+      console.warn("⚠️ Meta data stream incomplete for peer element:", id);
     }
+
+    const itemContainer = document.createElement("div");
+    
+    // Highlight the item card if it matches our open active chat channel target selection
+    const isActive = receiverId && receiverId === id.toString();
+    itemContainer.className = `cursor-pointer border p-3 rounded-2xl transition flex items-center gap-3 my-2 ${
+      isActive 
+        ? "bg-blue-50 border-blue-200 shadow-sm" 
+        : "bg-white border-slate-100 hover:bg-slate-50"
+    }`;
+    
+    itemContainer.addEventListener("click", () => startChat(id, username));
+
+    itemContainer.innerHTML = `
+      <div class="w-11 h-11 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center shadow-inner">
+        ${profilePic ? `<img src="${profilePic}" class="w-full h-full object-cover" />` : "👤"}
+      </div>
+      <div class="flex-1">
+        <h3 class="font-bold text-sm text-slate-700">${username}</h3>
+        <p class="text-xs text-emerald-500 font-semibold flex items-center gap-1">
+          <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span> Active Now
+        </p>
+      </div>
+    `;
+    fragment.appendChild(itemContainer);
   }
-);
 
-// ================= START CHAT =================
-function startChat(
-  userId,
-  username
-) {
+  targetOutputDiv.innerHTML = "";
+  targetOutputDiv.appendChild(fragment);
+});
 
-  localStorage.setItem(
-    "chatUserId",
-    userId
-  );
+function startChat(userId, username) {
+  receiverId = userId.toString();
+  receiverName = username;
+  localStorage.setItem("chatUserId", receiverId);
+  localStorage.setItem("chatUsername", receiverName);
+  
+  updateChatHeader();
+  loadMessages();
 
-  localStorage.setItem(
-    "chatUsername",
-    username
-  );
-
-  location.reload();
+  // Force-trigger an online directory rebuild to shift active color selection borders instantly
+  socket.emit("getOnlineUsers"); 
 }
 
-// ================= VIDEO CALL =================
-const startCallBtn =
-  document.getElementById(
-    "startCall"
-  );
+// ================= LIVE INSTANT SEARCH FILTER SYSTEM HOOK =================
+document.getElementById("searchUser")?.addEventListener("input", (e) => {
+  const query = e.target.value.toLowerCase().trim();
+  const contacts = document.querySelectorAll("#onlineUsers > div");
 
+  contacts.forEach((card) => {
+    const name = card.querySelector("h3")?.innerText.toLowerCase() || "";
+    if (name.includes(query)) {
+      card.style.setProperty("display", "flex", "important");
+    } else {
+      card.style.setProperty("display", "none", "important");
+    }
+  });
+});
+
+// ================= WEBRTC CONFERENCING INTERACTIVE CONTROLS =================
 if (startCallBtn) {
+  startCallBtn.addEventListener("click", async () => {
+    if (!receiverId) {
+      alert("Please select a user to establish a video connection stream.");
+      return;
+    }
 
-  startCallBtn.onclick =
-    async () => {
-
-      try {
-
-        const videoArea =
-          document.getElementById(
-            "videoArea"
-          );
-
-        const localVideo =
-          document.getElementById(
-            "localVideo"
-          );
-
-        const stream =
-          await navigator
-            .mediaDevices
-            .getUserMedia({
-
-              video: true,
-
-              audio: true
-            });
-
-        localVideo.srcObject =
-          stream;
-
-        videoArea.classList.remove(
-          "hidden"
-        );
-
-      } catch (err) {
-
-        console.log(
-          "CAMERA ERROR:",
-          err
-        );
+    if (videoArea) {
+      if (videoArea.classList.contains("hidden")) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          const localVideo = document.getElementById("localVideo");
+          if (localVideo) localVideo.srcObject = stream;
+          
+          videoArea.classList.remove("hidden");
+          videoArea.classList.add("grid");
+          console.log("📹 Local hardware camera stream attached.");
+        } catch (err) {
+          alert("Unable to open hardware video camera module channel access.");
+        }
+      } else {
+        // Toggle close and release active media source hardware feeds cleanly
+        const localVideo = document.getElementById("localVideo");
+        if (localVideo && localVideo.srcObject) {
+          localVideo.srcObject.getTracks().forEach(track => track.stop());
+          localVideo.srcObject = null;
+        }
+        videoArea.classList.remove("grid");
+        videoArea.classList.add("hidden");
       }
-    };
+    }
+  });
 }
+
+// ================= ATTACH CORE FUNCTION POOLS ON WINDOW RUNTIME =================
+window.toggleRecording = toggleRecording;
+window.startChat = startChat;
+window.sendMessage = sendMessage;
+
+// Initial execution setup on window frame boot loop
+loadMessages();

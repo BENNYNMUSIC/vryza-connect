@@ -1,871 +1,396 @@
-// ================= API =================
-const API =
-  "https://vryza-connect-backend-production.up.railway.app";
+// ================= MASTER SERVER PATHWAY LOCATORS =================
+const API = "https://vryza-connect-backend-production.up.railway.app";
 
-// ================= SOCKET =================
+// ================= ESTABLISH REALTIME NETWORK CONDUIT =================
 const socket = io(API, {
-  transports: ["websocket", "polling"]
+  transports: ["websocket", "polling"],
+  secure: true
 });
 
-// ================= USER =================
-const user =
-  JSON.parse(
-    localStorage.getItem("user")
-  );
+// ================= DIAGNOSTIC LINK MONITORING =================
+socket.on("connect", () => {
+  console.log("🟢 ENGINE: Realtime synchronization terminal online. ID:", socket.id);
+});
 
-const token =
-  localStorage.getItem("token");
+socket.on("connect_error", (err) => {
+  console.warn("❌ ENGINE: Synchronization terminal dropped connection.", err.message);
+});
 
-// ================= LOGIN CHECK =================
+// ================= ACCOUNT PROFILE STATE VALIDATION =================
+const user = JSON.parse(localStorage.getItem("user"));
+const token = localStorage.getItem("token");
+
 if (!user || !token) {
-
-  alert("Please login");
-
-  window.location.href =
-    "auth.html";
+  alert("Identity handshake missing. Please authenticate.");
+  window.location.href = "auth.html";
 }
 
-// ================= USER ID =================
-const currentUserId =
-  (
-    user._id ||
-    user.id
-  ).toString();
+const currentUserId = String(user._id || user.id);
 
-console.log(
-  "CURRENT USER:",
-  currentUserId
-);
+// ================= INITIALIZE CONVERSATION CHANNEL ROUTE =================
+socket.emit("join", currentUserId);
 
-// ================= SOCKET JOIN =================
-socket.emit(
-  "join",
-  currentUserId
-);
+// ================= UI DOM ELEMENT POOL HOOKS =================
+const onlineUsersDiv = document.getElementById("onlineUsers");
+const messagesDiv = document.getElementById("messages");
+const groupMessagesDiv = document.getElementById("groupMessages");
+const feedDiv = document.getElementById("feed");
+const receiverInput = document.getElementById("receiverId");
 
-// ================= DOM =================
-const onlineUsersDiv =
-  document.getElementById(
-    "onlineUsers"
-  );
+// ================= GLOBAL STATE =================
+let selectedUserId = null;
+let selectedUsername = "";
 
-const messagesDiv =
-  document.getElementById(
-    "messages"
-  );
-
-const groupMessagesDiv =
-  document.getElementById(
-    "groupMessages"
-  );
-
-const receiverInput =
-  document.getElementById(
-    "receiverId"
-  );
-
-const feedDiv =
-  document.getElementById(
-    "feed"
-  );
-
-// ================= CHAT TARGET =================
-let selectedUserId =
-  null;
-
-// ================= OPEN PROFILE =================
-function openProfile(
-  userId
-) {
-
-  localStorage.setItem(
-    "profileUserId",
-    userId
-  );
-
-  window.location.href =
-    "user.html";
-}
-
-// ================= ONLINE USERS =================
-socket.on(
-  "onlineUsers",
-  (users) => {
-
-    console.log(
-      "ONLINE USERS:",
-      users
-    );
-
-    onlineUsersDiv.innerHTML =
-      "";
-
-    users
-      .filter(
-        (id) =>
-          id.toString() !==
-          currentUserId
-      )
-      .forEach((id) => {
-
-        const div =
-          document.createElement(
-            "div"
-          );
-
-        div.className = `
-          flex
-          items-center
-          justify-between
-          bg-slate-50
-          hover:bg-blue-50
-          border
-          border-slate-100
-          px-4
-          py-3
-          rounded-2xl
-          cursor-pointer
-          transition
-        `;
-
-        div.innerHTML = `
-          <div
-            class="flex-1"
-          >
-            <p
-              class="
-                font-semibold
-                text-slate-700
-              "
-            >
-              User ${id.substring(0,6)}
-            </p>
-
-            <p
-              class="
-                text-xs
-                text-green-500
-              "
-            >
-              Online
-            </p>
-          </div>
-
-          <div
-            class="
-              flex
-              items-center
-              gap-2
-            "
-          >
-
-            <button
-              class="
-                profileBtn
-                bg-slate-200
-                hover:bg-slate-300
-                px-3
-                py-1
-                rounded-xl
-                text-xs
-              "
-            >
-              Profile
-            </button>
-
-            <button
-              class="
-                bg-blue-600
-                text-white
-                px-3
-                py-1
-                rounded-xl
-                text-xs
-              "
-            >
-              Chat
-            </button>
-
-          </div>
-        `;
-
-        // ================= CHAT =================
-        div.addEventListener(
-          "click",
-          () => {
-
-            selectedUserId =
-              id.toString();
-
-            receiverInput.value =
-              `User ${id.substring(0,6)}`;
-
-            messagesDiv.innerHTML =
-              "";
-
-            loadMessages();
-          }
-        );
-
-        // ================= PROFILE =================
-        div.querySelector(
-          ".profileBtn"
-        )
-        .addEventListener(
-          "click",
-          (e) => {
-
-            e.stopPropagation();
-
-            openProfile(id);
-          }
-        );
-
-        onlineUsersDiv.appendChild(
-          div
-        );
-      });
+// ================= PROFILE NAVIGATION HANDLER =================
+function openProfile(userId) {
+  if (!userId || userId === "undefined" || userId === "null") {
+    alert("Invalid user profile configuration.");
+    return;
   }
-);
+  localStorage.setItem("profileUserId", String(userId));
+  window.location.href = "user.html";
+}
 
-// ================= LOAD POSTS =================
+// ================= DIRECTORY DISCOVERY AND ACTIVE USER MANAGEMENT =================
+socket.on("onlineUsers", async (usersList) => {
+  console.log("🌐 REFRESH DIRECTORY SNAPSHOT:", usersList);
+  if (!onlineUsersDiv) return;
+
+  const fragment = document.createDocumentFragment();
+
+  for (const id of usersList) {
+    if (String(id) === currentUserId) continue;
+
+    let username = `User ${String(id).substring(0, 6)}`;
+    let profilePic = "";
+
+    try {
+      const res = await fetch(`${API}/api/users/${id}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      
+      const profileData = data.user || data;
+      username = profileData.username || username;
+      profilePic = profileData.profilePic || "";
+    } catch (err) {
+      console.warn("⚠️ Metadata stream incomplete for peer element:", id);
+    }
+
+    const div = document.createElement("div");
+    const isActive = selectedUserId && selectedUserId === String(id);
+
+    div.className = `
+      flex items-center justify-between border px-4 py-3 rounded-2xl cursor-pointer transition-all my-1.5
+      ${isActive ? "bg-blue-50 border-blue-200 shadow-sm" : "bg-slate-50 border-slate-100 hover:bg-blue-50/50"}
+    `;
+
+    div.innerHTML = `
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center shadow-inner text-sm font-bold text-slate-600">
+          ${profilePic ? `<img src="${profilePic}" class="w-full h-full object-cover" />` : username.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <p class="font-semibold text-sm text-slate-700">${username}</p>
+          <p class="text-xs text-emerald-500 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span> Online
+          </p>
+        </div>
+      </div>
+      <button class="profileBtn bg-white hover:bg-slate-100 border border-slate-200 shadow-sm px-3 py-1 rounded-xl text-xs font-medium text-slate-600 transition">
+        Profile
+      </button>
+    `;
+
+    div.addEventListener("click", () => {
+      selectedUserId = String(id);
+      selectedUsername = username;
+      
+      // FIX: Push data cleanly directly into view input form box layout element
+      if (receiverInput) receiverInput.value = `Chatting with ${selectedUsername}`;
+      
+      loadMessages();
+      socket.emit("getOnlineUsers"); 
+    });
+
+    div.querySelector(".profileBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      openProfile(String(id));
+    });
+
+    fragment.appendChild(div);
+  }
+
+  onlineUsersDiv.innerHTML = "";
+  onlineUsersDiv.appendChild(fragment);
+});
+
+// ================= DISCOVER TIMELINE POST FEED MANAGEMENT =================
 async function loadPosts() {
+  if (!feedDiv) return;
 
   try {
+    const res = await fetch(`${API}/api/posts`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
 
-    const res =
-      await fetch(
-        `${API}/api/posts`,
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`
-          }
-        }
-      );
+    const data = await res.json();
+    const posts = data.posts || data;
+    feedDiv.innerHTML = "";
 
-    const posts =
-      await res.json();
+    if (!Array.isArray(posts) || posts.length === 0) {
+      feedDiv.innerHTML = `<div class="text-center text-slate-400 py-8 italic text-sm">No activity inside the local feed cluster yet.</div>`;
+      return;
+    }
 
-    console.log(
-      "POSTS:",
-      posts
-    );
+    posts.reverse().forEach(post => {
+      const userData = post.userId || post.user || {};
+      const targetAuthorId = String(userData._id || userData.id || post.userId);
+      const div = document.createElement("div");
+      div.className = "bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm my-4";
 
-    feedDiv.innerHTML =
-      "";
+      const imageElement = post.image
+        ? `<div class="border-t border-slate-100 bg-slate-50"><img src="${API}/uploads/${post.image}" class="w-full max-h-[500px] object-cover block" loading="lazy"/></div>`
+        : "";
 
-    posts.reverse().forEach(
-      (post) => {
-
-        const div =
-          document.createElement(
-            "div"
-          );
-
-        div.className = `
-          bg-white
-          rounded-3xl
-          border
-          border-slate-200
-          shadow-sm
-          overflow-hidden
-        `;
-
-        const image =
-          post.image
-            ? `
-            <img
-              src="${API}/uploads/${post.image}"
-              class="
-                w-full
-                max-h-[500px]
-                object-cover
-              "
-            />
-          `
-            : "";
-
-        div.innerHTML = `
-          <div
-            class="
-              p-5
-            "
-          >
-
-            <!-- USER -->
-            <div
-              class="
-                flex
-                items-center
-                justify-between
-                mb-4
-              "
-            >
-
-              <div
-                onclick="openProfile('${post.userId}')"
-                class="
-                  flex
-                  items-center
-                  gap-3
-                  cursor-pointer
-                "
-              >
-
-                <div
-                  class="
-                    w-12
-                    h-12
-                    rounded-full
-                    bg-blue-600
-                    text-white
-                    flex
-                    items-center
-                    justify-center
-                    font-bold
-                  "
-                >
-                  ${
-                    post.username
-                      ?.charAt(0)
-                      ?.toUpperCase() ||
-                    "U"
-                  }
-                </div>
-
-                <div>
-
-                  <p
-                    class="
-                      font-bold
-                      text-slate-800
-                    "
-                  >
-                    ${
-                      post.username ||
-                      "User"
-                    }
-                  </p>
-
-                  <p
-                    class="
-                      text-xs
-                      text-slate-400
-                    "
-                  >
-                    Click to view profile
-                  </p>
-
-                </div>
-
+      div.innerHTML = `
+        <div class="p-5">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="openProfile('${targetAuthorId}')">
+              <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center rounded-full font-bold shadow-md">
+                ${(userData.username || "U").charAt(0).toUpperCase()}
               </div>
-
-              <!-- FOLLOW -->
-              <button
-                onclick="followUser('${post.userId}')"
-                class="
-                  bg-blue-600
-                  hover:bg-blue-700
-                  text-white
-                  px-4
-                  py-2
-                  rounded-xl
-                  text-sm
-                  font-semibold
-                "
-              >
-                Follow
-              </button>
-
+              <div>
+                <p class="font-bold text-slate-800 group-hover:text-blue-600 transition">${userData.username || "Anonymous User"}</p>
+                <p class="text-[11px] text-slate-400">Vryza Network Member</p>
+              </div>
             </div>
 
-            <!-- CAPTION -->
-            <p
-              class="
-                text-slate-700
-                mb-4
-                whitespace-pre-wrap
-              "
-            >
-              ${
-                post.caption ||
-                ""
-              }
-            </p>
-
+            ${targetAuthorId !== currentUserId ? `
+              <button onclick="followUser('${targetAuthorId}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition">
+                Follow
+              </button>
+            ` : ""}
           </div>
+          <p class="text-slate-700 text-sm leading-relaxed">${post.caption || ""}</p>
+        </div>
+        ${imageElement}
+      `;
 
-          ${image}
-        `;
-
-        feedDiv.appendChild(
-          div
-        );
-      });
+      feedDiv.appendChild(div);
+    });
 
   } catch (err) {
-
-    console.log(
-      "LOAD POSTS ERROR:",
-      err
-    );
+    console.error("❌ CRITICAL SOCIAL TIMELINE EXTRACTION ERROR:", err);
   }
 }
 
-loadPosts();
+// ================= CREATE POST SYSTEM ENGINE =================
+async function createPost() {
+  const captionInput = document.getElementById("caption");
+  const fileInput = document.getElementById("imageFile");
+  if (!captionInput) return;
 
-// ================= FOLLOW USER =================
-async function followUser(
-  targetUserId
-) {
+  const caption = captionInput.value.trim();
+  const file = fileInput?.files[0];
 
-  try {
-
-    const res =
-      await fetch(
-        `${API}/api/users/follow/${targetUserId}`,
-        {
-          method: "POST",
-
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-
-            "Content-Type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-            currentUserId
-          })
-        }
-      );
-
-    const data =
-      await res.json();
-
-    console.log(
-      "FOLLOW:",
-      data
-    );
-
-    alert(
-      "User followed"
-    );
-
-  } catch (err) {
-
-    console.log(
-      "FOLLOW ERROR:",
-      err
-    );
-  }
-}
-
-// ================= LOAD MESSAGES =================
-async function loadMessages() {
-
-  if (!selectedUserId)
+  if (!caption && !file) {
+    alert("Please provide either a caption or a media element before uploading.");
     return;
+  }
+
+  const formData = new FormData();
+  formData.append("caption", caption);
+  if (file) formData.append("image", file);
 
   try {
+    const res = await fetch(`${API}/api/posts`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${token}` },
+      body: formData
+    });
 
-    const res =
-      await fetch(
-        `${API}/api/messages/${selectedUserId}`,
-        {
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
+    const data = await res.json();
+    if (res.ok) {
+      captionInput.value = "";
+      if (fileInput) fileInput.value = "";
+      
+      // Reset layout indicators
+      const previewBox = document.getElementById("mediaDisplayPreview");
+      const placeholderTxt = document.getElementById("uploadPlaceholderText");
+      if (previewBox) { previewBox.innerHTML = ""; previewBox.classList.add("hidden"); }
+      if (placeholderTxt) placeholderTxt.innerText = "Click to upload image";
 
-            userid:
-              currentUserId
-          }
-        }
-      );
+      loadPosts();
+    } else {
+      alert(data.message || "Post transmission processing rejected by storage engine.");
+    }
+  } catch (err) {
+    console.error("❌ CRITICAL FEED POST COMPILING FAULT:", err);
+  }
+}
 
-    const messages =
-      await res.json();
+// ================= SOCIAL GRAPH RELATIONSHIPS =================
+async function followUser(targetUserId) {
+  if (!targetUserId || targetUserId === "undefined") return;
 
-    messagesDiv.innerHTML =
-      "";
-
-    messages.forEach(
-      (msg) => {
-
-        const sender =
-          msg.senderId?.toString();
-
-        const type =
-          sender ===
-          currentUserId
-            ? "sent"
-            : "received";
-
-        addMessage(
-          msg.text,
-          type
-        );
+  try {
+    const res = await fetch(`${API}/api/user/follow/${targetUserId}`, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
       }
-    );
+    });
 
-    scrollBottom();
-
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message || "Social relationship status updated successfully!");
+    } else {
+      alert(data.message || "Unable to adjust follow tracking targets.");
+    }
   } catch (err) {
-
-    console.log(
-      "LOAD MESSAGE ERROR:",
-      err
-    );
+    console.error("❌ RELATIONSHIP TRANSIT FAULT:", err);
   }
 }
 
-// ================= SEND MESSAGE =================
-function sendMessage() {
+// ================= BACKEND STORAGE RESYNC LOGIC =================
+async function loadMessages() {
+  if (!selectedUserId || !messagesDiv) return;
 
-  const input =
-    document.getElementById(
-      "message"
-    );
+  try {
+    messagesDiv.innerHTML = `<div class="text-center text-slate-400 py-4 italic text-xs animate-pulse">Loading conversation...</div>`;
 
-  const text =
-    input.value.trim();
+    const res = await fetch(`${API}/api/messages/${selectedUserId}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "userid": currentUserId,
+        "Content-Type": "application/json"
+      }
+    });
 
-  if (
-    !text ||
-    !selectedUserId
-  ) {
+    const data = await res.json();
+    const historicalFeed = data.messages || data;
+    messagesDiv.innerHTML = "";
 
-    alert(
-      "Select a user first"
-    );
+    if (!Array.isArray(historicalFeed) || historicalFeed.length === 0) {
+      messagesDiv.innerHTML = `<div class="text-center text-slate-400 py-6 italic text-xs">Empty Log.</div>`;
+      return;
+    }
 
-    return;
+    historicalFeed.forEach((msg) => {
+      const sender = (msg.senderId || msg.sender)?.toString();
+      const type = sender === currentUserId ? "sent" : "received";
+      if (msg.text || msg.message) addMessage(msg.text || msg.message, type);
+    });
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  } catch (err) {
+    console.error("❌ MESSAGES TIMELINE EXTRACTION ERROR:", err);
   }
+}
 
-  const data = {
+// ================= TRANSIT CHAT CONTENT BLOCKS =================
+function sendMessage() {
+  const input = document.getElementById("message");
+  if (!input) return;
 
-    senderId:
-      currentUserId,
+  const text = input.value.trim();
+  if (!text || !selectedUserId) return;
 
-    receiverId:
-      selectedUserId,
+  socket.emit("sendMessage", {
+    senderId: currentUserId,
+    receiverId: selectedUserId,
+    message: text,
+    text: text
+  });
 
-    text
-  };
-
-  socket.emit(
-    "sendMessage",
-    data
-  );
-
-  addMessage(
-    text,
-    "sent"
-  );
-
+  addMessage(text, "sent");
   input.value = "";
 }
 
-// ================= RECEIVE PRIVATE =================
-socket.on(
-  "receiveMessage",
-  (data) => {
-
-    if (
-      data.senderId
-        .toString() ===
-      selectedUserId
-        ?.toString()
-    ) {
-
-      addMessage(
-        data.text,
-        "received"
-      );
-    }
-  }
-);
-
-// ================= ADD MESSAGE =================
-function addMessage(
-  text,
-  type
-) {
-
-  const div =
-    document.createElement(
-      "div"
-    );
-
-  div.className =
-    type === "sent"
-      ? `
-        ml-auto
-        bg-blue-600
-        text-white
-        px-4
-        py-2
-        rounded-2xl
-        max-w-[80%]
-        text-sm
-      `
-      : `
-        mr-auto
-        bg-white
-        border
-        border-slate-200
-        text-slate-700
-        px-4
-        py-2
-        rounded-2xl
-        max-w-[80%]
-        text-sm
-      `;
-
-  div.innerText =
-    text;
-
-  messagesDiv.appendChild(
-    div
-  );
-
-  scrollBottom();
-}
-
-// ================= GROUP CHAT =================
+// ================= REALTIME BROADCAST DISPATCH GROUP CONDUIT =================
 function sendGroupMessage() {
+  const input = document.getElementById("groupMessage");
+  if (!input) return;
 
-  const input =
-    document.getElementById(
-      "groupMessage"
-    );
-
-  const text =
-    input.value.trim();
-
+  const text = input.value.trim();
   if (!text) return;
 
-  const data = {
-
-    senderId:
-      currentUserId,
-
-    username:
-      user.username ||
-      "User",
-
-    text,
-
-    group: true
-  };
-
-  socket.emit(
-    "groupMessage",
-    data
-  );
-
-  addGroupMessage(
-    data,
-    true
-  );
+  socket.emit("sendGroupMessage", {
+    senderId: currentUserId,
+    username: user.username || "Peer",
+    message: text,
+    text: text
+  });
 
   input.value = "";
 }
 
-// ================= RECEIVE GROUP =================
-socket.on(
-  "receiveGroupMessage",
-  (data) => {
-
-    addGroupMessage(
-      data,
-      false
-    );
+// ================= SOCKET EVENT HOOK RECEIVERS =================
+socket.on("receiveMessage", (data) => {
+  const incomingSender = (data.senderId || data.sender)?.toString();
+  if (incomingSender === selectedUserId) {
+    addMessage(data.message || data.text, "received");
   }
-);
+});
 
-// ================= ADD GROUP =================
-function addGroupMessage(
-  data,
-  own
-) {
+socket.on("receiveGroupMessage", (data) => {
+  console.log("🌍 GROUP CHAT OVERLAY INTERCEPT:", data);
+  if (!groupMessagesDiv) return;
 
-  const div =
-    document.createElement(
-      "div"
-    );
+  const div = document.createElement("div");
+  const isMe = String(data.senderId || data.sender) === currentUserId;
+  
+  const base = "max-w-[80%] px-3 py-2 rounded-2xl text-xs my-1 clear-both break-words shadow-sm flex flex-col";
+  
+  if (isMe) {
+    div.className = `${base} ml-auto bg-indigo-600 text-white rounded-tr-none`;
+    div.innerHTML = `<span class="text-[10px] text-indigo-200 font-bold">You</span><span>${data.message || data.text}</span>`;
+  } else {
+    div.className = `${base} mr-auto bg-white text-slate-700 border border-slate-100 rounded-tl-none`;
+    div.innerHTML = `<span class="text-[10px] text-indigo-500 font-bold">${data.username || "Global Peer"}</span><span>${data.message || data.text}</span>`;
+  }
 
-  div.className =
-    own
-      ? `
-        bg-indigo-600
-        text-white
-        p-3
-        rounded-2xl
-        ml-auto
-        max-w-[85%]
-      `
-      : `
-        bg-white
-        border
-        border-slate-200
-        text-slate-700
-        p-3
-        rounded-2xl
-        mr-auto
-        max-w-[85%]
-      `;
+  groupMessagesDiv.appendChild(div);
+  groupMessagesDiv.scrollTop = groupMessagesDiv.scrollHeight;
+});
 
-  div.innerHTML = `
-    <div
-      class="
-        text-xs
-        font-bold
-        mb-1
-      "
-    >
-      ${data.username}
-    </div>
+// ================= DOM ELEMENT INJECTION BUILDERS =================
+function addMessage(text, type) {
+  if (!messagesDiv) return;
 
-    <div>
-      ${data.text}
-    </div>
-  `;
+  const div = document.createElement("div");
+  const base = "max-w-[75%] px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm my-1.5 clear-both break-words transition-all";
 
-  groupMessagesDiv.appendChild(
-    div
-  );
+  if (type === "sent") {
+    div.className = `${base} ml-auto bg-blue-600 text-white rounded-tr-none`;
+  } else {
+    div.className = `${base} mr-auto bg-white text-slate-700 border border-slate-100 rounded-tl-none`;
+  }
 
-  groupMessagesDiv.scrollTop =
-    groupMessagesDiv.scrollHeight;
+  div.innerText = text;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// ================= CREATE POST =================
-async function createPost() {
+// ================= KEY BIND INTERCEPT LISTENER INITIALIZATION =================
+document.getElementById("message")?.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") sendMessage();
+});
 
-  const caption =
-    document
-      .getElementById(
-        "caption"
-      )
-      .value.trim();
+document.getElementById("groupMessage")?.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") sendGroupMessage();
+});
 
-  const image =
-    document
-      .getElementById(
-        "imageFile"
-      )
-      .files[0];
+// ================= ATTACH GLOBAL RUNTIME HOOKS =================
+window.openProfile = openProfile;
+window.followUser = followUser;
+window.sendMessage = sendMessage;
+window.sendGroupMessage = sendGroupMessage;
+window.createPost = createPost;
+window.loadPosts = loadPosts;
 
-  if (
-    !caption &&
-    !image
-  ) {
-    return;
-  }
-
-  const formData =
-    new FormData();
-
-  formData.append(
-    "caption",
-    caption
-  );
-
-  formData.append(
-    "userId",
-    currentUserId
-  );
-
-  if (image) {
-
-    formData.append(
-      "image",
-      image
-    );
-  }
-
-  try {
-
-    const res =
-      await fetch(
-        `${API}/api/posts`,
-        {
-          method: "POST",
-
-          headers: {
-            Authorization:
-              `Bearer ${token}`
-          },
-
-          body: formData
-        }
-      );
-
-    const data =
-      await res.json();
-
-    console.log(
-      "POST CREATED:",
-      data
-    );
-
-    alert(
-      "Post uploaded"
-    );
-
-    location.reload();
-
-  } catch (err) {
-
-    console.log(
-      "POST ERROR:",
-      err
-    );
-  }
-}
-
-// ================= ENTER SEND =================
-document
-  .getElementById(
-    "message"
-  )
-  .addEventListener(
-    "keypress",
-    (e) => {
-
-      if (
-        e.key === "Enter"
-      ) {
-
-        sendMessage();
-      }
-    }
-  );
-
-// ================= GROUP ENTER =================
-document
-  .getElementById(
-    "groupMessage"
-  )
-  .addEventListener(
-    "keypress",
-    (e) => {
-
-      if (
-        e.key === "Enter"
-      ) {
-
-        sendGroupMessage();
-      }
-    }
-  );
-
-// ================= SCROLL =================
-function scrollBottom() {
-
-  messagesDiv.scrollTop =
-    messagesDiv.scrollHeight;
-}
+// Execute timeline extraction loop on boot sequence load
+loadPosts();

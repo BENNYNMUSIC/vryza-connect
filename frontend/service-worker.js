@@ -1,16 +1,16 @@
 // ================= CACHE VERSION =================
-const CACHE_NAME =
-  "vryza-cache-v2";
+const CACHE_NAME = "vryza-cache-v2";
+const API_ORIGIN = "https://vryza-connect-backend-production.up.railway.app";
 
 // ================= FILES TO CACHE =================
 const urlsToCache = [
-
   "/",
   "/index.html",
   "/home.html",
   "/chat.html",
   "/profile.html",
   "/auth.html",
+  "/settings.html", // Added to prevent offline breaking
 
   "/style.css",
 
@@ -18,6 +18,7 @@ const urlsToCache = [
   "/chat.js",
   "/profile.js",
   "/auth.js",
+  "/settings.js", // Added to ensure layout matching
 
   "/images/icon-192.png",
   "/images/icon-512.png",
@@ -25,164 +26,93 @@ const urlsToCache = [
   "/images/default-avatar.png"
 ];
 
-// ================= INSTALL =================
-self.addEventListener(
-  "install",
-  (event) => {
+// ================= INSTALLATION =================
+self.addEventListener("install", (event) => {
+  console.log("⚙️ Service Worker: Installing Assets...");
 
-    console.log(
-      "Service Worker Installed"
-    );
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log("📦 Service Worker: Pre-caching static core shells");
+      // Using map inside Promise.all prevents one missing file from breaking the whole install
+      return Promise.all(
+        urlsToCache.map(url => {
+          return cache.add(url).catch(err => console.warn(`⚠️ Failed to cache asset: ${url}`, err));
+        })
+      );
+    })
+  );
 
-    event.waitUntil(
+  // Activate immediately without requiring a manual page refresh
+  self.skipWaiting();
+});
 
-      caches.open(
-        CACHE_NAME
-      ).then((cache) => {
+// ================= ACTIVATION =================
+self.addEventListener("activate", (event) => {
+  console.log("🚀 Service Worker: Activated Successfully.");
 
-        console.log(
-          "Caching files"
-        );
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log("🗑️ Deleting legacy structural cache store:", cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
 
-        return cache.addAll(
-          urlsToCache
-        );
-      })
-    );
+  // Instantly seize control of all active clients/open browser tabs
+  self.clients.claim();
+});
 
-    // ACTIVATE IMMEDIATELY
-    self.skipWaiting();
+// ================= FETCH PASS THROUGH INTERCEPTOR =================
+self.addEventListener("fetch", (event) => {
+  // 1. STRATEGY Bypass: Only intercept standard GET transactions
+  if (event.request.method !== "GET") return;
+
+  const requestUrl = new URL(event.request.url);
+
+  // 2. STRATEGY Bypass: Let live real-time API or WebSocket data bypass caching completely
+  if (requestUrl.origin === API_ORIGIN || requestUrl.pathname.startsWith("/api/")) {
+    return; // Dynamic API database content must always be handled directly via live server
   }
-);
 
-// ================= ACTIVATE =================
-self.addEventListener(
-  "activate",
-  (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      // Return local cache immediately if found
+      if (cachedResponse) {
+        return cachedResponse;
+      }
 
-    console.log(
-      "Service Worker Activated"
-    );
-
-    event.waitUntil(
-
-      caches.keys().then(
-        (cacheNames) => {
-
-          return Promise.all(
-
-            cacheNames.map(
-              (cache) => {
-
-                // DELETE OLD CACHE
-                if (
-                  cache !==
-                  CACHE_NAME
-                ) {
-
-                  console.log(
-                    "Deleting old cache:",
-                    cache
-                  );
-
-                  return caches.delete(
-                    cache
-                  );
-                }
-              }
-            )
-          );
-        }
-      )
-    );
-
-    // TAKE CONTROL
-    self.clients.claim();
-  }
-);
-
-// ================= FETCH =================
-self.addEventListener(
-  "fetch",
-  (event) => {
-
-    // ONLY CACHE GET REQUESTS
-    if (
-      event.request.method !==
-      "GET"
-    ) {
-      return;
-    }
-
-    event.respondWith(
-
-      caches.match(
-        event.request
-      ).then(
-        (cachedResponse) => {
-
-          // RETURN CACHE
+      // Fall back to live network connection
+      return fetch(event.request)
+        .then((networkResponse) => {
+          // FIXED: Allow 'cors' types so your cross-origin uploads and files work correctly
           if (
-            cachedResponse
+            !networkResponse || 
+            networkResponse.status !== 200 || 
+            (networkResponse.type !== "basic" && networkResponse.type !== "cors")
           ) {
-
-            return cachedResponse;
+            return networkResponse;
           }
 
-          // FETCH FROM NETWORK
-          return fetch(
-            event.request
-          )
+          // Clone response stream since it can only be read once
+          const responseClone = networkResponse.clone();
 
-            .then(
-              (networkResponse) => {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
 
-                // INVALID RESPONSE
-                if (
-                  !networkResponse ||
-                  networkResponse.status !== 200 ||
-                  networkResponse.type !== "basic"
-                ) {
-
-                  return networkResponse;
-                }
-
-                // CLONE RESPONSE
-                const responseClone =
-                  networkResponse.clone();
-
-                // SAVE TO CACHE
-                caches.open(
-                  CACHE_NAME
-                ).then(
-                  (cache) => {
-
-                    cache.put(
-                      event.request,
-                      responseClone
-                    );
-                  }
-                );
-
-                return networkResponse;
-              }
-            )
-
-            .catch(() => {
-
-              // OFFLINE FALLBACK
-              if (
-                event.request.destination ===
-                "document"
-              ) {
-
-                return caches.match(
-                  "/home.html"
-                );
-              }
-            });
-        }
-      )
-    );
-  }
-);
+          return networkResponse;
+        })
+        .catch(() => {
+          // OFFLINE FALLBACK ENGINE
+          if (event.request.destination === "document") {
+            return caches.match("/home.html");
+          }
+        });
+    })
+  );
+});
