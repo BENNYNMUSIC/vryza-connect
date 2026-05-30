@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vryza Connect - Authentication</title>
+
+  <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 380px;
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 18px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      background: #334155;
+      color: white;
+      font-size: 15px;
+      transition: ring 0.2s ease;
+    }
+
+    input:focus {
+      box-shadow: 0 0 0 2px #38bdf8;
+    }
+
+    input::placeholder {
+      color: #94a3b8;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 10px;
+      background: #22c55e;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #16a34a;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .toggle {
+      text-align: center;
+      margin-top: 18px;
+      color: #38bdf8;
+      cursor: pointer;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .toggle:hover {
+      text-decoration: underline;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #38bdf8;
+    }
+  </style>
+
+  <script src="loggin.js" defer></script>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="logo">
+      Vryza Connect
+    </div>
+
+    <div id="loginBox">
+      <h2>Login</h2>
+      <input
+        type="email"
+        id="logEmail"
+        placeholder="Email Address"
+        autocomplete="email"
+      />
+      <input
+        type="password"
+        id="logPass"
+        placeholder="Password"
+        autocomplete="current-password"
+      />
+      <button id="loginBtn" onclick="login()">
+        Login
+      </button>
+      <div class="toggle" onclick="showSignup()">
+        Don't have an account? Sign Up
+      </div>
+    </div>
+
+    <div id="signupBox" class="hidden">
+      <h2>Create Account</h2>
+      <input
+        type="text"
+        id="regUser"
+        placeholder="Choose Username"
+        autocomplete="username"
+      />
+      <input
+        type="email"
+        id="regEmail"
+        placeholder="Email Address"
+        autocomplete="email"
+      />
+      <input
+        type="password"
+        id="regPass"
+        placeholder="Create Password"
+        autocomplete="new-password"
+      />
+      <button id="registerBtn" onclick="register()">
+        Register
+      </button>
+      <div class="toggle" onclick="showLogin()">
+        Already have an account? Login
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
