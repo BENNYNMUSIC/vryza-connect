@@ -9,16 +9,22 @@ const urlsToCache = [
   "index.html",
   "home.html",
   "chat.html",
+  "friends.html",
   "profile.html",
   "auth.html",
   "settings.html",
+  "user.html",
+  "admin.html",
 
   "style.css",
 
   "script.js",
+  "admin.js",
   "chat.js",
+  "authcheck.js",
   "profile.js",
   "auth.js",
+  "loggin.js",
   "settings.js",
 
   "images/icon-192.png",
