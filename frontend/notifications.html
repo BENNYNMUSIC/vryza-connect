@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#111;
+    color:white;
+    margin:0;
+    padding:20px;
+}
+
+.notification{
+    background:#1e1e1e;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:10px;
+    cursor:pointer;
+}
+
+.notification.unread{
+    border-left:4px solid #00aaff;
+}
+
+.time{
+    color:gray;
+    font-size:12px;
+}
+</style>
+</head>
+<body>
+
+<h2>Notifications</h2>
+
+<div id="notifications"></div>
+
+<script>
+const API_URL = "https://vryza-connect-backend-production.up.railway.app";
+const token = localStorage.getItem("token");
+
+async function loadNotifications() {
+    try {
+
+        const res = await fetch(`${API_URL}/api/notifications`, {
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        });
+
+        const data = await res.json();
+
+        const container = document.getElementById("notifications");
+        container.innerHTML = "";
+
+        if (!data.notifications?.length) {
+            container.innerHTML = "<p>No notifications.</p>";
+            return;
+        }
+
+        data.notifications.forEach(notification => {
+
+            let text = "";
+
+            switch(notification.type){
+
+                case "follow":
+                    text = `${notification.from.username} started following you`;
+                    break;
+
+                case "like":
+                    text = `${notification.from.username} liked your post`;
+                    break;
+
+                case "comment":
+                    text = `${notification.from.username} commented on your post`;
+                    break;
+
+                case "message":
+                    text = `${notification.from.username} sent you a message`;
+                    break;
+            }
+
+            const div = document.createElement("div");
+
+            div.className =
+                `notification ${notification.read ? "" : "unread"}`;
+
+            div.innerHTML = `
+                <div>${text}</div>
+                <div class="time">
+                    ${new Date(notification.createdAt).toLocaleString()}
+                </div>
+            `;
+
+            div.onclick = async () => {
+
+                await fetch(
+                    `${API_URL}/api/notifications/${notification._id}/read`,
+                    {
+                        method:"PUT",
+                        headers:{
+                            Authorization:`Bearer ${token}`
+                        }
+                    }
+                );
+
+                if(notification.type === "like" ||
+                   notification.type === "comment") {
+
+                    window.location.href =
+                        `post.html?id=${notification.postId}`;
+
+                } else if(notification.type === "follow") {
+
+                    window.location.href =
+                        `profile.html?id=${notification.from._id}`;
+
+                } else if(notification.type === "message") {
+
+                    window.location.href =
+                        `chat.html?id=${notification.from._id}`;
+                }
+            };
+
+            container.appendChild(div);
+        });
+
+    } catch(err) {
+        console.error(err);
+    }
+}
+
+loadNotifications();
+</script>
+
+</body>
+</html>
