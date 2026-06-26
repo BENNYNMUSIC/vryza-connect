@@ -22,6 +22,25 @@ body{
     cursor:pointer;
 }
 
+#notificationBadge{
+    background:red;
+    color:white;
+    border-radius:50%;
+    padding:3px 8px;
+    font-size:12px;
+}
+
+.toast{
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#222;
+    color:white;
+    padding:12px;
+    border-radius:8px;
+    z-index:9999;
+}
+
 .notification.unread{
     border-left:4px solid #00aaff;
 }
@@ -38,56 +57,90 @@ body{
 
 <div id="notifications"></div>
 
+<div class="notification-icon">
+    🔔
+    <span id="notificationBadge">0</span>
+</div>
+
+<button id="markAllBtn">
+    Mark All As Read
+</button>
+
+<script src="/socket.io/socket.io.js"></script>
+
 <script>
 const API_URL = "https://vryza-connect-backend-production.up.railway.app";
 const token = localStorage.getItem("token");
 
-async function loadNotifications() {
+// Safely extract user ID from JWT token payload (or fallback to a localStorage item)
+let currentUserId = "";
+if (token) {
     try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(window.atob(base64));
+        currentUserId = payload.id || payload._id; 
+    } catch (e) {
+        console.error("Failed to parse token payload", e);
+    }
+}
 
-        const res = await fetch(`${API_URL}/api/notifications`, {
+let page = 1;
+let loading = false;
+
+// 1. Load Notifications from API
+async function loadNotifications(pageNumber = 1) {
+    if (loading) return;
+    loading = true;
+
+    try {
+        const res = await fetch(`${API_URL}/api/notifications?page=${pageNumber}`, {
             headers:{
                 Authorization:`Bearer ${token}`
             }
         });
 
         const data = await res.json();
-
         const container = document.getElementById("notifications");
-        container.innerHTML = "";
+        
+        if (pageNumber === 1) {
+            container.innerHTML = "";
+        }
 
-        if (!data.notifications?.length) {
-            container.innerHTML = "<p>No notifications.</p>";
+        // Note: Backend should return structure like { notifications: [...] }
+        const notificationList = data.notifications || data;
+
+        if (!notificationList || !notificationList.length) {
+            if (pageNumber === 1) {
+                container.innerHTML = "<p>No notifications.</p>";
+            }
+            loading = false;
             return;
         }
 
-        data.notifications.forEach(notification => {
-
+        notificationList.forEach(notification => {
             let text = "";
+            const username = notification.from?.username || "Someone";
 
             switch(notification.type){
-
                 case "follow":
-                    text = `${notification.from.username} started following you`;
+                    text = `${username} started following you`;
                     break;
-
                 case "like":
-                    text = `${notification.from.username} liked your post`;
+                    text = `${username} liked your post`;
                     break;
-
                 case "comment":
-                    text = `${notification.from.username} commented on your post`;
+                    text = `${username} commented on your post`;
                     break;
-
                 case "message":
-                    text = `${notification.from.username} sent you a message`;
+                    text = `${username} sent you a message`;
                     break;
+                default:
+                    text = "New activity on your account";
             }
 
             const div = document.createElement("div");
-
-            div.className =
-                `notification ${notification.read ? "" : "unread"}`;
+            div.className = `notification ${notification.read ? "" : "unread"}`;
 
             div.innerHTML = `
                 <div>${text}</div>
@@ -97,32 +150,23 @@ async function loadNotifications() {
             `;
 
             div.onclick = async () => {
-
-                await fetch(
-                    `${API_URL}/api/notifications/${notification._id}/read`,
-                    {
+                try {
+                    await fetch(`${API_URL}/api/notifications/${notification._id}/read`, {
                         method:"PUT",
                         headers:{
                             Authorization:`Bearer ${token}`
                         }
-                    }
-                );
+                    });
+                } catch(err) {
+                    console.error("Error marking notification as read:", err);
+                }
 
-                if(notification.type === "like" ||
-                   notification.type === "comment") {
-
-                    window.location.href =
-                        `post.html?id=${notification.postId}`;
-
+                if(notification.type === "like" || notification.type === "comment") {
+                    window.location.href = `post.html?id=${notification.postId}`;
                 } else if(notification.type === "follow") {
-
-                    window.location.href =
-                        `profile.html?id=${notification.from._id}`;
-
+                    window.location.href = `profile.html?id=${notification.from?._id}`;
                 } else if(notification.type === "message") {
-
-                    window.location.href =
-                        `chat.html?id=${notification.from._id}`;
+                    window.location.href = `chat.html?id=${notification.from?._id}`;
                 }
             };
 
@@ -130,11 +174,83 @@ async function loadNotifications() {
         });
 
     } catch(err) {
-        console.error(err);
+        console.error("Error loading notifications:", err);
+    } finally {
+        loading = false;
     }
 }
 
-loadNotifications();
+// 2. Fetch Unread Count (Placeholder to prevent errors since it's called by sockets)
+async function loadUnreadCount() {
+    try {
+        const res = await fetch(`${API_URL}/api/notifications/unread-count`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        document.getElementById("notificationBadge").innerText = data.count || 0;
+    } catch (err) {
+        console.error("Error fetching unread count:", err);
+    }
+}
+
+// 3. UI Toast Function
+function showToast(notification) {
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerHTML = "🔔 New notification";
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 4000);
+}
+
+// --- EVENT LISTENERS ---
+
+// Mark all as read button
+document.getElementById("markAllBtn").addEventListener("click", async () => {
+    try {
+        await fetch(`${API_URL}/api/notifications/read-all`, {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        page = 1;
+        loadNotifications(1);
+        loadUnreadCount();
+    } catch(err) {
+        console.error("Error marking all as read:", err);
+    }
+});
+
+// Infinite Scroll
+window.addEventListener("scroll", () => {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
+        if (!loading) {
+            page++;
+            loadNotifications(page);
+        }
+    }
+});
+
+// --- SOCKET INITIALIZATION ---
+if (token && currentUserId) {
+    const socket = io(API_URL);
+
+    socket.emit("join", currentUserId);
+
+    socket.on("newNotification", notification => {
+        page = 1; // Reset page to 1 to grab the latest feed items
+        loadNotifications(1);
+        loadUnreadCount();
+        showToast(notification);
+    });
+}
+
+// Initial Kick-off
+loadNotifications(1);
+loadUnreadCount();
 </script>
 
 </body>
