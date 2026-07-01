@@ -4,30 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Streams</title>
-    <style>
-        #liveStreams {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .live-card {
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        .live-card img {
-            object-fit: cover;
-        }
-    </style>
 </head>
 <body>
     <h1>Live Streams</h1>
-    <button id="goLiveBtn" style="padding: 10px 20px; cursor: pointer;">Go Live</button>
-    <div id="liveStreams"></div>
+
+    <button id="goLiveBtn" style="padding: 10px 20px; cursor: pointer; font-weight: bold;">Go Live</button>
+
+    <div id="liveStreams" style="margin-top: 20px;"></div>
 
     <script src="live.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
+
+<video id="videoElement" controls autoplay muted style="width: 100%; max-width: 800px;"></video>
+
+<script>
+  if (flvjs.isSupported()) {
+    var videoElement = document.getElementById('videoElement');
+    var flvPlayer = flvjs.createPlayer({
+      type: 'flv',
+      // This URL would be fetched dynamically from your stream's playbackUrl field
+      url: 'http://localhost:8000/live/YOUR_USER_STREAM_KEY.flv' 
+    });
+    flvPlayer.attachMediaElement(videoElement);
+    flvPlayer.load();
+    flvPlayer.play();
+  }
+</script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 const API_URL = "https://vryza-connect-backend-production.up.railway.app";
 
-// Helper function to safely escape strings to prevent basic XSS injections
+// Helper function to prevent malicious XSS injections from custom stream titles
 function escapeHTML(str) {
   if (!str) return '';
   return str.replace(/[&<>'"]/g, 
@@ -21,11 +21,11 @@ async function createStream() {
 
     const data = await res.json();
     if (data.success) {
-      console.log("Stream layout configured:", data.stream);
+      console.log(data.stream);
       return data.stream;
     }
   } catch (err) {
-    console.error("Failed to create stream key layout:", err);
+    console.error("Failed to fetch stream credentials:", err);
   }
 }
 
@@ -44,7 +44,7 @@ async function startStream(title) {
 
     return await res.json();
   } catch (err) {
-    console.error("Failed to transition stream status to live:", err);
+    console.error("Failed to start livestream:", err);
   }
 }
 
@@ -55,65 +55,66 @@ async function loadLiveStreams() {
     const container = document.getElementById("liveStreams");
 
     if (!container) return;
-    container.innerHTML = ""; // Clear existing content once safely
+    container.innerHTML = "";
 
+    // Defensive check: handle cases where data or streams array is missing
     if (!data.streams || data.streams.length === 0) {
       container.innerHTML = "<p>No active live streams right now.</p>";
       return;
     }
 
     data.streams.forEach(stream => {
-      // Escape dynamic string properties to secure DOM insertion points
-      const safeUsername = escapeHTML(stream.user?.username || "Unknown User");
+      // Optional chaining prevents undefined model property crashes
+      const safeUsername = escapeHTML(stream.user?.username || "Anonymous Streamer");
       const safeTitle = escapeHTML(stream.title || "Untitled Stream");
       const safePic = stream.user?.profilePic || "default-avatar.png"; 
 
       const cardHTML = `
-        <div class="live-card">
-          <img src="${safePic}" alt="${safeUsername}'s avatar" style="width:50px; height:50px; border-radius:50%;">
+        <div class="live-card" style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+          <img src="${safePic}" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%;">
           <h3>${safeUsername}</h3>
           <p>${safeTitle}</p>
           <span>🔴 LIVE</span>
         </div>
       `;
-      // insertAdjacentHTML keeps existing DOM states fully intact
+      // insertAdjacentHTML performs drastically better than standard innerHTML updates
       container.insertAdjacentHTML("beforeend", cardHTML);
     });
   } catch (err) {
-    console.error("Error loading livestreams:", err);
+    console.error("Error loading stream items:", err);
   }
 }
 
-// Wire everything up automatically when DOM parses
+// WIRE EVERYTHING TOGETHER ON PAGE LOAD
 document.addEventListener("DOMContentLoaded", () => {
   const goLiveBtn = document.getElementById("goLiveBtn");
-  
+
   if (goLiveBtn) {
     goLiveBtn.addEventListener("click", async () => {
       const title = prompt("Enter a title for your live stream:");
       if (!title || !title.trim()) {
-        alert("A stream title is required to go live!");
+        alert("You must provide a title to go live!");
         return;
       }
 
-      // 1. Ensure stream structure / streamKey exists
+      // Step 1: Ensure stream credentials / key structure exists
       const stream = await createStream();
       if (!stream) {
-        alert("Could not register stream credentials with server.");
+        alert("Failed to create stream key. Check auth status.");
         return;
       }
 
-      // 2. Alert server stream state is shifting to active active
+      // Step 2: Set title and change stream status to active live
       const result = await startStream(title.trim());
       if (result && result.success) {
-        alert("Stream initialized! Connect your encoder software (OBS) using your stream key.");
-        loadLiveStreams(); // Refresh local overview
+        alert(`Stream configured! Connect your broadcast app (like OBS) using your key: ${stream.streamKey}`);
+        loadLiveStreams(); // Refresh the listing layout instantly
       } else {
-        alert(`Failed to activate stream: ${result?.message || 'Unknown error'}`);
+        alert(`Could not start stream: ${result?.message || "Unknown error"}`);
       }
     });
   }
 
-  // Initial load execution
+  // Fetch the active live stream directory immediately when visiting the page
   loadLiveStreams();
 });
