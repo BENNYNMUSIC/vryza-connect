@@ -106,7 +106,6 @@ socket.on("onlineUsers", async (usersList) => {
       selectedUserId = String(id);
       selectedUsername = username;
       
-      // FIX: Push data cleanly directly into view input form box layout element
       if (receiverInput) receiverInput.value = `Chatting with ${selectedUsername}`;
       
       loadMessages();
@@ -215,7 +214,6 @@ async function createPost() {
       captionInput.value = "";
       if (fileInput) fileInput.value = "";
       
-      // Reset layout indicators
       const previewBox = document.getElementById("mediaDisplayPreview");
       const placeholderTxt = document.getElementById("uploadPlaceholderText");
       if (previewBox) { previewBox.innerHTML = ""; previewBox.classList.add("hidden"); }
@@ -328,6 +326,157 @@ function sendGroupMessage() {
   input.value = "";
 }
 
+// ================= DOM ELEMENT INJECTION BUILDERS =================
+function addMessage(text, type) {
+  if (!messagesDiv) return;
+
+  const div = document.createElement("div");
+  const base = "max-w-[75%] px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm my-1.5 clear-both break-words transition-all";
+
+  if (type === "sent") {
+    div.className = `${base} ml-auto bg-blue-600 text-white rounded-tr-none`;
+  } else {
+    div.className = `${base} mr-auto bg-white text-slate-700 border border-slate-100 rounded-tl-none`;
+  }
+
+  div.innerText = text;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// ================= REALTIME CALLS & NOTIFICATIONS ENGINE INTERCEPTORS =================
+
+// 1. Catch Unified Schema Database Notifications (Messages, Likes, System)
+socket.on("notificationReceived", async (notif) => {
+  console.log("🔔 ALARM INTERCEPT: Received a new database event:", notif);
+  
+  // If we are currently actively typing/chatting with this sender, do not throw a toast alert
+  if (selectedUserId && selectedUserId === String(notif.from)) return;
+
+  let originName = "Someone";
+  try {
+    const res = await fetch(`${API}/api/users/${notif.from}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+    originName = (data.user || data).username || originName;
+  } catch (e) {
+    console.warn("Unable to resolve username for alert.");
+  }
+
+  showGlobalToastAlert(originName, notif.type);
+});
+
+// 2. Catch Live WebRTC Incoming Phone/Video Calling Signals
+socket.on("incomingCall", async (data) => {
+  console.log("📞 INCOMING TELEPHONY SIGNAL INTERCEPT:", data);
+  
+  let callerName = "Unknown Connection";
+  try {
+    const res = await fetch(`${API}/api/users/${data.from}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const dataRes = await res.json();
+    callerName = (dataRes.user || dataRes).username || callerName;
+  } catch (e) {}
+
+  showFullScreenCallModal(callerName, data.signal, data.from);
+});
+
+// ================= NOTIFICATION INTERFACE INJECTION UTILITIES =================
+
+function showGlobalToastAlert(senderName, type) {
+  let toastContainer = document.getElementById("global-toast-container");
+  if (!toastContainer) {
+    toastContainer = document.createElement("div");
+    toastContainer.id = "global-toast-container";
+    toastContainer.className = "fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none";
+    document.body.appendChild(toastContainer);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = "bg-white/95 backdrop-blur-md border border-slate-100 shadow-xl p-4 rounded-2xl flex items-center gap-3 transition-all transform translate-x-12 opacity-0 duration-300 pointer-events-auto max-w-sm";
+  
+  let label = "Interacted with you.";
+  let badgeColor = "bg-blue-500";
+  
+  if (type === "message") { label = "sent you a direct message."; badgeColor = "bg-indigo-500"; }
+  if (type === "incoming_call") { label = "is trying to call you."; badgeColor = "bg-emerald-500"; }
+  if (type === "like") { label = "liked your post."; badgeColor = "bg-rose-500"; }
+  if (type === "comment") { label = "commented on your timeline."; badgeColor = "bg-amber-500"; }
+
+  toast.innerHTML = `
+    <div class="w-2.5 h-2.5 rounded-full ${badgeColor} shrink-0"></div>
+    <div class="flex-1">
+      <p class="text-xs font-bold text-slate-800">${senderName}</p>
+      <p class="text-[11px] text-slate-500">${label}</p>
+    </div>
+  `;
+
+  toastContainer.appendChild(toast);
+  
+  // Trigger slide animation
+  setTimeout(() => { toast.classList.remove("translate-x-12", "opacity-0"); }, 10);
+  
+  // Clean up element automatically after expiration delay
+  setTimeout(() => {
+    toast.classList.add("translate-x-12", "opacity-0");
+    setTimeout(() => { toast.remove(); }, 300);
+  }, 4500);
+}
+
+function showFullScreenCallModal(callerName, signalData, callerId) {
+  // Prevent duplicate interface layering stack issues
+  if (document.getElementById("telephony-overlay-modal")) return;
+
+  const modal = document.createElement("div");
+  modal.id = "telephony-overlay-modal";
+  modal.className = "fixed inset-0 bg-slate-900/80 backdrop-blur-lg z-[99999] flex items-center justify-center p-4 animate-fade-in";
+  
+  modal.innerHTML = `
+    <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl text-center border border-slate-100 transform transition-all scale-95 duration-300">
+      <div class="relative w-20 h-20 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-full flex items-center justify-center text-white font-black text-2xl mx-auto mb-6 shadow-lg shadow-emerald-200">
+        ${callerName.charAt(0).toUpperCase()}
+        <span class="absolute inset-0 rounded-full border-4 border-emerald-400 animate-ping opacity-75"></span>
+      </div>
+      
+      <h3 class="text-xl font-black text-slate-800 tracking-tight mb-1">${callerName}</h3>
+      <p class="text-xs text-slate-400 font-medium mb-8">Incoming Communication Link...</p>
+      
+      <div class="flex gap-4 justify-center">
+        <button id="declineCallBtn" class="bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm px-6 py-3 rounded-2xl shadow-md transition flex items-center gap-2">
+          Decline
+        </button>
+        <button id="acceptCallBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm px-6 py-3 rounded-2xl shadow-md transition flex items-center gap-2">
+          Accept Call
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Hook operational controller events inside layouts
+  modal.querySelector("#declineCallBtn").addEventListener("click", () => {
+    socket.emit("endCall", { to: callerId });
+    modal.remove();
+  });
+
+  modal.querySelector("#acceptCallBtn").addEventListener("click", () => {
+    console.log("Accepting call line...");
+    socket.emit("answerCall", { to: callerId, signal: signalData });
+    
+    // Redirect context variables or reveal local communication layout components here
+    modal.remove();
+    alert("Connection linking sequence running via signaling bridge setup...");
+  });
+
+  // Handle call terminating externally while window remains open
+  socket.on("callEnded", () => {
+    modal.remove();
+  });
+}
+
 // ================= SOCKET EVENT HOOK RECEIVERS =================
 socket.on("receiveMessage", (data) => {
   const incomingSender = (data.senderId || data.sender)?.toString();
@@ -356,24 +505,6 @@ socket.on("receiveGroupMessage", (data) => {
   groupMessagesDiv.appendChild(div);
   groupMessagesDiv.scrollTop = groupMessagesDiv.scrollHeight;
 });
-
-// ================= DOM ELEMENT INJECTION BUILDERS =================
-function addMessage(text, type) {
-  if (!messagesDiv) return;
-
-  const div = document.createElement("div");
-  const base = "max-w-[75%] px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm my-1.5 clear-both break-words transition-all";
-
-  if (type === "sent") {
-    div.className = `${base} ml-auto bg-blue-600 text-white rounded-tr-none`;
-  } else {
-    div.className = `${base} mr-auto bg-white text-slate-700 border border-slate-100 rounded-tl-none`;
-  }
-
-  div.innerText = text;
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
 
 // ================= KEY BIND INTERCEPT LISTENER INITIALIZATION =================
 document.getElementById("message")?.addEventListener("keypress", (e) => {
