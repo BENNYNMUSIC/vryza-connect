@@ -1,5 +1,5 @@
 // ================= MASTER SERVER PATHWAY LOCATORS =================
-const API = "https://vryza-connect-backend-production.up.railway.app";
+const API = "https://vryza-connect-backend-1.onrender.com";
 
 // ================= ESTABLISH REALTIME NETWORK CONDUIT =================
 const socket = io(API, {

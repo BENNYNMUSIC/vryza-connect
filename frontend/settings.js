@@ -1,5 +1,5 @@
 // ================= MASTER SERVER PATHWAY LOCATORS =================
-const API = "https://vryza-connect-backend-production.up.railway.app";
+const API = "https://vryza-connect-backend-1.onrender.com";
 
 // ================= USER SESSION SECURITY CHECKS =================
 const token = localStorage.getItem("token");

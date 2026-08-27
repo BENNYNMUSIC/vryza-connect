@@ -1,4 +1,4 @@
-const API = "https://vryza-connect-backend-production.up.railway.app";
+const API = "https://vryza-connect-backend-1.onrender.com";
 const socket = io(API);
 
 const token = localStorage.getItem("token");

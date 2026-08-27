@@ -1,6 +1,6 @@
 // ================= MASTER API =================
 const API =
-  "https://vryza-connect-backend-production.up.railway.app";
+  "https://vryza-connect-backend-1.onrender.com";
 
 // ================= GLOBAL STATE =================
 let currentProfileId = null;

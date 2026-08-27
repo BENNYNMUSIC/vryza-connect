@@ -1,4 +1,4 @@
-const API_URL = "https://vryza-connect-backend-production.up.railway.app";
+const API_URL = "https://localhost:5500";
 
 // Helper function to prevent malicious XSS injections from custom stream titles
 function escapeHTML(str) {

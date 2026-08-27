@@ -1,0 +1,31 @@
+<div class="owner-dashboard">
+  <h2>📊 Most Asked Support Questions</h2>
+  <ul id="top-questions-list">Loading...</ul>
+</div>
+
+<script>
+  async function fetchTopQuestions() {
+    const res = await fetch('/api/admin/top-questions');
+    const data = await res.json();
+
+    const listElement = document.getElementById('top-questions-list');
+    listElement.innerHTML = '';
+
+    if (data.topQuestions.length === 0) {
+      listElement.innerHTML = '<li>No questions logged yet.</li>';
+      return;
+    }
+
+    data.topQuestions.forEach((item, index) => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <strong>#${index + 1}</strong> "${item._id}" 
+        <span class="ask-count">Asked ${item.count} times</span>
+      `;
+      listElement.appendChild(li);
+    });
+  }
+
+  // Fetch when owner opens dashboard page
+  fetchTopQuestions();
+</script>

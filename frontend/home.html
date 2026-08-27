@@ -3,8 +3,8 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vryza Connect | Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vryza Connect | Home & Dashboard</title>
 
   <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
 
@@ -15,17 +15,17 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <script src="https://vryza-connect-backend-production.up.railway.app/socket.io/socket.io.js"></script>
-
-  <link href="https://fonts.googleapis.com/css2=family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <style>
     body {
       font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
     ::-webkit-scrollbar {
-      width: 6px;
+      width: 4px;
+      height: 4px;
     }
     ::-webkit-scrollbar-track {
       background: #f1f1f1;
@@ -34,104 +34,153 @@
       background: #cbd5e1;
       border-radius: 10px;
     }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* AI Admin message styling (from isadmin.css) */
+    .ai-admin-message {
+      background-color: #f0f4ff;
+      border-left: 4px solid #3b82f6;
+      padding: 10px 14px;
+      margin: 8px 0;
+      border-radius: 8px;
+    }
+
+    .bot-badge {
+      background-color: #2563eb;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
   </style>
 </head>
 
-<body class="bg-slate-50 pt-20">
+<body class="bg-slate-50 pt-16 sm:pt-20 pb-12">
 
-  <nav class="bg-white/80 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
-    <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-3">
+  <nav class="bg-white/90 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5">
       
-      <div class="flex items-center gap-12">
-        <div class="flex items-center gap-3 bg-slate-100/80 px-3 py-1.5 rounded-2xl border border-slate-200/60 shadow-inner">
+      <div class="flex items-center gap-3 sm:gap-8 overflow-x-auto hide-scrollbar w-full">
+        <div class="flex items-center gap-2 bg-slate-100/80 px-2.5 py-1.5 rounded-2xl border border-slate-200/60 shrink-0">
           <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md shadow-blue-200">
-            <img src="images/vryza connect.png" class="w-6 h-6 invert brightness-200" alt="logo">
+            <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
           </div>
-          <span class="font-black text-slate-800 text-lg tracking-tight">
+          <span class="font-black text-slate-800 text-base tracking-tight hidden sm:inline">
             Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">+</span>
           </span>
         </div>
 
-        <div class="flex items-center gap-6">
-          <button onclick="go('home.html')" class="text-blue-600 font-bold flex items-center gap-1">🏠 Home</button>
-          <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1">👤 Profile</button>
-          <button onclick="go('chat.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1">💬 Chat</button>
-           <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1">Friends</button>
-           <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1">notifications</button>
-           <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1">LIVE</button>
-          <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1">⚙️ Settings</button>
+        <div class="flex items-center gap-4 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
+          <button onclick="go('home.html')" class="text-blue-600 font-bold flex items-center gap-1 text-sm shrink-0">🏠 Home</button>
+          <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">👤 Profile</button>
+          <button onclick="go('chat.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">💬 Chat</button>
+          <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">👥 Friends</button>
+          <button onclick="go('group.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🌍 Groups</button>
+          <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🔔 Alerts</button>
+          <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🔴 LIVE</button>
+          <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">⚙️ Settings</button>
         </div>
       </div>
 
-      <button onclick="logout()" class="text-red-500 font-semibold hover:text-red-700 transition flex items-center gap-1">
+      <button onclick="logout()" class="text-red-500 font-semibold hover:text-red-700 transition hidden sm:flex items-center gap-1 text-sm shrink-0 ml-4">
         🚪 Logout
       </button>
     </div>
   </nav>
 
-  <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 px-6 mt-4">
+  <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-6 mt-4">
 
-    <div class="lg:col-span-8 space-y-8">
+    <div class="lg:col-span-8 space-y-6">
 
-      <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-inner">
+      <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-inner text-sm">
             You
           </div>
-          <h2 class="text-lg font-bold text-slate-800 tracking-tight">Share an update</h2>
+          <h2 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">Share an update</h2>
         </div>
 
-        <div class="relative group border-2 border-dashed border-slate-200 rounded-2xl p-4 transition hover:border-blue-300 mb-4 bg-slate-50/50 text-center">
+        <div class="relative group border-2 border-dashed border-slate-200 rounded-2xl p-3 sm:p-4 transition hover:border-blue-300 mb-3 bg-slate-50/50 text-center">
           <input type="file" id="imageFile" accept="image/*,video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewUploadFile(this)">
-          <div id="uploadPlaceholderText" class="text-slate-500 text-sm py-2">
-            <span class="text-blue-600 font-semibold">Click to upload media file</span> (Image / Video)
+          <div id="uploadPlaceholderText" class="text-slate-500 text-xs sm:text-sm py-1">
+            <span class="text-blue-600 font-semibold">Tap to upload media</span> (Image / Video)
           </div>
           <div id="mediaDisplayPreview" class="hidden mt-2 max-w-xs mx-auto relative rounded-xl overflow-hidden border border-slate-200 shadow-sm"></div>
         </div>
 
-        <textarea id="caption" placeholder="What's happening?" class="w-full p-4 bg-slate-50 border border-transparent rounded-2xl mb-4 focus:border-blue-300 focus:bg-white focus:ring-0 outline-none text-slate-700 resize-none transition-all" rows="3"></textarea>
+        <textarea id="caption" placeholder="What's happening?" class="w-full p-3 sm:p-4 bg-slate-50 border border-transparent rounded-2xl mb-3 focus:border-blue-300 focus:bg-white focus:ring-0 outline-none text-slate-700 text-sm resize-none transition-all" rows="3"></textarea>
 
-        <button onclick="createPost()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98]">
+        <button onclick="createPost()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98] text-sm sm:text-base">
           Post to Feed
         </button>
+      </div>
+
+      <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-slate-800 text-base">🌍 Your Groups</h3>
+          <button onclick="go('group.html')" class="text-xs text-blue-600 font-semibold hover:underline">View All</button>
+        </div>
+        <div id="homeMyGroups" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <p class="text-xs text-slate-400">Loading your groups...</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 owner-dashboard">
+        <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center justify-between">
+          <span>📊 Support Insights</span>
+          <span class="text-xs text-slate-400 font-normal">Top Questions</span>
+        </h3>
+        <ul id="top-questions-list" class="space-y-2 text-xs sm:text-sm text-slate-600">
+          <li class="text-slate-400">Loading insights...</li>
+        </ul>
       </div>
 
       <div id="feed" class="space-y-6"></div>
     </div>
 
     <div class="lg:col-span-4 space-y-6">
-      <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 sticky top-24">
+      <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 lg:sticky lg:top-20">
         
-        <h3 class="font-bold text-slate-800 mb-4 flex items-center justify-between">
+        <h3 class="font-bold text-slate-800 mb-3 flex items-center justify-between text-sm sm:text-base">
           <span>Active Now</span>
           <span class="relative flex h-2 w-2">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
         </h3>
-        <div id="onlineUsers" class="space-y-3 max-h-[200px] overflow-y-auto pr-2"></div>
+        <div id="onlineUsers" class="space-y-2.5 max-h-[160px] overflow-y-auto pr-1 text-sm"></div>
 
-        <hr class="my-6 border-slate-100">
-        <h3 class="font-bold text-slate-800 mb-4">💬 Quick Chat</h3>
-        <div class="bg-slate-50 rounded-2xl p-3 mb-3 border border-slate-100 shadow-inner">
-          <input id="receiverId" placeholder="Select an active user to begin..." class="w-full bg-transparent text-xs text-slate-600 font-bold outline-none border-none placeholder-slate-400" readonly>
+        <hr class="my-5 border-slate-100">
+
+        <h3 class="font-bold text-slate-800 mb-3 text-sm sm:text-base">💬 Quick Chat</h3>
+        <div class="bg-slate-50 rounded-2xl p-2.5 mb-2.5 border border-slate-100 shadow-inner">
+          <input id="receiverId" placeholder="Select an active user..." class="w-full bg-transparent text-xs text-slate-600 font-bold outline-none border-none placeholder-slate-400" readonly>
         </div>
-        <div id="messages" class="h-64 overflow-y-auto rounded-2xl mb-4 bg-slate-50 border border-slate-100 p-4 space-y-3 text-sm flex flex-col"></div>
+        <div id="chat-window" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-100 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
         
         <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-blue-400 transition shadow-sm">
-          <input id="message" placeholder="Say hi..." class="flex-1 px-3 py-2 text-sm outline-none bg-transparent">
-          <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-md transition">
+          <input id="message" placeholder="Say hi..." class="flex-1 px-2.5 py-1.5 text-xs sm:text-sm outline-none bg-transparent">
+          <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-md transition shrink-0">
             ➤
           </button>
         </div>
 
-        <hr class="my-6 border-slate-100">
-        <h3 class="font-bold text-slate-800 mb-4">🌍 Group Chat</h3>
-        <div id="groupMessages" class="h-64 overflow-y-auto rounded-2xl mb-4 bg-slate-50 border border-slate-100 p-4 space-y-3 text-sm flex flex-col"></div>
+        <hr class="my-5 border-slate-100">
+
+        <h3 class="font-bold text-slate-800 mb-3 text-sm sm:text-base">🌍 Community Group Chat</h3>
+        <div id="groupMessages" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-100 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
         
         <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-indigo-400 transition shadow-sm">
-          <input id="groupMessage" placeholder="Message everyone..." class="flex-1 px-3 py-2 text-sm outline-none bg-transparent">
-          <button onclick="sendGroupMessage()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-md transition">
+          <input id="groupMessage" placeholder="Message everyone..." class="flex-1 px-2.5 py-1.5 text-xs sm:text-sm outline-none bg-transparent">
+          <button onclick="sendGroupMessage()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-md transition shrink-0">
             ➤
           </button>
         </div>
@@ -141,19 +190,227 @@
 
   </div>
 
+  <section id="groupChatModal" class="hidden fixed inset-0 bg-white z-50 flex flex-col">
+    <div class="h-full flex flex-col">
+      <div class="p-4 bg-blue-600 text-white flex justify-between items-center shadow-md">
+        <div>
+          <h2 id="chatGroupName" class="font-bold text-lg sm:text-xl"></h2>
+          <p id="chatGroupMembers" class="text-xs sm:text-sm opacity-90"></p>
+        </div>
+        <button onclick="closeGroupChat()" class="text-2xl font-bold px-3 py-1 hover:bg-blue-700 rounded-xl transition">✕</button>
+      </div>
+
+      <div id="groupChatMessagesContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 space-y-3"></div>
+
+      <div class="p-3 sm:p-4 bg-white border-t border-slate-200 flex gap-2 max-w-4xl mx-auto w-full">
+        <input id="modalMessageInput" type="text" placeholder="Type a message..." class="flex-1 border border-slate-200 p-3 rounded-xl outline-none focus:border-blue-500 text-sm transition" onkeydown="handleModalMessageKey(event)">
+        <button onclick="sendModalGroupMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-6 rounded-xl font-semibold text-sm shadow-md transition">Send</button>
+      </div>
+    </div>
+  </section>
+
   <script src="script.js"></script>
 
   <script>
+    const API_URL = "https://vryza-connect-backend-1.onrender.com";
+    let currentGroupModal = null;
+    const socket = io(API_URL); // Initialize socket connection for AI Admin messages
+
     function go(page) {
       window.location.href = page;
     }
+
     function logout() {
       localStorage.clear();
       window.location.href = "auth.html";
     }
-  </script>
 
-  <script>
+    function getToken() {
+      return localStorage.getItem("token");
+    }
+
+    async function apiRequestHome(url, options = {}) {
+      const token = getToken();
+      options.headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`
+      };
+      const response = await fetch(API_URL + url, options);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Something went wrong");
+      }
+      return data;
+    }
+
+    // AI Admin Socket Handler Logic (from isadmin.js)
+    socket.on('receive_message', (data) => {
+      const chatWindow = document.getElementById('chat-window');
+      if (!chatWindow) return;
+      const msgElement = document.createElement('div');
+
+      if (data.isAi) {
+        msgElement.className = 'message ai-admin-message';
+        msgElement.innerHTML = `
+          <div class="msg-header flex items-center justify-between mb-1">
+            <span class="bot-badge">🤖 AI ADMIN</span>
+            <span class="time text-[10px] text-slate-400">${new Date(data.timestamp).toLocaleTimeString()}</span>
+          </div>
+          <div class="msg-body text-xs sm:text-sm text-slate-700">${data.message}</div>
+        `;
+      } else {
+        msgElement.className = 'message user-message text-xs sm:text-sm bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm';
+        msgElement.innerHTML = `
+          <strong>${escapeHTML(data.sender || "User")}:</strong> ${escapeHTML(data.message)}
+        `;
+      }
+
+      chatWindow.appendChild(msgElement);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    });
+
+    // Fetch Top Admin Support Questions (from lsadmin.html)
+    async function fetchTopQuestions() {
+      try {
+        const res = await fetch(API_URL + '/api/admin/top-questions');
+        const data = await res.json();
+        const listElement = document.getElementById('top-questions-list');
+        if (!listElement) return;
+        listElement.innerHTML = '';
+
+        if (!data.topQuestions || data.topQuestions.length === 0) {
+          listElement.innerHTML = '<li class="text-slate-400">No questions logged yet.</li>';
+          return;
+        }
+
+        data.topQuestions.forEach((item, index) => {
+          const li = document.createElement('li');
+          li.className = "flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-100";
+          li.innerHTML = `
+            <strong>#${index + 1}</strong> "${escapeHTML(item._id)}" 
+            <span class="ask-count bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg text-[10px] font-bold">Asked ${item.count} times</span>
+          `;
+          listElement.appendChild(li);
+        });
+      } catch (err) {
+        const listElement = document.getElementById('top-questions-list');
+        if (listElement) listElement.innerHTML = '<li class="text-slate-400 text-xs">Unable to load insights.</li>';
+      }
+    }
+
+    // Load User's Groups onto Home Page Preview
+    async function loadHomeMyGroups() {
+      const container = document.getElementById("homeMyGroups");
+      if (!container) return;
+      try {
+        const groups = await apiRequestHome("/api/groups/my");
+        container.innerHTML = "";
+        if (!groups || groups.length === 0) {
+          container.innerHTML = `<p class="text-xs text-slate-400 col-span-2">No groups joined yet. <a href="group.html" class="text-blue-600 underline">Explore groups</a></p>`;
+          return;
+        }
+        groups.slice(0, 4).forEach(group => {
+          container.innerHTML += `
+            <div class="bg-slate-50 border border-slate-100 p-3 rounded-2xl flex items-center justify-between gap-2 shadow-sm">
+              <div class="flex items-center gap-2.5 overflow-hidden">
+                <img src="${group.image || 'images/vryza connect.png'}" class="w-9 h-9 rounded-xl object-cover shrink-0">
+                <div class="truncate">
+                  <h4 class="font-bold text-xs text-slate-800 truncate">${escapeHTML(group.name)}</h4>
+                  <p class="text-[10px] text-slate-500">${group.members ? group.members.length : 0} members</p>
+                </div>
+              </div>
+              <button onclick='openGroupModal(${JSON.stringify(group)})' class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0">Open</button>
+            </div>
+          `;
+        });
+      } catch (err) {
+        console.error("Failed to load user groups on home", err);
+      }
+    }
+
+    function openGroupModal(group) {
+      currentGroupModal = group;
+      document.getElementById("groupChatModal").classList.remove("hidden");
+      document.getElementById("chatGroupName").textContent = group.name;
+      document.getElementById("chatGroupMembers").textContent = `${group.members ? group.members.length : 0} members`;
+      loadModalGroupMessages(group._id);
+    }
+
+    function closeGroupChat() {
+      currentGroupModal = null;
+      document.getElementById("groupChatModal").classList.add("hidden");
+    }
+
+    async function loadModalGroupMessages(groupId) {
+      try {
+        const messages = await apiRequestHome(`/api/groups/${groupId}/messages`);
+        const container = document.getElementById("groupChatMessagesContainer");
+        container.innerHTML = "";
+        messages.forEach(msg => appendModalMessage(msg));
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function appendModalMessage(message) {
+      const container = document.getElementById("groupChatMessagesContainer");
+      const currentUser = getCurrentUserId();
+      const isMine = message.sender && message.sender._id === currentUser;
+
+      const div = document.createElement("div");
+      div.className = `mb-3 flex ${isMine ? "justify-end" : "justify-start"}`;
+      div.innerHTML = `
+        <div class="${isMine ? "bg-blue-600 text-white" : "bg-white border border-slate-200 text-slate-800"} p-3 rounded-2xl max-w-xs sm:max-w-md shadow-sm text-xs sm:text-sm">
+          <p class="font-semibold opacity-75 mb-0.5 text-[10px]">${escapeHTML(message.sender?.username || "User")}</p>
+          <p>${escapeHTML(message.text)}</p>
+        </div>
+      `;
+      container.appendChild(div);
+    }
+
+    async function sendModalGroupMessage() {
+      if (!currentGroupModal) return;
+      const input = document.getElementById("modalMessageInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      try {
+        const message = await apiRequestHome(`/api/groups/${currentGroupModal._id}/messages`, {
+          method: "POST",
+          body: JSON.stringify({ text })
+        });
+        appendModalMessage(message);
+        input.value = "";
+        const container = document.getElementById("groupChatMessagesContainer");
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function handleModalMessageKey(event) {
+      if (event.key === "Enter") {
+        sendModalGroupMessage();
+      }
+    }
+
+    function getCurrentUserId() {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        return user?._id;
+      } catch {
+        return null;
+      }
+    }
+
+    function escapeHTML(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
     function previewUploadFile(input) {
       const targetBox = document.getElementById("mediaDisplayPreview");
       const labelText = document.getElementById("uploadPlaceholderText");
@@ -173,14 +430,16 @@
       }
       reader.readAsDataURL(file);
     }
-  </script>
 
-  <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/service-worker.js").then(() => {
         console.log("Service Worker Registered");
       });
     }
+
+    // Initialize home elements on load
+    loadHomeMyGroups();
+    fetchTopQuestions();
   </script>
 </body>
 </html>

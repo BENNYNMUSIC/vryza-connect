@@ -1,5 +1,5 @@
 // ================= API CONFIGURATION =================
-const API_URL = "https://vryza-connect-backend-production.up.railway.app";
+const API_URL = "https://vryza-connect-backend-1.onrender.com";
 
 // ================= SECURITY HANDSHAKE TOKEN =================
 const token = localStorage.getItem("token");

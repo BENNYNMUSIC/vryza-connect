@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Groups - Vryza Connect</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            background: #f3f4f6;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+
+    <header class="bg-white shadow p-4">
+
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+
+            <h1 class="text-2xl font-bold">
+                Vryza Connect Groups
+            </h1>
+
+            <button
+                onclick="showCreateGroup()"
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+                + Create Group
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <main class="max-w-6xl mx-auto p-4">
+
+        <!-- CREATE GROUP -->
+
+        <section
+            id="createGroupSection"
+            class="hidden bg-white p-6 rounded-xl shadow mb-6">
+
+            <h2 class="text-xl font-bold mb-4">
+                Create a Group
+            </h2>
+
+            <input
+                id="groupName"
+                type="text"
+                placeholder="Group name"
+                class="w-full border p-3 rounded-lg mb-3">
+
+            <textarea
+                id="groupDescription"
+                placeholder="Group description"
+                class="w-full border p-3 rounded-lg mb-3">
+            </textarea>
+
+            <label class="block font-semibold mb-2">
+                Privacy
+            </label>
+
+            <select
+                id="groupPrivacy"
+                class="w-full border p-3 rounded-lg mb-4">
+
+                <option value="public">
+                    Public - Anyone can join
+                </option>
+
+                <option value="private">
+                    Private - Members must be invited
+                </option>
+
+            </select>
+
+            <div class="flex gap-2">
+
+                <button
+                    onclick="createGroup()"
+                    class="bg-green-600 text-white px-5 py-2 rounded-lg">
+                    Create
+                </button>
+
+                <button
+                    onclick="hideCreateGroup()"
+                    class="bg-gray-400 text-white px-5 py-2 rounded-lg">
+                    Cancel
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- MY GROUPS -->
+
+        <section class="mb-8">
+
+            <h2 class="text-xl font-bold mb-4">
+                My Groups
+            </h2>
+
+            <div
+                id="myGroups"
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+
+        </section>
+
+
+        <!-- PUBLIC GROUPS -->
+
+        <section>
+
+            <h2 class="text-xl font-bold mb-4">
+                Discover Public Groups
+            </h2>
+
+            <div
+                id="publicGroups"
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+
+        </section>
+
+
+        <!-- GROUP CHAT -->
+
+        <section
+            id="groupChat"
+            class="hidden fixed inset-0 bg-white z-50">
+
+            <div class="h-full flex flex-col">
+
+                <!-- CHAT HEADER -->
+
+                <div
+                    class="p-4 bg-blue-600 text-white flex justify-between items-center">
+
+                    <div>
+
+                        <h2
+                            id="chatGroupName"
+                            class="font-bold text-xl">
+                        </h2>
+
+                        <p
+                            id="chatGroupMembers"
+                            class="text-sm">
+                        </p>
+
+                    </div>
+
+                    <button
+                        onclick="closeGroupChat()"
+                        class="text-2xl">
+                        ✕
+                    </button>
+
+                </div>
+
+
+                <!-- MESSAGES -->
+
+                <div
+                    id="groupMessages"
+                    class="flex-1 overflow-y-auto p-4 bg-gray-100">
+                </div>
+
+
+                <!-- MESSAGE INPUT -->
+
+                <div
+                    class="p-4 bg-white border-t flex gap-2">
+
+                    <input
+                        id="messageInput"
+                        type="text"
+                        placeholder="Type a message..."
+                        class="flex-1 border p-3 rounded-lg"
+                        onkeydown="handleMessageKey(event)">
+
+                    <button
+                        onclick="sendGroupMessage()"
+                        class="bg-blue-600 text-white px-5 rounded-lg">
+                        Send
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+<script>
+
+const API_URL =
+    "https://vryza-connect-backend-1.onrender.com";
+
+let currentGroup = null;
+
+
+// =====================================================
+// TOKEN
+// =====================================================
+
+function getToken() {
+    return localStorage.getItem("token");
+
+}
+
+
+// =====================================================
+// API REQUEST
+// =====================================================
+
+async function apiRequest(url, options = {}) {
+
+    const token = getToken();
+
+    options.headers = {
+
+        "Content-Type": "application/json",
+
+        ...(options.headers || {}),
+
+        Authorization: `Bearer ${token}`
+
+    };
+
+    const response = await fetch(
+        API_URL + url,
+        options
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.message || "Something went wrong"
+        );
+
+    }
+
+    return data;
+
+}
+
+
+// =====================================================
+// CREATE GROUP UI
+// =====================================================
+
+function showCreateGroup() {
+
+    document
+        .getElementById("createGroupSection")
+        .classList.remove("hidden");
+
+}
+
+function hideCreateGroup() {
+
+    document
+        .getElementById("createGroupSection")
+        .classList.add("hidden");
+
+}
+
+
+// =====================================================
+// CREATE GROUP
+// =====================================================
+
+async function createGroup() {
+
+    const name =
+        document.getElementById("groupName").value.trim();
+
+    const description =
+        document.getElementById("groupDescription").value.trim();
+
+    const privacy =
+        document.getElementById("groupPrivacy").value;
+
+    if (!name) {
+
+        alert("Please enter a group name");
+
+        return;
+
+    }
+
+    try {
+
+        const data = await apiRequest(
+            "/api/groups",
+            {
+                method: "POST",
+
+                body: JSON.stringify({
+                    name,
+                    description,
+                    privacy
+                })
+            }
+        );
+
+        alert("Group created!");
+
+        document.getElementById("groupName").value = "";
+        document.getElementById("groupDescription").value = "";
+
+        hideCreateGroup();
+
+        loadGroups();
+
+        openGroup(data.group);
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
+
+
+// =====================================================
+// LOAD GROUPS
+// =====================================================
+
+async function loadGroups() {
+
+    try {
+
+        const myGroups =
+            await apiRequest("/api/groups/my");
+
+        const publicGroups =
+            await apiRequest("/api/groups/public");
+
+        displayMyGroups(myGroups);
+
+        displayPublicGroups(
+            publicGroups,
+            myGroups
+        );
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+// =====================================================
+// MY GROUPS
+// =====================================================
+
+function displayMyGroups(groups) {
+
+    const container =
+        document.getElementById("myGroups");
+
+    container.innerHTML = "";
+
+    if (groups.length === 0) {
+
+        container.innerHTML =
+            `<p class="text-gray-500">
+                You haven't joined any groups yet.
+            </p>`;
+
+        return;
+
+    }
+
+    groups.forEach(group => {
+
+        container.innerHTML += groupCard(
+            group,
+            true
+        );
+
+    });
+
+}
+
+
+// =====================================================
+// PUBLIC GROUPS
+// =====================================================
+
+function displayPublicGroups(groups, myGroups) {
+
+    const container =
+        document.getElementById("publicGroups");
+
+    container.innerHTML = "";
+
+    const myGroupIds =
+        myGroups.map(group => group._id);
+
+    groups.forEach(group => {
+
+        if (!myGroupIds.includes(group._id)) {
+
+            container.innerHTML += groupCard(
+                group,
+                false
+            );
+
+        }
+
+    });
+
+}
+
+
+// =====================================================
+// GROUP CARD
+// =====================================================
+
+function groupCard(group, isMember) {
+
+    const memberCount =
+        group.members
+        ? group.members.length
+        : 0;
+
+    return `
+
+        <div class="bg-white rounded-xl shadow p-5">
+
+            <div class="flex items-center gap-3 mb-3">
+
+                <img
+                    src="${group.image || "default-group.png"}"
+                    class="w-14 h-14 rounded-full object-cover">
+
+                <div>
+
+                    <h3 class="font-bold text-lg">
+                        ${escapeHTML(group.name)}
+                    </h3>
+
+                    <p class="text-gray-500 text-sm">
+                        ${memberCount} members
+                    </p>
+
+                </div>
+
+            </div>
+
+            <p class="text-gray-600 mb-4">
+                ${escapeHTML(group.description || "No description")}
+            </p>
+
+            <p class="text-sm mb-4">
+
+                ${
+                    group.privacy === "private"
+                    ? "🔒 Private"
+                    : "🌎 Public"
+                }
+
+            </p>
+
+            ${
+                isMember
+
+                ?
+
+                `<button
+                    onclick='openGroup(${JSON.stringify(group)})'
+                    class="w-full bg-blue-600 text-white py-2 rounded-lg">
+                    Open Group
+                </button>`
+
+                :
+
+                `<button
+                    onclick="joinGroup('${group._id}')"
+                    class="w-full bg-green-600 text-white py-2 rounded-lg">
+                    Join Group
+                </button>`
+            }
+
+        </div>
+
+    `;
+
+}
+
+
+// =====================================================
+// JOIN GROUP
+// =====================================================
+
+async function joinGroup(groupId) {
+
+    try {
+
+        await apiRequest(
+            `/api/groups/${groupId}/join`,
+            {
+                method: "POST"
+            }
+        );
+
+        alert("You joined the group!");
+
+        loadGroups();
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
+
+
+// =====================================================
+// OPEN GROUP
+// =====================================================
+
+async function openGroup(group) {
+
+    currentGroup = group;
+
+    document
+        .getElementById("groupChat")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("chatGroupName")
+        .textContent = group.name;
+
+    document
+        .getElementById("chatGroupMembers")
+        .textContent =
+        `${group.members.length} members`;
+
+    loadMessages(group._id);
+
+}
+
+
+// =====================================================
+// CLOSE GROUP
+// =====================================================
+
+function closeGroupChat() {
+
+    currentGroup = null;
+
+    document
+        .getElementById("groupChat")
+        .classList.add("hidden");
+
+}
+
+
+// =====================================================
+// LOAD MESSAGES
+// =====================================================
+
+async function loadMessages(groupId) {
+
+    try {
+
+        const messages =
+            await apiRequest(
+                `/api/groups/${groupId}/messages`
+            );
+
+        const container =
+            document.getElementById("groupMessages");
+
+        container.innerHTML = "";
+
+        messages.forEach(message => {
+
+            addMessageToScreen(message);
+
+        });
+
+        container.scrollTop =
+            container.scrollHeight;
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+// =====================================================
+// ADD MESSAGE
+// =====================================================
+
+function addMessageToScreen(message) {
+
+    const container =
+        document.getElementById("groupMessages");
+
+    const currentUser =
+        getCurrentUserId();
+
+    const isMine =
+        message.sender &&
+        message.sender._id === currentUser;
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        `mb-3 flex ${isMine ? "justify-end" : "justify-start"}`;
+
+    div.innerHTML = `
+
+        <div
+            class="${
+                isMine
+                ? "bg-blue-600 text-white"
+                : "bg-white"
+            }
+            p-3 rounded-xl max-w-xs shadow">
+
+            <p class="font-semibold text-sm">
+                ${escapeHTML(
+                    message.sender?.username || "User"
+                )}
+            </p>
+
+            <p>
+                ${escapeHTML(message.text)}
+            </p>
+
+        </div>
+
+    `;
+
+    container.appendChild(div);
+
+}
+
+
+// =====================================================
+// SEND MESSAGE
+// =====================================================
+
+async function sendGroupMessage() {
+
+    if (!currentGroup) return;
+
+    const input =
+        document.getElementById("messageInput");
+
+    const text =
+        input.value.trim();
+
+    if (!text) return;
+
+    try {
+
+        const message =
+            await apiRequest(
+                `/api/groups/${currentGroup._id}/messages`,
+                {
+                    method: "POST",
+
+                    body: JSON.stringify({
+                        text
+                    })
+                }
+            );
+
+        addMessageToScreen(message);
+
+        input.value = "";
+
+        const container =
+            document.getElementById("groupMessages");
+
+        container.scrollTop =
+            container.scrollHeight;
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
+
+}
+
+
+// =====================================================
+// ENTER TO SEND
+// =====================================================
+
+function handleMessageKey(event) {
+
+    if (event.key === "Enter") {
+
+        sendGroupMessage();
+
+    }
+
+}
+
+
+// =====================================================
+// CURRENT USER
+// =====================================================
+
+function getCurrentUserId() {
+
+    try {
+
+        const user =
+            JSON.parse(
+                localStorage.getItem("user")
+            );
+
+        return user?._id;
+
+    } catch {
+
+        return null;
+
+    }
+
+}
+
+
+// =====================================================
+// SECURITY
+// =====================================================
+
+function escapeHTML(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+
+}
+
+
+// =====================================================
+// START
+// =====================================================
+
+loadGroups();
+
+</script>
+
+</body>
+</html>

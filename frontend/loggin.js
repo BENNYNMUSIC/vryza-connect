@@ -1,5 +1,5 @@
 // ================= API ENDPOINT PATHWAY MARKERS =================
-const API = "https://vryza-connect-backend-production.up.railway.app/api/auth";
+const API = "https://vryza-connect-backend-1.onrender.com/api/auth";
 
 // ================= ESTABLISH STATE SESSION CACHE =================
 const existingToken = localStorage.getItem("token");

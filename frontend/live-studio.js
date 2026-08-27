@@ -1,4 +1,4 @@
-const API_URL = "https://vryza-connect-backend-production.up.railway.app";
+const API_URL = "https://vryza-connect-backend-1.onrender.com";
 // Update this with your Railway app's custom TCP proxy port for RTMP (default is 1935)
 const RTMP_SERVER = "rtmp://vryza-connect-backend-production.up.railway.app:1935/live";
 

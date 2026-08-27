@@ -1,6 +1,6 @@
 // ================= CACHE VERSION =================
 const CACHE_NAME = "vryza-cache-v3"; // Incremented version to force clear old caches
-const API_ORIGIN = "https://vryza-connect-backend-production.up.railway.app";
+const API_ORIGIN = "https://localhost:5500";
 
 // ================= FILES TO CACHE =================
 // Fixed: Relative paths (no leading slashes) ensure compatibility with GitHub Pages subfolders
