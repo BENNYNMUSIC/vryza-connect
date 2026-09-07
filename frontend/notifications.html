@@ -1,53 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Notifications</title>
+<title>Notifications - Vryza+</title>
 
 <style>
-body{
+body {
     font-family: Arial, sans-serif;
-    background:#111;
-    color:white;
-    margin:0;
-    padding:20px;
+    background: #111;
+    color: white;
+    margin: 0;
+    padding: 20px;
 }
 
-.notification{
-    background:#1e1e1e;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:10px;
-    cursor:pointer;
+.notification {
+    background: #1e1e1e;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-#notificationBadge{
-    background:red;
-    color:white;
-    border-radius:50%;
-    padding:3px 8px;
-    font-size:12px;
+.notification:hover {
+    background: #282828;
 }
 
-.toast{
-    position:fixed;
-    top:20px;
-    right:20px;
-    background:#222;
-    color:white;
-    padding:12px;
-    border-radius:8px;
-    z-index:9999;
+#notificationBadge {
+    background: red;
+    color: white;
+    border-radius: 50%;
+    padding: 3px 8px;
+    font-size: 12px;
 }
 
-.notification.unread{
-    border-left:4px solid #00aaff;
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #0284c7;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 8px;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-.time{
-    color:gray;
-    font-size:12px;
+.notification.unread {
+    border-left: 4px solid #00aaff;
+}
+
+.time {
+    color: gray;
+    font-size: 12px;
+    margin-top: 4px;
 }
 </style>
 </head>
@@ -57,22 +64,26 @@ body{
 
 <div id="notifications"></div>
 
-<div class="notification-icon">
-    🔔
-    <span id="notificationBadge">0</span>
+<div class="notification-icon" style="margin-bottom: 15px;">
+    🔔 Unread: <span id="notificationBadge">0</span>
 </div>
 
-<button id="markAllBtn">
+<button id="markAllBtn" style="padding: 10px 15px; border-radius: 8px; cursor: pointer;">
     Mark All As Read
 </button>
 
-<script src="/socket.io/socket.io.js"></script>
+<!-- Absolute Socket.IO Client Script URL -->
+<script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
 
 <script>
-const API_URL = "https://localhost:5000";
+const API_URL = "https://vryza-connect-backend-1.onrender.com";
 const token = localStorage.getItem("token");
 
-// Safely extract user ID from JWT token payload (or fallback to a localStorage item)
+// Auth Guard: Redirect unauthenticated users immediately
+if (!token) {
+    window.location.href = "auth.html";
+}
+
 let currentUserId = "";
 if (token) {
     try {
@@ -95,8 +106,8 @@ async function loadNotifications(pageNumber = 1) {
 
     try {
         const res = await fetch(`${API_URL}/api/notifications?page=${pageNumber}`, {
-            headers:{
-                Authorization:`Bearer ${token}`
+            headers: {
+                Authorization: `Bearer ${token}`
             }
         });
 
@@ -107,12 +118,11 @@ async function loadNotifications(pageNumber = 1) {
             container.innerHTML = "";
         }
 
-        // Note: Backend should return structure like { notifications: [...] }
-        const notificationList = data.notifications || data;
+        const notificationList = data.notifications || (Array.isArray(data) ? data : []);
 
         if (!notificationList || !notificationList.length) {
             if (pageNumber === 1) {
-                container.innerHTML = "<p>No notifications.</p>";
+                container.innerHTML = "<p style='color: gray;'>No notifications yet.</p>";
             }
             loading = false;
             return;
@@ -122,7 +132,7 @@ async function loadNotifications(pageNumber = 1) {
             let text = "";
             const username = notification.from?.username || "Someone";
 
-            switch(notification.type){
+            switch(notification.type) {
                 case "follow":
                     text = `${username} started following you`;
                     break;
@@ -152,21 +162,26 @@ async function loadNotifications(pageNumber = 1) {
             div.onclick = async () => {
                 try {
                     await fetch(`${API_URL}/api/notifications/${notification._id}/read`, {
-                        method:"PUT",
-                        headers:{
-                            Authorization:`Bearer ${token}`
+                        method: "PUT",
+                        headers: {
+                            Authorization: `Bearer ${token}`
                         }
                     });
                 } catch(err) {
                     console.error("Error marking notification as read:", err);
                 }
 
-                if(notification.type === "like" || notification.type === "comment") {
-                    window.location.href = `post.html?id=${notification.postId}`;
-                } else if(notification.type === "follow") {
+                if (notification.type === "like" || notification.type === "comment") {
+                    window.location.href = `post.html?id=${notification.postId || notification.targetId}`;
+                } else if (notification.type === "follow") {
                     window.location.href = `profile.html?id=${notification.from?._id}`;
-                } else if(notification.type === "message") {
-                    window.location.href = `chat.html?id=${notification.from?._id}`;
+                } else if (notification.type === "message") {
+                    // Store chat context into localStorage to match chat.js expectations
+                    if (notification.from) {
+                        localStorage.setItem("chatUserId", notification.from._id);
+                        localStorage.setItem("chatUsername", notification.from.username);
+                    }
+                    window.location.href = "chat.html";
                 }
             };
 
@@ -180,7 +195,7 @@ async function loadNotifications(pageNumber = 1) {
     }
 }
 
-// 2. Fetch Unread Count (Placeholder to prevent errors since it's called by sockets)
+// 2. Fetch Unread Count
 async function loadUnreadCount() {
     try {
         const res = await fetch(`${API_URL}/api/notifications/unread-count`, {
@@ -195,9 +210,10 @@ async function loadUnreadCount() {
 
 // 3. UI Toast Function
 function showToast(notification) {
+    const sender = notification.from?.username || "Someone";
     const toast = document.createElement("div");
     toast.className = "toast";
-    toast.innerHTML = "🔔 New notification";
+    toast.innerHTML = `🔔 New notification from <strong>${sender}</strong>`;
     document.body.appendChild(toast);
 
     setTimeout(() => {
@@ -207,7 +223,6 @@ function showToast(notification) {
 
 // --- EVENT LISTENERS ---
 
-// Mark all as read button
 document.getElementById("markAllBtn").addEventListener("click", async () => {
     try {
         await fetch(`${API_URL}/api/notifications/read-all`, {
@@ -235,13 +250,13 @@ window.addEventListener("scroll", () => {
 });
 
 // --- SOCKET INITIALIZATION ---
-if (token && currentUserId) {
+if (typeof io !== "undefined" && currentUserId) {
     const socket = io(API_URL);
 
     socket.emit("join", currentUserId);
 
     socket.on("newNotification", notification => {
-        page = 1; // Reset page to 1 to grab the latest feed items
+        page = 1;
         loadNotifications(1);
         loadUnreadCount();
         showToast(notification);
