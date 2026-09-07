@@ -10,6 +10,7 @@ if (!token || !user) {
 
 const currentUserId = user.id || user._id;
 let receiverId = null;
+let allFriends = [];
 
 // DOM Selectors
 const contactsContainer = document.getElementById("onlineUsers");
@@ -17,6 +18,7 @@ const messagesContainer = document.getElementById("messages");
 const messageInput = document.getElementById("message");
 const chatWith = document.getElementById("chatWith");
 const typingText = document.getElementById("typing");
+const searchInput = document.getElementById("searchUser");
 
 // Voice Recording Global Variables
 let mediaRecorder = null;
@@ -39,7 +41,7 @@ socket.on("connect", () => {
   socket.emit("join", currentUserId);
 });
 
-// ================= LOAD FRIENDS =================
+// ================= LOAD & RENDER FRIENDS =================
 async function loadFriends() {
   try {
     const res = await fetch(`${API}/api/friends`, {
@@ -60,33 +62,27 @@ async function loadFriends() {
       return;
     }
 
-    data.friends.forEach(friend => {
-      const card = document.createElement("div");
-      card.className = "p-3 bg-white border border-slate-100 rounded-2xl cursor-pointer hover:bg-slate-50 flex items-center gap-3 transition-all";
+    allFriends = data.friends;
+    renderFriends(allFriends);
 
-      const avatar = friend.profilePic 
-        ? (friend.profilePic.startsWith("http") ? friend.profilePic : `${API}/uploads/${friend.profilePic}`)
-        : "images/default-avatar.png";
-
-      card.innerHTML = `
-        <img src="${avatar}" class="w-10 h-10 rounded-full object-cover bg-slate-100" alt="avatar">
-        <div>
-          <div class="font-semibold text-slate-700 text-sm">${friend.username}</div>
-          <div class="text-[11px] text-slate-400">@${friend.username.toLowerCase()}</div>
-        </div>
-      `;
-
-      card.onclick = () => openChat(friend);
-      contactsContainer.appendChild(card);
-    });
-
-    // Handle preselected friend context passed out of other page hooks
+    // 1. Check for routing parameters from friends.html redirect
     const preselectedId = localStorage.getItem("chatUserId");
     const preselectedName = localStorage.getItem("chatUsername");
+
+    // 2. Check for previously active saved chat session
+    const savedActiveChat = localStorage.getItem("activeChatUser");
+
     if (preselectedId && preselectedName) {
       openChat({ _id: preselectedId, username: preselectedName });
       localStorage.removeItem("chatUserId");
       localStorage.removeItem("chatUsername");
+    } else if (savedActiveChat) {
+      try {
+        const lastUser = JSON.parse(savedActiveChat);
+        openChat(lastUser);
+      } catch (e) {
+        console.error("Error restoring saved chat session:", e);
+      }
     }
 
   } catch (err) {
@@ -94,11 +90,64 @@ async function loadFriends() {
   }
 }
 
+function renderFriends(friendsList) {
+  contactsContainer.innerHTML = "";
+
+  if (!friendsList.length) {
+    contactsContainer.innerHTML = `
+      <div class="text-center text-slate-400 text-xs py-4">
+        No contacts found
+      </div>
+    `;
+    return;
+  }
+
+  friendsList.forEach(friend => {
+    const friendId = friend._id || friend.id;
+    const isActive = receiverId && receiverId.toString() === friendId.toString();
+
+    const card = document.createElement("div");
+    card.className = `p-3 rounded-2xl cursor-pointer hover:bg-slate-50 flex items-center gap-3 transition-all border ${
+      isActive ? "bg-blue-50/80 border-blue-200 shadow-sm" : "bg-white border-slate-100"
+    }`;
+
+    const avatar = friend.profilePic 
+      ? (friend.profilePic.startsWith("http") ? friend.profilePic : `${API}/uploads/${friend.profilePic}`)
+      : "images/default-avatar.png";
+
+    card.innerHTML = `
+      <img src="${avatar}" class="w-10 h-10 rounded-full object-cover bg-slate-100" alt="avatar">
+      <div class="flex-1 overflow-hidden">
+        <div class="font-semibold text-slate-700 text-sm truncate">${friend.username}</div>
+        <div class="text-[11px] text-slate-400 truncate">@${friend.username.toLowerCase()}</div>
+      </div>
+    `;
+
+    card.onclick = () => openChat(friend);
+    contactsContainer.appendChild(card);
+  });
+}
+
+// Live Search Interceptor
+if (searchInput) {
+  searchInput.addEventListener("input", (e) => {
+    const term = e.target.value.toLowerCase().trim();
+    const filtered = allFriends.filter(f => f.username.toLowerCase().includes(term));
+    renderFriends(filtered);
+  });
+}
+
 // ================= OPEN CHAT =================
 function openChat(friend) {
-  receiverId = friend._id;
+  receiverId = friend._id || friend.id;
+
+  // Persist session locally to keep conversation state across reloads/navigation
+  localStorage.setItem("activeChatUser", JSON.stringify({ _id: receiverId, username: friend.username }));
+
   chatWith.innerText = `Chatting with ${friend.username}`;
   messagesContainer.innerHTML = '<div class="text-center text-slate-400 text-xs italic">Loading thread...</div>';
+
+  renderFriends(allFriends);
   loadMessages();
 }
 
@@ -298,12 +347,10 @@ function addVoiceMessageToDOM(base64Audio, type) {
 async function setupWebRTC(isCaller) {
   peerConnection = new RTCPeerConnection(rtcConfig);
 
-  // Transfer client media tracks to core WebRTC connection
   localStream.getTracks().forEach(track => {
     peerConnection.addTrack(track, localStream);
   });
 
-  // Track incoming remote audio/video signals
   peerConnection.ontrack = (event) => {
     const remoteVideo = document.getElementById("remoteVideo");
     if (remoteVideo && event.streams[0]) {
@@ -311,7 +358,6 @@ async function setupWebRTC(isCaller) {
     }
   };
 
-  // Capture network path parameters
   peerConnection.onicecandidate = (event) => {
     if (event.candidate && receiverId) {
       socket.emit("iceCandidate", { to: receiverId, candidate: event.candidate });
@@ -319,7 +365,6 @@ async function setupWebRTC(isCaller) {
   };
 }
 
-// Click Trigger for starting a call
 document.getElementById("startCall").addEventListener("click", async () => {
   if (!receiverId) {
     alert("Select a friend to call first!");
@@ -350,12 +395,7 @@ document.getElementById("startCall").addEventListener("click", async () => {
   }
 });
 
-// Listener for Incoming Call
 socket.on("incomingCall", async (data) => {
-  if (receiverId !== data.from) {
-    console.log("Call incoming from unselected user context.");
-  }
-
   const accept = confirm("Incoming call! Would you like to accept?");
   if (!accept) {
     socket.emit("endCall", { to: data.from });
@@ -384,7 +424,6 @@ socket.on("incomingCall", async (data) => {
   }
 });
 
-// Listener for Accepted Call Signatures
 socket.on("callAccepted", async (signal) => {
   try {
     if (peerConnection) {
@@ -396,7 +435,6 @@ socket.on("callAccepted", async (signal) => {
   }
 });
 
-// Network candidates exchange mapping
 socket.on("iceCandidate", async (data) => {
   try {
     if (peerConnection && data.candidate) {
@@ -407,7 +445,6 @@ socket.on("iceCandidate", async (data) => {
   }
 });
 
-// Handle Call Ending cleanups
 socket.on("callEnded", () => {
   alert("The call has ended.");
   endActiveStream();
@@ -436,6 +473,6 @@ function endActiveStream() {
 // Initialize Contact Retrieval
 loadFriends();
 
-// Global Window Bindings for HTML elements
+// Global Window Bindings
 window.sendMessage = sendMessage;
 window.toggleRecording = toggleRecording;
