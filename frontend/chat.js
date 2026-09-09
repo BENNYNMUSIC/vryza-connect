@@ -19,6 +19,10 @@ const messageInput = document.getElementById("message");
 const chatWith = document.getElementById("chatWith");
 const typingText = document.getElementById("typing");
 const searchInput = document.getElementById("searchUser");
+const contactsAside = document.getElementById("contactsAside");
+const chatSection = document.getElementById("chatSection");
+const startCallBtn = document.getElementById("startCall");
+const endCallBtn = document.getElementById("endCall");
 
 // Voice Recording Global Variables
 let mediaRecorder = null;
@@ -34,6 +38,23 @@ const rtcConfig = {
     { urls: "stun:stun1.l.google.com:19302" }
   ]
 };
+
+// ================= MOBILE NAVIGATION TOGGLES =================
+function showContactsView() {
+  contactsAside.classList.remove("hidden");
+  contactsAside.classList.add("flex");
+  chatSection.classList.add("hidden");
+  chatSection.classList.remove("flex");
+}
+
+function showChatView() {
+  if (window.innerWidth < 768) {
+    contactsAside.classList.add("hidden");
+    contactsAside.classList.remove("flex");
+    chatSection.classList.remove("hidden");
+    chatSection.classList.add("flex");
+  }
+}
 
 // ================= SOCKET JOIN =================
 socket.on("connect", () => {
@@ -65,11 +86,8 @@ async function loadFriends() {
     allFriends = data.friends;
     renderFriends(allFriends);
 
-    // 1. Check for routing parameters from friends.html redirect
     const preselectedId = localStorage.getItem("chatUserId");
     const preselectedName = localStorage.getItem("chatUsername");
-
-    // 2. Check for previously active saved chat session
     const savedActiveChat = localStorage.getItem("activeChatUser");
 
     if (preselectedId && preselectedName) {
@@ -107,7 +125,7 @@ function renderFriends(friendsList) {
     const isActive = receiverId && receiverId.toString() === friendId.toString();
 
     const card = document.createElement("div");
-    card.className = `p-3 rounded-2xl cursor-pointer hover:bg-slate-50 flex items-center gap-3 transition-all border ${
+    card.className = `p-2.5 sm:p-3 rounded-xl sm:rounded-2xl cursor-pointer hover:bg-slate-50 flex items-center gap-3 transition-all border ${
       isActive ? "bg-blue-50/80 border-blue-200 shadow-sm" : "bg-white border-slate-100"
     }`;
 
@@ -116,10 +134,10 @@ function renderFriends(friendsList) {
       : "images/default-avatar.png";
 
     card.innerHTML = `
-      <img src="${avatar}" class="w-10 h-10 rounded-full object-cover bg-slate-100" alt="avatar">
+      <img src="${avatar}" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover bg-slate-100" alt="avatar">
       <div class="flex-1 overflow-hidden">
-        <div class="font-semibold text-slate-700 text-sm truncate">${friend.username}</div>
-        <div class="text-[11px] text-slate-400 truncate">@${friend.username.toLowerCase()}</div>
+        <div class="font-semibold text-slate-700 text-xs sm:text-sm truncate">${friend.username}</div>
+        <div class="text-[10px] sm:text-[11px] text-slate-400 truncate">@${friend.username.toLowerCase()}</div>
       </div>
     `;
 
@@ -141,7 +159,6 @@ if (searchInput) {
 function openChat(friend) {
   receiverId = friend._id || friend.id;
 
-  // Persist session locally to keep conversation state across reloads/navigation
   localStorage.setItem("activeChatUser", JSON.stringify({ _id: receiverId, username: friend.username }));
 
   chatWith.innerText = `Chatting with ${friend.username}`;
@@ -149,6 +166,7 @@ function openChat(friend) {
 
   renderFriends(allFriends);
   loadMessages();
+  showChatView();
 }
 
 // ================= LOAD MESSAGES =================
@@ -245,8 +263,8 @@ socket.on("userStopTyping", (data) => {
 function addMessage(text, type) {
   const div = document.createElement("div");
   div.className = type === "sent"
-    ? "bg-blue-600 text-white ml-auto max-w-xs p-3 rounded-2xl shadow-sm text-sm"
-    : "bg-slate-200 text-slate-800 mr-auto max-w-xs p-3 rounded-2xl shadow-sm text-sm";
+    ? "bg-blue-600 text-white ml-auto max-w-[80%] sm:max-w-xs p-2.5 sm:p-3 rounded-2xl shadow-sm text-xs sm:text-sm break-words"
+    : "bg-slate-200 text-slate-800 mr-auto max-w-[80%] sm:max-w-xs p-2.5 sm:p-3 rounded-2xl shadow-sm text-xs sm:text-sm break-words";
 
   div.innerText = text;
   messagesContainer.appendChild(div);
@@ -297,7 +315,7 @@ async function toggleRecording() {
 
       mediaRecorder.start();
       isRecording = true;
-      micBtn.className = "w-11 h-11 rounded-xl bg-red-500 text-white transition shadow-md flex items-center justify-center text-lg animate-pulse";
+      micBtn.className = "w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-red-500 text-white transition shadow-md flex items-center justify-center text-sm sm:text-lg animate-pulse";
       micBtn.innerText = "🛑";
 
     } catch (err) {
@@ -307,7 +325,7 @@ async function toggleRecording() {
   } else {
     mediaRecorder.stop();
     isRecording = false;
-    micBtn.className = "w-11 h-11 rounded-xl bg-white hover:bg-red-50 hover:text-red-500 text-slate-500 transition shadow-sm flex items-center justify-center text-lg";
+    micBtn.className = "w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white hover:bg-red-50 hover:text-red-500 text-slate-500 transition shadow-sm flex items-center justify-center text-sm sm:text-lg";
     micBtn.innerText = "🎙️";
   }
 }
@@ -325,17 +343,17 @@ socket.on("receiveVoice", (data) => {
 function addVoiceMessageToDOM(base64Audio, type) {
   const div = document.createElement("div");
   div.className = type === "sent"
-    ? "bg-blue-600 text-white ml-auto max-w-xs p-3 rounded-2xl flex flex-col gap-1 shadow-sm"
-    : "bg-slate-200 text-slate-800 mr-auto max-w-xs p-3 rounded-2xl flex flex-col gap-1 shadow-sm";
+    ? "bg-blue-600 text-white ml-auto max-w-[85%] sm:max-w-xs p-2.5 sm:p-3 rounded-2xl flex flex-col gap-1 shadow-sm"
+    : "bg-slate-200 text-slate-800 mr-auto max-w-[85%] sm:max-w-xs p-2.5 sm:p-3 rounded-2xl flex flex-col gap-1 shadow-sm";
 
   const label = document.createElement("span");
-  label.className = "text-[10px] opacity-70 font-semibold uppercase tracking-wider";
+  label.className = "text-[9px] sm:text-[10px] opacity-70 font-semibold uppercase tracking-wider";
   label.innerText = type === "sent" ? "Your Voice Note" : "Voice Note";
 
   const audio = document.createElement("audio");
   audio.src = base64Audio;
   audio.controls = true;
-  audio.className = "w-48 h-8 filter mt-1 invert brightness-90 rounded";
+  audio.className = "w-40 sm:w-48 h-8 filter mt-1 rounded";
 
   div.appendChild(label);
   div.appendChild(audio);
@@ -365,7 +383,8 @@ async function setupWebRTC(isCaller) {
   };
 }
 
-document.getElementById("startCall").addEventListener("click", async () => {
+// START CALL
+startCallBtn.addEventListener("click", async () => {
   if (!receiverId) {
     alert("Select a friend to call first!");
     return;
@@ -375,6 +394,9 @@ document.getElementById("startCall").addEventListener("click", async () => {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     document.getElementById("localVideo").srcObject = localStream;
     document.getElementById("videoArea").classList.remove("hidden");
+
+    startCallBtn.classList.add("hidden");
+    endCallBtn.classList.remove("hidden");
 
     await setupWebRTC(true);
 
@@ -395,6 +417,17 @@ document.getElementById("startCall").addEventListener("click", async () => {
   }
 });
 
+// END CALL TRIGGER
+function triggerEndCall() {
+  if (receiverId) {
+    socket.emit("endCall", { to: receiverId });
+  }
+  endActiveStream();
+}
+
+endCallBtn.addEventListener("click", triggerEndCall);
+
+// INCOMING CALL HANDLER
 socket.on("incomingCall", async (data) => {
   const accept = confirm("Incoming call! Would you like to accept?");
   if (!accept) {
@@ -404,6 +437,8 @@ socket.on("incomingCall", async (data) => {
 
   receiverId = data.from;
   document.getElementById("videoArea").classList.remove("hidden");
+  startCallBtn.classList.add("hidden");
+  endCallBtn.classList.remove("hidden");
 
   try {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -459,9 +494,13 @@ function endActiveStream() {
     localStream.getTracks().forEach(track => track.stop());
     localStream = null;
   }
+
   document.getElementById("localVideo").srcObject = null;
   document.getElementById("remoteVideo").srcObject = null;
   document.getElementById("videoArea").classList.add("hidden");
+
+  startCallBtn.classList.remove("hidden");
+  endCallBtn.classList.add("hidden");
   
   if (receiverId) {
     chatWith.innerText = "Conversation Active";
@@ -476,3 +515,5 @@ loadFriends();
 // Global Window Bindings
 window.sendMessage = sendMessage;
 window.toggleRecording = toggleRecording;
+window.showContactsView = showContactsView;
+window.triggerEndCall = triggerEndCall;
