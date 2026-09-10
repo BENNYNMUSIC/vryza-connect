@@ -69,6 +69,13 @@
       </div>
 
     </div>
+
+    <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1.5">
+  <span>💬 Chat</span>
+  <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
+    0
+  </span>
+</button>
   </nav>
 
   <!-- MAIN CHAT INTERFACE -->
@@ -184,6 +191,7 @@
 
   <script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
   <script src="chat.js"></script>
+  <script src="chatBadge.js"></script>
 
   <script>
     function go(page) {

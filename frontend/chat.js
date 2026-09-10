@@ -508,6 +508,28 @@ function endActiveStream() {
     chatWith.innerText = "Select a conversation";
   }
 }
+async function openConversation(senderId) {
+  localStorage.setItem("chatUserId", senderId);
+
+  // Send API request to mark message thread as read
+  const rawToken = localStorage.getItem("token");
+  const token = rawToken ? rawToken.replace(/^Bearer\s+/i, "").trim() : "";
+
+  try {
+    await fetch(`${API_URL}/api/messages/read/${senderId}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    // Re-sync badge count
+    if (typeof fetchUnreadChatCount === "function") {
+      fetchUnreadChatCount();
+    }
+  } catch (err) {
+    console.error("Failed to mark messages as read:", err);
+  }
+}
+
 
 // Initialize Contact Retrieval
 loadFriends();
