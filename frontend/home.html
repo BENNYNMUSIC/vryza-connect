@@ -81,7 +81,15 @@
         <div class="flex items-center gap-4 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
           <button onclick="go('home.html')" class="text-blue-600 font-bold flex items-center gap-1 text-sm shrink-0">🏠 Home</button>
           <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">👤 Profile</button>
-          <button onclick="go('chat.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">💬 Chat</button>
+          
+          <!-- CHAT BUTTON WITH UNREAD BADGE -->
+          <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1.5 text-sm shrink-0">
+            <span>💬 Chat</span>
+            <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
+              0
+            </span>
+          </button>
+
           <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">👥 Friends</button>
           <button onclick="go('group.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🌍 Groups</button>
           <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🔔 Alerts</button>
@@ -94,13 +102,6 @@
         🚪 Logout
       </button>
     </div>
-
-    <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1.5">
-      <span>💬 Chat</span>
-      <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
-        0
-      </span>
-    </button>
   </nav>
 
   <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-6 mt-4">
@@ -217,7 +218,7 @@
     </div>
   </section>
 
-  <!-- External Master JavaScript Loaded First -->
+  <!-- Scripts -->
   <script src="script.js"></script>
 
   <script>
@@ -252,33 +253,33 @@
       return data;
     }
 
-    // AI Admin Socket Handler Logic
-    socket.on('receive_message', (data) => {
-      const chatWindow = document.getElementById('messages');
-      if (!chatWindow) return;
-      const msgElement = document.createElement('div');
+    if (typeof socket !== "undefined") {
+      socket.on('receive_message', (data) => {
+        const chatWindow = document.getElementById('messages');
+        if (!chatWindow) return;
+        const msgElement = document.createElement('div');
 
-      if (data.isAi) {
-        msgElement.className = 'message ai-admin-message';
-        msgElement.innerHTML = `
-          <div class="msg-header flex items-center justify-between mb-1">
-            <span class="bot-badge">🤖 AI ADMIN</span>
-            <span class="time text-[10px] text-slate-400">${new Date(data.timestamp).toLocaleTimeString()}</span>
-          </div>
-          <div class="msg-body text-xs sm:text-sm text-slate-700">${data.message}</div>
-        `;
-      } else {
-        msgElement.className = 'message user-message text-xs sm:text-sm bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm';
-        msgElement.innerHTML = `
-          <strong>${escapeHTML(data.sender || "User")}:</strong> ${escapeHTML(data.message)}
-        `;
-      }
+        if (data.isAi) {
+          msgElement.className = 'message ai-admin-message';
+          msgElement.innerHTML = `
+            <div class="msg-header flex items-center justify-between mb-1">
+              <span class="bot-badge">🤖 AI ADMIN</span>
+              <span class="time text-[10px] text-slate-400">${new Date(data.timestamp).toLocaleTimeString()}</span>
+            </div>
+            <div class="msg-body text-xs sm:text-sm text-slate-700">${data.message}</div>
+          `;
+        } else {
+          msgElement.className = 'message user-message text-xs sm:text-sm bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm';
+          msgElement.innerHTML = `
+            <strong>${escapeHTML(data.sender || "User")}:</strong> ${escapeHTML(data.message)}
+          `;
+        }
 
-      chatWindow.appendChild(msgElement);
-      chatWindow.scrollTop = chatWindow.scrollHeight;
-    });
+        chatWindow.appendChild(msgElement);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      });
+    }
 
-    // Fetch Top Admin Support Questions
     async function fetchTopQuestions() {
       try {
         const res = await fetch(API_URL + '/api/admin/top-questions');
@@ -307,7 +308,6 @@
       }
     }
 
-    // Load User's Groups onto Home Page Preview
     async function loadHomeMyGroups() {
       const container = document.getElementById("homeMyGroups");
       if (!container) return;
@@ -459,7 +459,6 @@
       });
     }
 
-    // Initialize home elements on load
     renderCurrentPostAvatar();
     loadHomeMyGroups();
     fetchTopQuestions();
