@@ -96,11 +96,11 @@
     </div>
 
     <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1.5">
-  <span>💬 Chat</span>
-  <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
-    0
-  </span>
-</button>
+      <span>💬 Chat</span>
+      <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
+        0
+      </span>
+    </button>
   </nav>
 
   <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-6 mt-4">
@@ -109,7 +109,7 @@
 
       <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200">
         <div class="flex items-center gap-3 mb-3">
-          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-inner text-sm">
+          <div id="createPostUserAvatar" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-inner text-sm overflow-hidden">
             You
           </div>
           <h2 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">Share an update</h2>
@@ -172,7 +172,6 @@
           <input id="receiverId" placeholder="Select an active user..." class="w-full bg-transparent text-xs text-slate-600 font-bold outline-none border-none placeholder-slate-400" readonly>
         </div>
         
-        <!-- FIX: Updated ID from chat-window to messages so script.js binds to it properly -->
         <div id="messages" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-100 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
         
         <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-blue-400 transition shadow-sm">
@@ -224,9 +223,6 @@
   <script>
     const API_URL = "https://vryza-connect-backend-1.onrender.com";
     let currentGroupModal = null;
-    
-    // FIX: Removed "const socket = io(API_URL);" duplicate declaration to prevent script execution crashes.
-    // The socket connection established inside script.js is used automatically here.
 
     function go(page) {
       window.location.href = page;
@@ -443,6 +439,20 @@
       reader.readAsDataURL(file);
     }
 
+    function renderCurrentPostAvatar() {
+      const avatarContainer = document.getElementById("createPostUserAvatar");
+      if (!avatarContainer) return;
+      try {
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        if (storedUser.profilePic) {
+          const picUrl = storedUser.profilePic.startsWith('http') ? storedUser.profilePic : `${API_URL}/uploads/${storedUser.profilePic}`;
+          avatarContainer.innerHTML = `<img src="${picUrl}" class="w-full h-full object-cover" />`;
+        } else if (storedUser.username) {
+          avatarContainer.innerText = storedUser.username.charAt(0).toUpperCase();
+        }
+      } catch (e) {}
+    }
+
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/service-worker.js").then(() => {
         console.log("Service Worker Registered");
@@ -450,6 +460,7 @@
     }
 
     // Initialize home elements on load
+    renderCurrentPostAvatar();
     loadHomeMyGroups();
     fetchTopQuestions();
   </script>

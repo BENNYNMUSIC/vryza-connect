@@ -1,13 +1,33 @@
 // ================= MASTER SERVER PATHWAY LOCATORS =================
 const API = "https://vryza-connect-backend-1.onrender.com";
 
+// ================= ACCOUNT PROFILE STATE VALIDATION =================
+let user = null;
+try {
+  const storedUser = localStorage.getItem("user");
+  user = storedUser ? JSON.parse(storedUser) : null;
+} catch (err) {
+  console.error("❌ Failed to parse stored user data:", err);
+}
+
+const token = localStorage.getItem("token");
+
+// Safe extraction supporting both `_id` and `id` formats
+const currentUserId = user ? String(user._id || user.id || "") : "";
+
+if (!user || !token || !currentUserId || currentUserId === "undefined") {
+  console.warn("⚠️ Identity handshake missing or invalid. Redirecting to auth...");
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  window.location.href = "auth.html";
+}
+
 // ================= ESTABLISH REALTIME NETWORK CONDUIT =================
 const socket = io(API, {
   transports: ["websocket", "polling"],
   secure: true
 });
 
-// ================= DIAGNOSTIC LINK MONITORING =================
 socket.on("connect", () => {
   console.log("🟢 ENGINE: Realtime synchronization terminal online. ID:", socket.id);
 });
@@ -16,18 +36,7 @@ socket.on("connect_error", (err) => {
   console.warn("❌ ENGINE: Synchronization terminal dropped connection.", err.message);
 });
 
-// ================= ACCOUNT PROFILE STATE VALIDATION =================
-const user = JSON.parse(localStorage.getItem("user"));
-const token = localStorage.getItem("token");
-
-if (!user || !token) {
-  alert("Identity handshake missing. Please authenticate.");
-  window.location.href = "auth.html";
-}
-
-const currentUserId = String(user._id || user.id);
-
-// ================= INITIALIZE CONVERSATION CHANNEL ROUTE =================
+// Initialize real-time room route
 socket.emit("join", currentUserId);
 
 // ================= UI DOM ELEMENT POOL HOOKS =================
@@ -68,11 +77,12 @@ socket.on("onlineUsers", async (usersList) => {
       const res = await fetch(`${API}/api/users/${id}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
-      const data = await res.json();
-      
-      const profileData = data.user || data;
-      username = profileData.username || username;
-      profilePic = profileData.profilePic || "";
+      if (res.ok) {
+        const data = await res.json();
+        const profileData = data.user || data;
+        username = profileData.username || username;
+        profilePic = profileData.profilePic || "";
+      }
     } catch (err) {
       console.warn("⚠️ Metadata stream incomplete for peer element:", id);
     }
@@ -85,10 +95,14 @@ socket.on("onlineUsers", async (usersList) => {
       ${isActive ? "bg-blue-50 border-blue-200 shadow-sm" : "bg-slate-50 border-slate-100 hover:bg-blue-50/50"}
     `;
 
+    const avatarHtml = profilePic 
+      ? `<img src="${profilePic.startsWith('http') ? profilePic : `${API}/uploads/${profilePic}`}" class="w-full h-full object-cover" />`
+      : username.charAt(0).toUpperCase();
+
     div.innerHTML = `
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center shadow-inner text-sm font-bold text-slate-600">
-          ${profilePic ? `<img src="${profilePic}" class="w-full h-full object-cover" />` : username.charAt(0).toUpperCase()}
+          ${avatarHtml}
         </div>
         <div>
           <p class="font-semibold text-sm text-slate-700">${username}</p>
@@ -133,6 +147,8 @@ async function loadPosts() {
       headers: { "Authorization": `Bearer ${token}` }
     });
 
+    if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+
     const data = await res.json();
     const posts = data.posts || data;
     feedDiv.innerHTML = "";
@@ -143,8 +159,9 @@ async function loadPosts() {
     }
 
     posts.reverse().forEach(post => {
+      const postId = String(post._id || post.id || "");
       const userData = post.userId || post.user || {};
-      const targetAuthorId = String(userData._id || userData.id || post.userId);
+      const targetAuthorId = String(userData._id || userData.id || post.userId || "");
       const div = document.createElement("div");
       div.className = "bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm my-4";
 
@@ -152,12 +169,19 @@ async function loadPosts() {
         ? `<div class="border-t border-slate-100 bg-slate-50"><img src="${API}/uploads/${post.image}" class="w-full max-h-[500px] object-cover block" loading="lazy"/></div>`
         : "";
 
+      const profilePic = userData.profilePic;
+      const avatarContent = profilePic
+        ? `<img src="${profilePic.startsWith('http') ? profilePic : `${API}/uploads/${profilePic}`}" class="w-full h-full object-cover rounded-full" />`
+        : (userData.username || "U").charAt(0).toUpperCase();
+
+      const isOwner = targetAuthorId === currentUserId;
+
       div.innerHTML = `
         <div class="p-5">
           <div class="flex justify-between items-center mb-4">
             <div class="flex items-center gap-3 cursor-pointer group" onclick="openProfile('${targetAuthorId}')">
-              <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center rounded-full font-bold shadow-md">
-                ${(userData.username || "U").charAt(0).toUpperCase()}
+              <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center rounded-full font-bold shadow-md overflow-hidden">
+                ${avatarContent}
               </div>
               <div>
                 <p class="font-bold text-slate-800 group-hover:text-blue-600 transition">${userData.username || "Anonymous User"}</p>
@@ -165,11 +189,17 @@ async function loadPosts() {
               </div>
             </div>
 
-            ${targetAuthorId !== currentUserId ? `
-              <button onclick="followUser('${targetAuthorId}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition">
-                Follow
-              </button>
-            ` : ""}
+            <div class="flex items-center gap-2">
+              ${!isOwner ? `
+                <button onclick="followUser('${targetAuthorId}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition">
+                  Follow
+                </button>
+              ` : `
+                <button onclick="deletePost('${postId}')" class="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                  🗑️ Delete
+                </button>
+              `}
+            </div>
           </div>
           <p class="text-slate-700 text-sm leading-relaxed">${post.caption || ""}</p>
         </div>
@@ -181,6 +211,29 @@ async function loadPosts() {
 
   } catch (err) {
     console.error("❌ CRITICAL SOCIAL TIMELINE EXTRACTION ERROR:", err);
+  }
+}
+
+// ================= DELETE POST ENGINE =================
+async function deletePost(postId) {
+  if (!postId) return;
+  if (!confirm("Are you sure you want to delete this post?")) return;
+
+  try {
+    const res = await fetch(`${API}/api/posts/${postId}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      loadPosts();
+    } else {
+      alert(data.message || "Unable to delete post.");
+    }
+  } catch (err) {
+    console.error("❌ DELETE POST ERROR:", err);
+    alert("Server connection failed while attempting to delete post.");
   }
 }
 
@@ -344,13 +397,8 @@ function addMessage(text, type) {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// ================= REALTIME CALLS & NOTIFICATIONS ENGINE INTERCEPTORS =================
-
-// 1. Catch Unified Schema Database Notifications (Messages, Likes, System)
+// ================= SOCKET & NOTIFICATIONS =================
 socket.on("notificationReceived", async (notif) => {
-  console.log("🔔 ALARM INTERCEPT: Received a new database event:", notif);
-  
-  // If we are currently actively typing/chatting with this sender, do not throw a toast alert
   if (selectedUserId && selectedUserId === String(notif.from)) return;
 
   let originName = "Someone";
@@ -358,8 +406,10 @@ socket.on("notificationReceived", async (notif) => {
     const res = await fetch(`${API}/api/users/${notif.from}`, {
       headers: { "Authorization": `Bearer ${token}` }
     });
-    const data = await res.json();
-    originName = (data.user || data).username || originName;
+    if (res.ok) {
+      const data = await res.json();
+      originName = (data.user || data).username || originName;
+    }
   } catch (e) {
     console.warn("Unable to resolve username for alert.");
   }
@@ -367,23 +417,20 @@ socket.on("notificationReceived", async (notif) => {
   showGlobalToastAlert(originName, notif.type);
 });
 
-// 2. Catch Live WebRTC Incoming Phone/Video Calling Signals
 socket.on("incomingCall", async (data) => {
-  console.log("📞 INCOMING TELEPHONY SIGNAL INTERCEPT:", data);
-  
   let callerName = "Unknown Connection";
   try {
     const res = await fetch(`${API}/api/users/${data.from}`, {
       headers: { "Authorization": `Bearer ${token}` }
     });
-    const dataRes = await res.json();
-    callerName = (dataRes.user || dataRes).username || callerName;
+    if (res.ok) {
+      const dataRes = await res.json();
+      callerName = (dataRes.user || dataRes).username || callerName;
+    }
   } catch (e) {}
 
   showFullScreenCallModal(callerName, data.signal, data.from);
 });
-
-// ================= NOTIFICATION INTERFACE INJECTION UTILITIES =================
 
 function showGlobalToastAlert(senderName, type) {
   let toastContainer = document.getElementById("global-toast-container");
@@ -414,11 +461,7 @@ function showGlobalToastAlert(senderName, type) {
   `;
 
   toastContainer.appendChild(toast);
-  
-  // Trigger slide animation
   setTimeout(() => { toast.classList.remove("translate-x-12", "opacity-0"); }, 10);
-  
-  // Clean up element automatically after expiration delay
   setTimeout(() => {
     toast.classList.add("translate-x-12", "opacity-0");
     setTimeout(() => { toast.remove(); }, 300);
@@ -426,7 +469,6 @@ function showGlobalToastAlert(senderName, type) {
 }
 
 function showFullScreenCallModal(callerName, signalData, callerId) {
-  // Prevent duplicate interface layering stack issues
   if (document.getElementById("telephony-overlay-modal")) return;
 
   const modal = document.createElement("div");
@@ -456,28 +498,23 @@ function showFullScreenCallModal(callerName, signalData, callerId) {
 
   document.body.appendChild(modal);
 
-  // Hook operational controller events inside layouts
   modal.querySelector("#declineCallBtn").addEventListener("click", () => {
     socket.emit("endCall", { to: callerId });
     modal.remove();
   });
 
   modal.querySelector("#acceptCallBtn").addEventListener("click", () => {
-    console.log("Accepting call line...");
     socket.emit("answerCall", { to: callerId, signal: signalData });
-    
-    // Redirect context variables or reveal local communication layout components here
     modal.remove();
     alert("Connection linking sequence running via signaling bridge setup...");
   });
 
-  // Handle call terminating externally while window remains open
   socket.on("callEnded", () => {
     modal.remove();
   });
 }
 
-// ================= SOCKET EVENT HOOK RECEIVERS =================
+// ================= SOCKET RECEIVERS =================
 socket.on("receiveMessage", (data) => {
   const incomingSender = (data.senderId || data.sender)?.toString();
   if (incomingSender === selectedUserId) {
@@ -486,7 +523,6 @@ socket.on("receiveMessage", (data) => {
 });
 
 socket.on("receiveGroupMessage", (data) => {
-  console.log("🌍 GROUP CHAT OVERLAY INTERCEPT:", data);
   if (!groupMessagesDiv) return;
 
   const div = document.createElement("div");
@@ -506,7 +542,7 @@ socket.on("receiveGroupMessage", (data) => {
   groupMessagesDiv.scrollTop = groupMessagesDiv.scrollHeight;
 });
 
-// ================= KEY BIND INTERCEPT LISTENER INITIALIZATION =================
+// ================= LISTENERS =================
 document.getElementById("message")?.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendMessage();
 });
@@ -515,13 +551,14 @@ document.getElementById("groupMessage")?.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendGroupMessage();
 });
 
-// ================= ATTACH GLOBAL RUNTIME HOOKS =================
+// Attach global hooks
 window.openProfile = openProfile;
 window.followUser = followUser;
 window.sendMessage = sendMessage;
 window.sendGroupMessage = sendGroupMessage;
 window.createPost = createPost;
+window.deletePost = deletePost;
 window.loadPosts = loadPosts;
 
-// Execute timeline extraction loop on boot sequence load
+// Execute timeline load
 loadPosts();
