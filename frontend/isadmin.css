@@ -16,3 +16,20 @@
   border-radius: 4px;
   margin-right: 6px;
 }
+
+/* Supplemental layout styles for generated elements */
+.msg-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.time {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.msg-body {
+  color: #1f2937;
+  word-break: break-word;
+}

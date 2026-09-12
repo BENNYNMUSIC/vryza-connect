@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Owner Dashboard</title>
+  <style>
+    .owner-dashboard {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 600px;
+      padding: 16px;
+    }
+
+    #top-questions-list {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    #top-questions-list li {
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+    }
+
+    .ask-count {
+      font-size: 0.85em;
+      color: #6b7280;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="owner-dashboard">
+    <h2>📊 Most Asked Support Questions</h2>
+    <ul id="top-questions-list">Loading...</ul>
+  </div>
+
+  <script>
+    async function fetchTopQuestions() {
+      const listElement = document.getElementById('top-questions-list');
+      if (!listElement) return;
+
+      try {
+        const res = await fetch('/api/admin/top-questions');
+        
+        if (!res.ok) {
+          throw new Error(`Server returned status ${res.status}`);
+        }
+
+        const data = await res.json();
+        const questions = Array.isArray(data?.topQuestions) ? data.topQuestions : [];
+
+        listElement.innerHTML = '';
+
+        if (questions.length === 0) {
+          const emptyItem = document.createElement('li');
+          emptyItem.textContent = 'No questions logged yet.';
+          listElement.appendChild(emptyItem);
+          return;
+        }
+
+        questions.forEach((item, index) => {
+          const li = document.createElement('li');
+
+          const rankStrong = document.createElement('strong');
+          rankStrong.textContent = `#${index + 1} `;
+
+          const questionText = document.createTextNode(`"${item._id || 'Untitled'}" `);
+
+          const countSpan = document.createElement('span');
+          countSpan.className = 'ask-count';
+          countSpan.textContent = `Asked ${item.count ?? 0} times`;
+
+          li.appendChild(rankStrong);
+          li.appendChild(questionText);
+          li.appendChild(countSpan);
+
+          listElement.appendChild(li);
+        });
+      } catch (error) {
+        console.error('Failed to fetch top questions:', error);
+        listElement.innerHTML = '';
+        
+        const errorItem = document.createElement('li');
+        errorItem.textContent = 'Failed to load questions. Please try again.';
+        listElement.appendChild(errorItem);
+      }
+    }
+
+    // Fetch when owner opens dashboard page
+    fetchTopQuestions();
+  </script>
+
+</body>
+</html>
