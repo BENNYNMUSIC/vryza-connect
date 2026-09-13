@@ -57,15 +57,15 @@
   </main>
 
   <script>
-    // Corrected Production Backend Route Locator
     const API = "https://vryza-connect-backend-1.onrender.com";
 
-    // Application Credentials Parsing
     const token = localStorage.getItem("token");
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-    const profileUserId = localStorage.getItem("profileUserId");
 
-    // Navigation and Session Helpers
+    // Reads URL query target first, falls back to saved profile context
+    const urlParams = new URLSearchParams(window.location.search);
+    const profileUserId = urlParams.get("id") || localStorage.getItem("profileUserId");
+
     function go(page) {
       window.location.href = page;
     }
@@ -75,7 +75,6 @@
       window.location.href = "auth.html";
     }
 
-    // Session Verification Shield
     if (!token || !profileUserId) {
       alert("Session footprint missing or profile target unset.");
       window.location.href = "auth.html";
@@ -89,13 +88,21 @@
       };
     }
 
-    // Direct conversation opener
+    // Normalizes avatar URL sources
+    function buildAvatarUrl(src) {
+      if (!src) return null;
+      if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:")) {
+        return src;
+      }
+      const cleanPath = src.replace(/^\/?(uploads\/)?/, '');
+      return `${API}/uploads/${cleanPath}`;
+    }
+
     function startDirectChat() {
       localStorage.setItem("chatUserId", profileUserId);
       window.location.href = 'chat.html';
     }
 
-    // ================= DATA LOADING FLOW PIPELINE =================
     async function loadProfile() {
       const container = document.getElementById("profileContainer");
       
@@ -113,11 +120,19 @@
         }
 
         const user = data.user || data;
-        
+
+        // Avatar Image & Initial Fallback Handler
+        const avatarUrl = buildAvatarUrl(user.profilePic);
+        const userInitial = (user.username || "U").charAt(0).toUpperCase();
+
+        const avatarHTML = avatarUrl 
+          ? `<img src="${avatarUrl}" alt="${user.username}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-3xl font-black text-white\'>${userInitial}</span>';" />`
+          : `<span class="text-3xl font-black text-white">${userInitial}</span>`;
+
         container.innerHTML = `
           <div class="flex flex-col sm:flex-row items-center gap-5 pb-6 border-b border-slate-100">
-            <div class="w-24 h-24 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center text-3xl font-black shadow-md">
-              ${user.username ? user.username.charAt(0).toUpperCase() : "U"}
+            <div class="w-24 h-24 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center text-3xl font-black shadow-md overflow-hidden border-2 border-slate-100">
+              ${avatarHTML}
             </div>
             <div class="text-center sm:text-left">
               <h1 class="text-3xl font-black text-slate-800 tracking-tight">${user.username || "Anonymous Connection"}</h1>
@@ -134,7 +149,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="block text-[10px] uppercase font-bold text-slate-400">Location</span><span class="font-semibold text-slate-800">${user.location || "Earth"}</span></div>
               <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="block text-[10px] uppercase font-bold text-slate-400">Gender</span><span class="font-semibold text-slate-800">${user.gender || "Not disclosed"}</span></div>
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="block text-[10px] uppercase font-bold text-slate-400">Age Bracket</span><span class="font-semibold text-slate-800">${user.age || "Hidden"}</span></div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="block text-[10px] uppercase font-bold text-slate-400">Age Metric</span><span class="font-semibold text-slate-800">${user.age || "Hidden"}</span></div>
             </div>
           </div>
 
@@ -161,7 +176,6 @@
       }
     }
 
-    // ================= INTERACTIVE TOGGLE CONTROLLER =================
     function updateFollowButtonUI(isFollowing) {
       const btn = document.getElementById("followBtn");
       if (!btn) return;
@@ -175,7 +189,6 @@
       }
     }
 
-    // ================= DATA MUTATION CONTROLLERS =================
     async function followUser() {
       const btn = document.getElementById("followBtn");
       if (btn) btn.disabled = true;
@@ -207,6 +220,5 @@
   </script>
 
   <script src="chatBadge.js"></script>
-  <script src="settings.js"></script>
 </body>
 </html>
