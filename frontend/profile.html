@@ -51,27 +51,24 @@
           <span>👤</span> <span class="hidden sm:inline">Profile</span>
           <div class="hidden sm:block absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-full"></div>
         </button>
-        <button onclick="go('chat.html')" class="px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition font-semibold text-xs sm:text-sm flex items-center gap-1">
+        <button onclick="go('chat.html')" class="relative px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition font-semibold text-xs sm:text-sm flex items-center gap-1">
           <span>💬</span> <span class="hidden sm:inline">Chat</span>
+          <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
+            0
+          </span>
         </button>
         <button onclick="go('settings.html')" class="px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition font-semibold text-xs sm:text-sm flex items-center gap-1">
           <span>⚙️</span> <span class="hidden sm:inline">Settings</span>
         </button>
       </div>
-    </div>
 
-    <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1.5">
-  <span>💬 Chat</span>
-  <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
-    0
-  </span>
-</button>
+    </div>
   </nav>
 
   <main class="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
-      <!-- MAIN PROFILE & CONTENT SECTION (Displays 1st on mobile) -->
+      <!-- MAIN PROFILE & CONTENT SECTION -->
       <section class="lg:col-span-8 order-1 lg:order-2 space-y-6 sm:space-y-8">
 
         <!-- Cover & User Header -->
@@ -83,7 +80,7 @@
             <div class="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10">
               <label class="bg-white/30 backdrop-blur-md text-white border border-white/30 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl cursor-pointer hover:bg-white/40 transition text-[10px] sm:text-xs font-bold tracking-wide shadow-sm uppercase flex items-center gap-1">
                 📸 <span>Swap Cover</span>
-                <input type="file" id="coverImage" accept="image/*" onchange="previewCoverLocal(this)" class="hidden" />
+                <input type="file" id="coverImage" accept="image/*" class="hidden" />
               </label>
             </div>
           </div>
@@ -128,7 +125,7 @@
 
       </section>
 
-      <!-- SIDEBAR EDIT FORM (Displays 2nd on mobile, sticky sidebar on desktop) -->
+      <!-- SIDEBAR EDIT FORM -->
       <aside class="lg:col-span-4 order-2 lg:order-1 space-y-6">
         <div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm lg:sticky lg:top-24">
           <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4 sm:mb-6 flex items-center gap-2">
@@ -147,7 +144,7 @@
           <div class="space-y-3 sm:space-y-4">
             <div>
               <label class="text-[10px] uppercase font-black text-slate-400 ml-2 tracking-wide block mb-1">Upload New Avatar</label>
-              <input type="file" id="profilePic" accept="image/*" onchange="previewAvatarLocal(this)" class="w-full text-xs text-slate-500 bg-slate-50 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 rounded-xl p-1.5 sm:p-2 border border-slate-100 shadow-inner cursor-pointer" />
+              <input type="file" id="profilePic" accept="image/*" class="w-full text-xs text-slate-500 bg-slate-50 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 rounded-xl p-1.5 sm:p-2 border border-slate-100 shadow-inner cursor-pointer" />
             </div>
 
             <div>
@@ -191,49 +188,10 @@
   </main>
 
   <script src="profile.js"></script>
-
   <script>
     function go(page) {
       window.location.href = page;
     }
-
-    function previewAvatarLocal(input) {
-      if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          document.getElementById("avatar").src = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
-      }
-    }
-
-    function previewCoverLocal(input) {
-      if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          document.getElementById("coverPreview").src = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const userPayload = localStorage.getItem("user");
-      if (!userPayload) {
-        window.location.href = "auth.html";
-        return;
-      }
-      
-      const parsedUser = JSON.parse(userPayload);
-      const targetId = parsedUser._id || parsedUser.id;
-      
-      if (typeof viewProfile === "function" && targetId) {
-        if(!localStorage.getItem("profileUserId")) {
-           localStorage.setItem("profileUserId", String(targetId));
-        }
-        viewProfile(String(localStorage.getItem("profileUserId")));
-      }
-    });
   </script>
 
 </body>
