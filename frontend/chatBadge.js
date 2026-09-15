@@ -1,88 +1,259 @@
 // ================= UNREAD CHAT BADGE CONTROLLER =================
+
 const API_URL = "https://vryza-connect-backend-1.onrender.com";
 
 let chatUnreadCount = 0;
 
-// Fetch current unread count on page load
-async function fetchUnreadChatCount() {
-  const rawToken = localStorage.getItem("token");
-  if (!rawToken) return;
 
-  const token = rawToken.replace(/^Bearer\s+/i, "").trim();
+// ================= GET TOKEN =================
+
+function getCleanToken() {
+  const rawToken = localStorage.getItem("token");
+
+  if (!rawToken) {
+    return null;
+  }
+
+  return rawToken
+    .replace(/^Bearer\s+/i, "")
+    .trim();
+}
+
+
+// ================= FETCH UNREAD COUNT =================
+
+async function fetchUnreadChatCount() {
+  const token = getCleanToken();
+
+  if (!token) {
+    return;
+  }
 
   try {
-    const res = await fetch(`${API_URL}/api/messages/unread-count`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await fetch(
+      `${API_URL}/api/messages/unread-count`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
 
-    if (!res.ok) return;
+    if (res.status === 401) {
+      console.warn("Unread badge: authentication expired.");
+      return;
+    }
+
+    if (!res.ok) {
+      console.warn(
+        "Unread badge API returned:",
+        res.status
+      );
+      return;
+    }
 
     const data = await res.json();
-    chatUnreadCount = data.unreadCount || data.count || 0;
+
+    chatUnreadCount =
+      Number(data.unreadCount || 0);
+
     updateChatBadgeUI();
+
   } catch (err) {
-    console.error("Failed to fetch chat unread count:", err);
+    console.error(
+      "❌ FAILED TO FETCH UNREAD COUNT:",
+      err
+    );
   }
 }
 
-// Update DOM badge element visibility and count
+
+// ================= UPDATE BADGE =================
+
 function updateChatBadgeUI() {
-  const badge = document.getElementById("chatUnreadBadge");
-  if (!badge) return;
+  const badge =
+    document.getElementById("chatUnreadBadge");
+
+  if (!badge) {
+    return;
+  }
 
   if (chatUnreadCount > 0) {
-    badge.innerText = chatUnreadCount > 99 ? "99+" : chatUnreadCount;
+
+    badge.innerText =
+      chatUnreadCount > 99
+        ? "99+"
+        : chatUnreadCount;
+
     badge.classList.remove("hidden");
+
   } else {
+
     badge.innerText = "0";
+
     badge.classList.add("hidden");
   }
 }
 
-// Socket.IO Real-time Listener Integration
+
+// ================= REAL-TIME SOCKET BADGE =================
+
 function initChatSocketBadge() {
-  const rawToken = localStorage.getItem("token");
-  if (!rawToken || typeof io === "undefined") return;
 
-  const token = rawToken.replace(/^Bearer\s+/i, "").trim();
-  let currentUserId = "";
+  const rawToken =
+    localStorage.getItem("token");
 
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(window.atob(base64));
-    currentUserId = payload.id || payload._id;
-  } catch (e) {
+  if (
+    !rawToken ||
+    typeof io === "undefined"
+  ) {
     return;
   }
 
-  if (!currentUserId) return;
+  let currentUserId = "";
 
-  const socket = io(API_URL);
-  socket.emit("join", currentUserId);
+  const token =
+    rawToken
+      .replace(/^Bearer\s+/i, "")
+      .trim();
 
-  // Listen for direct incoming messages
-  socket.on("receiveMessage", (message) => {
-    const activeChatPartnerId = localStorage.getItem("chatUserId");
+  try {
 
-    // Increment badge only if message is NOT from currently active conversation user
-    if (message.senderId !== activeChatPartnerId && window.location.pathname.includes("chat.html") === false) {
-      chatUnreadCount++;
-      updateChatBadgeUI();
+    const parts = token.split(".");
+
+    if (parts.length !== 3) {
+      return;
+    }
+
+    const base64Url = parts[1];
+
+    const base64 =
+      base64Url
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+    const payload =
+      JSON.parse(
+        window.atob(base64)
+      );
+
+    currentUserId =
+      payload.id ||
+      payload._id;
+
+  } catch (err) {
+
+    console.error(
+      "❌ Could not read user from token:",
+      err
+    );
+
+    return;
+  }
+
+  if (!currentUserId) {
+    return;
+  }
+
+
+  // IMPORTANT:
+  // Your server requires Socket.IO authentication.
+  // Pass the token when creating the socket.
+
+  const socket = io(API_URL, {
+    auth: {
+      token
     }
   });
 
-  // Listen for notification socket events as backup
-  socket.on("newNotification", (notification) => {
-    if (notification.type === "message") {
-      chatUnreadCount++;
-      updateChatBadgeUI();
+
+  socket.on("connect", () => {
+
+    console.log(
+      "🔔 Chat badge socket connected"
+    );
+
+    socket.emit(
+      "join",
+      currentUserId
+    );
+  });
+
+
+  // ================= NEW PRIVATE MESSAGE =================
+
+  socket.on("receiveMessage", (message) => {
+
+    if (!message) {
+      return;
     }
+
+    const senderId =
+      message.senderId?.toString();
+
+    const receiverId =
+      message.receiverId?.toString();
+
+    const myId =
+      currentUserId.toString();
+
+
+    // VERY IMPORTANT:
+    // Ignore messages that YOU sent.
+    if (senderId === myId) {
+      return;
+    }
+
+
+    // Only count messages actually sent TO us.
+    if (receiverId !== myId) {
+      return;
+    }
+
+
+    // If currently viewing this exact conversation,
+    // don't increase the badge.
+    const activeChatPartner =
+      localStorage.getItem("chatUserId") ||
+      localStorage.getItem("activeChatUser");
+
+
+    if (
+      activeChatPartner &&
+      activeChatPartner.includes(senderId) &&
+      window.location.pathname.includes("chat.html")
+    ) {
+      return;
+    }
+
+
+    chatUnreadCount++;
+
+    updateChatBadgeUI();
+
+  });
+
+
+  socket.on("disconnect", () => {
+
+    console.log(
+      "🔕 Chat badge socket disconnected"
+    );
+
   });
 }
 
-// Kick off badge initialization
-document.addEventListener("DOMContentLoaded", () => {
-  fetchUnreadChatCount();
-  initChatSocketBadge();
-});
+
+// ================= INITIALIZE =================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    fetchUnreadChatCount();
+
+    initChatSocketBadge();
+
+  }
+);
