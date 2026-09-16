@@ -16,7 +16,7 @@ body {
     color: #f8fafc;
     margin: 0;
     padding: 16px;
-    max-w: 600px;
+    max-width: 600px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -26,7 +26,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    border-b: 1px solid #1e293b;
+    border-bottom: 1px solid #1e293b;
     padding-bottom: 12px;
 }
 
@@ -270,28 +270,33 @@ async function loadNotifications(pageNumber = 1) {
             const div = document.createElement("div");
             div.className = `notification ${notification.read ? "" : "unread"} ${extraClass}`;
 
+            const timeStr = notification.createdAt 
+                ? new Date(notification.createdAt).toLocaleString() 
+                : "Just now";
+
             div.innerHTML = `
                 <div class="noti-content">
                     <span class="noti-icon">${icon}</span>
                     <div>
                         <div class="noti-text">${text}</div>
-                        <div class="time">
-                            ${new Date(notification.createdAt).toLocaleString()}
-                        </div>
+                        <div class="time">${timeStr}</div>
                     </div>
                 </div>
             `;
 
-            div.onclick = () => {
-                // Non-blocking read request
-                fetch(`${API_URL}/api/notifications/${notification._id}/read`, {
-                    method: "PUT",
-                    headers: {
-                        Authorization: `Bearer ${token}`
+            div.onclick = async () => {
+                if (!notification.read) {
+                    try {
+                        await fetch(`${API_URL}/api/notifications/${notification._id}/read`, {
+                            method: "PUT",
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        div.classList.remove("unread");
+                        loadUnreadCount();
+                    } catch (err) {
+                        console.error("Error marking notification as read:", err);
                     }
-                }).catch(err => console.error("Error marking notification as read:", err));
-
-                div.classList.remove("unread");
+                }
 
                 // Route actions matching context
                 if (notification.type === "like" || notification.type === "comment") {
@@ -303,8 +308,10 @@ async function loadNotifications(pageNumber = 1) {
                     window.location.href = "profile.html";
                 } else if (["message", "missed_call", "incoming_call", "call"].includes(notification.type)) {
                     if (notification.from) {
-                        localStorage.setItem("chatUserId", notification.from._id);
-                        localStorage.setItem("chatUsername", notification.from.username);
+                        localStorage.setItem("chatUserId", notification.from._id || notification.from);
+                        if (notification.from.username) {
+                            localStorage.setItem("chatUsername", notification.from.username);
+                        }
                     }
                     window.location.href = "chat.html";
                 }
@@ -366,9 +373,7 @@ document.getElementById("markAllBtn").addEventListener("click", async () => {
     try {
         await fetch(`${API_URL}/api/notifications/read-all`, {
             method: "PUT",
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+            headers: { Authorization: `Bearer ${token}` }
         });
         page = 1;
         loadNotifications(1);
@@ -388,24 +393,31 @@ window.addEventListener("scroll", () => {
     }
 });
 
-// --- SOCKET INITIALIZATION ---
-if (typeof io !== "undefined" && currentUserId) {
-    const socket = io(API_URL);
+// --- SOCKET INITIALIZATION WITH HANDSHAKE AUTH ---
+if (typeof io !== "undefined" && currentUserId && token) {
+    const socket = io(API_URL, {
+        auth: { token: token },
+        transports: ["websocket", "polling"]
+    });
 
     socket.emit("join", currentUserId);
 
-    socket.on("newNotification", notification => {
+    const handleIncomingNotification = (notification) => {
         page = 1;
         loadNotifications(1);
         loadUnreadCount();
-        showToast(notification);
-    });
+        if (notification) showToast(notification);
+    };
+
+    socket.on("notificationReceived", handleIncomingNotification);
+    socket.on("newNotification", handleIncomingNotification);
 }
 
 // Initial Kick-off
 loadNotifications(1);
 loadUnreadCount();
 </script>
+<script src="chatBadge.js"></script>
 
 </body>
 </html>
