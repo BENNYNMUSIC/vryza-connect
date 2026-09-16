@@ -4,11 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Owner Dashboard</title>
+
+  <!-- PWA Web App Meta Tags -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<!-- iOS Safari PWA Compatibility -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Vryza+" />
+<link rel="apple-touch-icon" href="images/icon-192.png" />
+
+<!-- PWA Registration Script -->
+<script src="sw-register.js" defer></script>
+  <link rel="stylesheet" href="isadmin.css">
   <style>
     .owner-dashboard {
       font-family: system-ui, -apple-system, sans-serif;
       max-width: 600px;
       padding: 16px;
+      margin: 0 auto;
     }
 
     #top-questions-list {
@@ -39,12 +55,20 @@
   </div>
 
   <script>
+    const ADMIN_API = "https://vryza-connect-backend-1.onrender.com/api/admin";
+
     async function fetchTopQuestions() {
       const listElement = document.getElementById('top-questions-list');
       if (!listElement) return;
 
       try {
-        const res = await fetch('/api/admin/top-questions');
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${ADMIN_API}/top-questions`, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": token ? `Bearer ${token}` : ""
+          }
+        });
         
         if (!res.ok) {
           throw new Error(`Server returned status ${res.status}`);
@@ -85,12 +109,11 @@
         listElement.innerHTML = '';
         
         const errorItem = document.createElement('li');
-        errorItem.textContent = 'Failed to load questions. Please try again.';
+        errorItem.textContent = 'Failed to load questions. Please check authentication or network connection.';
         listElement.appendChild(errorItem);
       }
     }
 
-    // Fetch when owner opens dashboard page
     fetchTopQuestions();
   </script>
 

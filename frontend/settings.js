@@ -3,14 +3,12 @@ const API = "https://vryza-connect-backend-1.onrender.com";
 
 // ================= USER SESSION SECURITY CHECKS =================
 const token = localStorage.getItem("token");
-const user = JSON.parse(localStorage.getItem("user") || null);
+const user = JSON.parse(localStorage.getItem("user") || "null");
 
-// Immediate redirect defense loop if token credentials are empty
 if (!token || !user) {
   window.location.href = "auth.html";
 }
 
-// Helper function to safely format the token with Bearer scheme
 function getAuthHeader() {
   if (!token) return "";
   return token.startsWith("Bearer ") ? token : `Bearer ${token}`;
@@ -18,13 +16,7 @@ function getAuthHeader() {
 
 // ================= USER DESTROY SESSION (LOGOUT) =================
 function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  localStorage.removeItem("chatUserId");
-  localStorage.removeItem("chatUsername");
-  localStorage.removeItem("profileUserId");
-  localStorage.removeItem("theme");
-
+  localStorage.clear();
   alert("Logged out successfully");
   window.location.href = "auth.html";
 }
@@ -78,21 +70,30 @@ async function sendSupport() {
   }
 
   try {
-    // UI Loading feedback transformation
     if (button) {
       button.disabled = true;
       button.innerText = "Sending...";
     }
 
-    // Connects seamlessly with backend payload requirements
-    const res = await fetch(`${API}/api/support`, {
+    let res = await fetch(`${API}/api/support`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": getAuthHeader()
       },
-      body: JSON.stringify({ message: message })
+      body: JSON.stringify({ message })
     });
+
+    if (res.status === 404) {
+      res = await fetch(`${API}/api/user/support`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": getAuthHeader()
+        },
+        body: JSON.stringify({ message })
+      });
+    }
 
     const data = await res.json();
 
@@ -107,18 +108,15 @@ async function sendSupport() {
     console.error("❌ CRITICAL SUPPORT BUS FAULT:", err);
     alert("Pipeline timeout routing communication dispatch packet.");
   } finally {
-    // Guaranteed reset regardless of operation result state outcomes
     if (button) {
       button.disabled = false;
-      button.innerText = "Send";
+      button.innerText = "Submit Ticket";
     }
   }
 }
 
-// ================= PROTECTED INITIALIZATION MOUNT LOOP =================
+// ================= INITIALIZATION =================
 document.addEventListener("DOMContentLoaded", () => {
-  
-  // 1. Load active system preference themes instantly
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme === "dark") {
     setDark();
@@ -126,19 +124,18 @@ document.addEventListener("DOMContentLoaded", () => {
     setLight();
   }
 
-  // 2. Attach keyboard event listeners safely after DOM trees render
   const supportInput = document.getElementById("supportMessage");
   if (supportInput) {
     supportInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault(); // Stop default paragraph breaks
+        e.preventDefault();
         sendSupport();
       }
     });
   }
 });
 
-// ================= EXPORT METHODS FOR DOM INLINE BINDINGS =================
+// ================= EXPORT METHODS FOR DOM BINDINGS =================
 window.logout = logout;
 window.setDark = setDark;
 window.setLight = setLight;

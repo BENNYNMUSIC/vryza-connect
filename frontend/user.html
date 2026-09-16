@@ -4,10 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vryza+ | View Profile</title>
+  <!-- PWA Web App Meta Tags -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<!-- iOS Safari PWA Compatibility -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Vryza+" />
+<link rel="apple-touch-icon" href="images/icon-192.png" />
+
+<!-- PWA Registration Script -->
+<script src="sw-register.js" defer></script>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
     body { font-family: "Inter", sans-serif; transition: background-color 0.2s; }
@@ -15,12 +28,12 @@
 </head>
 <body class="bg-slate-100 min-h-screen pt-20">
 
-  <!-- NAVBAR WITH BADGE INTEGRATION -->
+  <!-- TOP NAVIGATION BAR -->
   <nav class="bg-white/90 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
     <div class="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5">
       <div class="flex items-center gap-2 sm:gap-3 cursor-pointer" onclick="go('home.html')">
         <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md">
-          <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
+          <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'white\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M13 10V3L4 14h7v7l9-11h-7z\'/></svg>';">
         </div>
         <span class="font-black text-slate-800 text-base tracking-tight">
           Vryza<span class="text-blue-600">+</span>
@@ -58,11 +71,12 @@
 
   <script>
     const API = "https://vryza-connect-backend-1.onrender.com";
+    const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-3.8-.85-5.05-2.2.03-1.66 3.33-2.55 5.05-2.55 1.71 0 5.02.89 5.05 2.55C15.8 19.15 14.03 20 12 20z'/></svg>";
 
     const token = localStorage.getItem("token");
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const currentUserId = String(currentUser._id || currentUser.id || "");
 
-    // Reads URL query target first, falls back to saved profile context
     const urlParams = new URLSearchParams(window.location.search);
     const profileUserId = urlParams.get("id") || localStorage.getItem("profileUserId");
 
@@ -88,9 +102,8 @@
       };
     }
 
-    // Normalizes avatar URL sources
     function buildAvatarUrl(src) {
-      if (!src) return null;
+      if (!src || src === "undefined" || src === "null") return null;
       if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:")) {
         return src;
       }
@@ -100,17 +113,24 @@
 
     function startDirectChat() {
       localStorage.setItem("chatUserId", profileUserId);
-      window.location.href = 'chat.html';
+      window.location.href = `chat.html?userId=${profileUserId}`;
     }
 
     async function loadProfile() {
       const container = document.getElementById("profileContainer");
       
       try {
-        const res = await fetch(`${API}/api/user/${profileUserId}`, {
+        let res = await fetch(`${API}/api/user/${profileUserId}`, {
           method: "GET",
           headers: getHeaders()
         });
+
+        if (res.status === 404) {
+          res = await fetch(`${API}/api/users/${profileUserId}`, {
+            method: "GET",
+            headers: getHeaders()
+          });
+        }
 
         const data = await res.json();
 
@@ -119,15 +139,15 @@
           return;
         }
 
-        const user = data.user || data;
-
-        // Avatar Image & Initial Fallback Handler
+        const user = data.user || data.profile || data;
         const avatarUrl = buildAvatarUrl(user.profilePic);
         const userInitial = (user.username || "U").charAt(0).toUpperCase();
 
         const avatarHTML = avatarUrl 
-          ? `<img src="${avatarUrl}" alt="${user.username}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-3xl font-black text-white\'>${userInitial}</span>';" />`
+          ? `<img src="${avatarUrl}" alt="${user.username}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${DEFAULT_AVATAR}';" />`
           : `<span class="text-3xl font-black text-white">${userInitial}</span>`;
+
+        const isSelf = String(user._id || user.id) === currentUserId;
 
         container.innerHTML = `
           <div class="flex flex-col sm:flex-row items-center gap-5 pb-6 border-b border-slate-100">
@@ -154,21 +174,28 @@
           </div>
 
           <div class="pt-4 flex flex-col sm:flex-row gap-3">
-            <button id="followBtn" onclick="followUser()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-6 rounded-2xl font-bold transition shadow-md shadow-blue-100 active:scale-[0.99]">
-              Loading Status...
-            </button>
-            <button onclick="startDirectChat()" class="bg-slate-800 hover:bg-slate-900 text-white py-3.5 px-6 rounded-2xl font-bold transition shadow-md active:scale-[0.99]">
-              Message Profile
-            </button>
+            ${isSelf ? `
+              <button onclick="go('profile.html')" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-3.5 px-6 rounded-2xl font-bold transition shadow-md active:scale-[0.99]">
+                Edit My Profile
+              </button>
+            ` : `
+              <button id="followBtn" onclick="followUser()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-6 rounded-2xl font-bold transition shadow-md shadow-blue-100 active:scale-[0.99]">
+                Loading Status...
+              </button>
+              <button onclick="startDirectChat()" class="bg-slate-800 hover:bg-slate-900 text-white py-3.5 px-6 rounded-2xl font-bold transition shadow-md active:scale-[0.99]">
+                Message Profile
+              </button>
+            `}
           </div>
         `;
 
-        const currentId = currentUser.id || currentUser._id;
-        const isFollowing = user.followers && Array.isArray(user.followers) 
-          ? user.followers.some(f => (f._id || f) === currentId) 
-          : false;
+        if (!isSelf) {
+          const isFollowing = user.followers && Array.isArray(user.followers) 
+            ? user.followers.some(f => String(f._id || f.id || f) === currentUserId) 
+            : false;
 
-        updateFollowButtonUI(isFollowing);
+          updateFollowButtonUI(isFollowing);
+        }
 
       } catch (err) {
         console.error("❌ PROFILE SYSTEM LOADING FAULT:", err);
@@ -194,10 +221,17 @@
       if (btn) btn.disabled = true;
 
       try {
-        const res = await fetch(`${API}/api/user/follow/${profileUserId}`, {
+        let res = await fetch(`${API}/api/user/follow/${profileUserId}`, {
           method: "PUT",
           headers: getHeaders()
         });
+
+        if (res.status === 404) {
+          res = await fetch(`${API}/api/users/follow/${profileUserId}`, {
+            method: "PUT",
+            headers: getHeaders()
+          });
+        }
 
         const data = await res.json();
 
@@ -206,7 +240,11 @@
           return;
         }
 
-        updateFollowButtonUI(data.following);
+        const isFollowing = data.following !== undefined 
+          ? data.following 
+          : (data.followers && data.followers.includes(currentUserId));
+
+        updateFollowButtonUI(isFollowing);
 
       } catch (err) {
         console.error("❌ CRITICAL RELATION ENGINE ABORT:", err);

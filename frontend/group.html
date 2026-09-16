@@ -7,26 +7,28 @@
 
     <title>Groups - Vryza Connect</title>
 
+    <!-- PWA Web App Meta Tags -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<!-- iOS Safari PWA Compatibility -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Vryza+" />
+<link rel="apple-touch-icon" href="images/icon-192.png" />
+
+<!-- PWA Registration Script -->
+<script src="sw-register.js" defer></script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
 
     <style>
-        body {
-            background: #f3f4f6;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        body { background: #f3f4f6; }
+        .hidden { display: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         #groupMessages img, #groupMessages video {
             max-width: 280px;
@@ -35,9 +37,7 @@
             border-radius: 12px;
         }
 
-        #groupMessages audio {
-            max-width: 260px;
-        }
+        #groupMessages audio { max-width: 260px; }
 
         .recording-pulse {
             animation: recordingPulse 1s infinite;
@@ -53,33 +53,67 @@
 
 <body class="pt-20">
 
-    <!-- NAVIGATION BAR -->
-    <nav class="bg-white/90 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
-        <div class="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5">
-            <div class="flex items-center gap-3 sm:gap-8 overflow-x-auto hide-scrollbar w-full">
-                <div class="flex items-center gap-2 bg-slate-100/80 px-2.5 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer" onclick="go('home.html')">
-                    <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md shadow-blue-200">
-                        <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
-                    </div>
-                    <span class="font-black text-slate-800 text-base tracking-tight hidden sm:inline">
-                        Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">+</span>
-                    </span>
+    <!-- NAVIGATION BAR (ICONS OVER TEXT) -->
+    <nav class="bg-white/95 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
+        <div class="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-1.5">
+            
+            <!-- LOGO -->
+            <div class="flex items-center gap-2 bg-slate-100/80 px-2.5 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer" onclick="go('home.html')">
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md shadow-blue-200">
+                    <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
                 </div>
-
-                <div class="flex items-center gap-4 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
-                    <button onclick="go('home.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🏠 Home</button>
-                    <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">👤 Profile</button>
-                    <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1.5 text-sm shrink-0">💬 Chat</button>
-                    <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">👥 Friends</button>
-                    <button onclick="go('group.html')" class="text-blue-600 font-bold flex items-center gap-1 text-sm shrink-0">🌍 Groups</button>
-                    <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🔔 Alerts</button>
-                    <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🔴 LIVE</button>
-                    <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">⚙️ Settings</button>
-                </div>
+                <span class="font-black text-slate-800 text-base tracking-tight hidden md:inline">
+                    Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">+</span>
+                </span>
             </div>
 
-            <button onclick="logout()" class="text-red-500 font-semibold hover:text-red-700 transition hidden sm:flex items-center gap-1 text-sm shrink-0 ml-4">
-                🚪 Logout
+            <!-- NAV ITEMS -->
+            <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
+                <button onclick="go('home.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+                    <span class="text-lg leading-none mb-0.5">🏠</span>
+                    <span>Home</span>
+                </button>
+
+                <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+                    <span class="text-lg leading-none mb-0.5">👤</span>
+                    <span>Profile</span>
+                </button>
+
+                <button onclick="go('chat.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+                    <span class="text-lg leading-none mb-0.5">💬</span>
+                    <span>Chat</span>
+                </button>
+
+                <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+                    <span class="text-lg leading-none mb-0.5">👥</span>
+                    <span>Friends</span>
+                </button>
+
+                <button onclick="go('group.html')" class="text-blue-600 font-bold flex flex-col items-center text-[11px] shrink-0 hover:opacity-80 transition">
+                    <span class="text-lg leading-none mb-0.5">🌍</span>
+                    <span>Groups</span>
+                </button>
+
+                <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+                    <span class="text-lg leading-none mb-0.5">🔔</span>
+                    <span>Alerts</span>
+                </button>
+
+                <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+                    <span class="text-lg leading-none mb-0.5">🔴</span>
+                    <span>LIVE</span>
+                </button>
+
+                <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+                    <span class="text-lg leading-none mb-0.5">⚙️</span>
+                    <span>Settings</span>
+                </button>
+            </div>
+
+            <!-- LOGOUT -->
+            <button onclick="logout()" class="text-red-500 hover:text-red-700 font-semibold flex flex-col items-center text-[11px] shrink-0 transition ml-2">
+                <span class="text-lg leading-none mb-0.5">🚪</span>
+                <span>Logout</span>
             </button>
         </div>
     </nav>
@@ -137,13 +171,11 @@
                         <h2 id="chatGroupName" class="font-bold text-xl"></h2>
                         <div class="flex items-center gap-3 text-xs opacity-90 mt-0.5">
                             <span id="chatGroupMembers"></span>
-                            <!-- Publicly Visible Reported Users Count -->
                             <span id="reportedBadge" class="bg-amber-500/30 text-amber-100 px-2 py-0.5 rounded-full font-medium">⚠️ 0 reported members</span>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <!-- Admin Only Reports Button -->
                         <button id="viewReportsBtn" onclick="openReportsModal()" class="hidden bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition">
                             🚨 Admin Reports
                         </button>
@@ -177,21 +209,16 @@
                 <!-- MESSAGE INPUT -->
                 <div class="p-3 sm:p-4 bg-white border-t">
                     <div class="flex gap-2 items-center">
-                        <!-- IMAGE INPUT -->
                         <label for="groupImageInput" class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 w-11 h-11 flex items-center justify-center rounded-lg transition text-xl shrink-0" title="Send image">📷</label>
                         <input id="groupImageInput" type="file" accept="image/*" class="hidden" onchange="handleMediaSelected(event, 'image')">
 
-                        <!-- VIDEO INPUT -->
                         <label for="groupVideoInput" class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 w-11 h-11 flex items-center justify-center rounded-lg transition text-xl shrink-0" title="Send video">🎥</label>
                         <input id="groupVideoInput" type="file" accept="video/*" class="hidden" onchange="handleMediaSelected(event, 'video')">
 
-                        <!-- VOICE RECORDING -->
                         <button id="voiceButton" onclick="toggleRecording()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 w-11 h-11 flex items-center justify-center rounded-lg transition text-xl shrink-0" title="Record voice note">🎤</button>
 
-                        <!-- TEXT INPUT -->
                         <input id="messageInput" type="text" placeholder="Type a message..." class="flex-1 min-w-0 border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" onkeydown="handleMessageKey(event)">
 
-                        <!-- SEND BUTTON -->
                         <button onclick="sendGroupMessage()" class="bg-blue-600 text-white px-4 sm:px-6 h-11 rounded-lg font-semibold hover:bg-blue-700 transition shrink-0">Send</button>
                     </div>
                 </div>
@@ -209,7 +236,7 @@
             </div>
         </div>
 
-        <!-- ADMIN REPORTS MODAL (ADMIN ONLY) -->
+        <!-- ADMIN REPORTS MODAL -->
         <div id="reportsModal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
             <div class="bg-white rounded-xl max-w-lg w-full p-6 max-h-[80vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4">
@@ -226,9 +253,14 @@
 const API_URL = "https://vryza-connect-backend-1.onrender.com";
 
 function go(url) { window.location.href = url; }
-function logout() { localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href = "auth.html"; }
-function getToken() { return localStorage.getItem("token"); }
-if (!getToken()) { window.location.href = "auth.html"; }
+function logout() { localStorage.clear(); window.location.href = "auth.html"; }
+
+function getCleanToken() {
+  const raw = localStorage.getItem("token");
+  return raw ? raw.replace(/^Bearer\s+/i, "").trim() : null;
+}
+
+if (!getCleanToken()) { window.location.href = "auth.html"; }
 
 let currentGroup = null;
 let activeGroupMap = {};
@@ -242,7 +274,7 @@ let selectedVideoData = "";
 const socket = io(API_URL, {
     transports: ["websocket", "polling"],
     secure: true,
-    auth: { token: getToken() }
+    auth: { token: getCleanToken() }
 });
 
 socket.on("connect", () => {
@@ -255,7 +287,9 @@ socket.on("receiveGroupMessage", (data) => {
     const senderId = String(data.senderId || data.sender?._id || data.sender?.id || data.sender || "");
     if (senderId === String(getCurrentUserId())) return;
 
-    if (currentGroup && targetGroupId === String(currentGroup._id)) {
+    const currentGroupId = currentGroup ? String(currentGroup._id || currentGroup.id) : "";
+
+    if (currentGroup && targetGroupId === currentGroupId) {
         addMessageToScreen({
             _id: data.messageId || data._id,
             group: targetGroupId,
@@ -270,7 +304,7 @@ socket.on("receiveGroupMessage", (data) => {
 });
 
 async function apiRequest(url, options = {}) {
-    const token = getToken();
+    const token = getCleanToken();
     options.headers = {
         "Content-Type": "application/json",
         ...(options.headers || {}),
@@ -300,7 +334,8 @@ async function createGroup() {
         alert("Group created!");
         hideCreateGroup();
         await loadGroups();
-        if (group && group._id) openGroupById(group._id);
+        const createdGroupId = group ? String(group._id || group.id) : null;
+        if (createdGroupId) openGroupById(createdGroupId);
     } catch (error) { alert(error.message); }
 }
 
@@ -310,7 +345,12 @@ async function loadGroups() {
         const publicGroups = await apiRequest("/api/groups/public");
         activeGroupMap = {};
         const allGroups = [...(Array.isArray(myGroups) ? myGroups : []), ...(Array.isArray(publicGroups) ? publicGroups : [])];
-        allGroups.forEach(g => { if (g && g._id) activeGroupMap[g._id] = g; });
+        allGroups.forEach(g => {
+            if (g) {
+                const gId = String(g._id || g.id || "");
+                if (gId) activeGroupMap[gId] = g;
+            }
+        });
         displayMyGroups(myGroups);
         displayPublicGroups(publicGroups, myGroups);
     } catch (error) { console.error("Load groups error:", error); }
@@ -329,10 +369,11 @@ function displayMyGroups(groups) {
 function displayPublicGroups(groups, myGroups) {
     const container = document.getElementById("publicGroups");
     container.innerHTML = "";
-    const myGroupIds = (myGroups || []).map(g => String(g._id));
+    const myGroupIds = (myGroups || []).map(g => String(g._id || g.id));
     let count = 0;
     (groups || []).forEach(group => {
-        if (!myGroupIds.includes(String(group._id))) {
+        const gId = String(group._id || group.id);
+        if (!myGroupIds.includes(gId)) {
             container.innerHTML += groupCard(group, false);
             count++;
         }
@@ -341,6 +382,7 @@ function displayPublicGroups(groups, myGroups) {
 }
 
 function groupCard(group, isMember) {
+    const groupId = String(group._id || group.id);
     return `
         <div class="bg-white rounded-xl shadow p-5 flex flex-col justify-between border border-gray-100">
             <div>
@@ -357,8 +399,8 @@ function groupCard(group, isMember) {
             </div>
             <div>
                 ${isMember 
-                    ? `<button onclick="openGroupById('${group._id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition shadow-sm">Open Group</button>`
-                    : `<button onclick="joinGroup('${group._id}')" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition shadow-sm">Join Group</button>`}
+                    ? `<button onclick="openGroupById('${groupId}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition shadow-sm">Open Group</button>`
+                    : `<button onclick="joinGroup('${groupId}')" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition shadow-sm">Join Group</button>`}
             </div>
         </div>
     `;
@@ -373,26 +415,26 @@ async function joinGroup(groupId) {
 }
 
 async function openGroupById(groupId) {
-    const group = activeGroupMap[groupId];
+    const targetId = String(groupId);
+    const group = activeGroupMap[targetId];
     if (!group) return;
 
-    if (currentGroup && String(currentGroup._id) !== String(groupId)) {
-        socket.emit("leaveGroup", currentGroup._id);
+    if (currentGroup && String(currentGroup._id || currentGroup.id) !== targetId) {
+        socket.emit("leaveGroup", String(currentGroup._id || currentGroup.id));
     }
 
     currentGroup = group;
-    socket.emit("joinGroup", groupId);
+    socket.emit("joinGroup", targetId);
 
     document.getElementById("groupChat").classList.remove("hidden");
     document.getElementById("chatGroupName").textContent = group.name;
     document.getElementById("chatGroupMembers").textContent = `${group.members ? group.members.length : 0} members`;
 
-    // Configure Owner / Admin status
-    const currentUserId = getCurrentUserId();
-    const isOwner = String(group.owner?._id || group.owner) === String(currentUserId);
-    const isAdmin = isOwner || (group.admins || []).some(a => String(a._id || a) === String(currentUserId));
+    const currentUserId = String(getCurrentUserId() || "");
+    const ownerId = String(group.owner?._id || group.owner?.id || group.owner || "");
+    const isOwner = ownerId === currentUserId;
+    const isAdmin = isOwner || (group.admins || []).some(a => String(a._id || a.id || a) === currentUserId);
 
-    // Show/Hide Admin Reports Button
     const viewReportsBtn = document.getElementById("viewReportsBtn");
     if (isAdmin) {
         viewReportsBtn.classList.remove("hidden");
@@ -400,10 +442,8 @@ async function openGroupById(groupId) {
         viewReportsBtn.classList.add("hidden");
     }
 
-    // Load Public Report Summary Counter
-    loadReportSummary(group._id);
-
-    loadMessages(group._id);
+    loadReportSummary(targetId);
+    loadMessages(targetId);
 }
 
 async function loadReportSummary(groupId) {
@@ -417,7 +457,7 @@ async function loadReportSummary(groupId) {
 }
 
 function closeGroupChat() {
-    if (currentGroup) socket.emit("leaveGroup", currentGroup._id);
+    if (currentGroup) socket.emit("leaveGroup", String(currentGroup._id || currentGroup.id));
     stopRecording(true);
     clearSelectedMedia();
     currentGroup = null;
@@ -434,39 +474,46 @@ async function loadMessages(groupId) {
     } catch (error) { console.error("Load messages error:", error); }
 }
 
+function resolveMediaUrl(path) {
+    if (!path) return "";
+    if (path.startsWith("http") || path.startsWith("data:")) return path;
+    return `${API_URL}/uploads/${path}`;
+}
+
 function addMessageToScreen(message) {
     const container = document.getElementById("groupMessages");
     if (!container) return;
 
-    if (message._id && document.querySelector(`[data-message-id="${message._id}"]`)) return;
+    const msgId = String(message._id || message.id || "");
+    if (msgId && document.querySelector(`[data-message-id="${msgId}"]`)) return;
 
-    const currentUser = getCurrentUserId();
-    const senderId = message.sender?._id || message.sender?.id || message.sender;
-    const isMine = String(senderId) === String(currentUser);
+    const currentUser = String(getCurrentUserId() || "");
+    const senderId = String(message.sender?._id || message.sender?.id || message.sender || "");
+    const isMine = senderId === currentUser;
 
     const div = document.createElement("div");
-    if (message._id) div.dataset.messageId = message._id;
+    if (msgId) div.dataset.messageId = msgId;
     div.className = `flex ${isMine ? "justify-end" : "justify-start"}`;
 
     const bubbleClass = isMine ? "bg-blue-600 text-white rounded-br-none" : "bg-white border text-gray-800 rounded-bl-none";
     let contentHTML = "";
 
-    // IMAGE
-    if (message.image) {
-        contentHTML += `<div class="mb-2"><img src="${escapeAttribute(message.image)}" class="rounded-xl cursor-pointer border border-black/10" onclick="openMediaOverlay('${escapeAttribute(message.image)}', 'image')"></div>`;
+    const imageUrl = resolveMediaUrl(message.image);
+    const videoUrl = resolveMediaUrl(message.video);
+    const voiceUrl = resolveMediaUrl(message.voice);
+
+    if (imageUrl) {
+        contentHTML += `<div class="mb-2"><img src="${escapeAttribute(imageUrl)}" class="rounded-xl cursor-pointer border border-black/10" onclick="openMediaOverlay('${escapeAttribute(imageUrl)}', 'image')"></div>`;
     }
 
-    // VIDEO
-    if (message.video) {
-        contentHTML += `<div class="mb-2"><video controls class="rounded-xl max-w-full"><source src="${escapeAttribute(message.video)}">Your browser does not support video.</video></div>`;
+    if (videoUrl) {
+        contentHTML += `<div class="mb-2"><video controls class="rounded-xl max-w-full"><source src="${escapeAttribute(videoUrl)}">Your browser does not support video.</video></div>`;
     }
 
-    // VOICE
-    if (message.voice) {
-        contentHTML += `<div class="mb-2"><audio controls class="w-full"><source src="${escapeAttribute(message.voice)}"></audio></div>`;
+    if (voiceUrl) {
+        contentHTML += `<div class="mb-2"><audio controls class="w-full"><source src="${escapeAttribute(voiceUrl)}"></audio></div>`;
     }
 
-    // TEXT
     if (message.text) {
         contentHTML += `<p class="text-sm leading-relaxed break-words whitespace-pre-wrap">${escapeHTML(message.text)}</p>`;
     }
@@ -487,7 +534,6 @@ function addMessageToScreen(message) {
     container.scrollTop = container.scrollHeight;
 }
 
-// Media Selection & Preview
 function handleMediaSelected(event, type) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -531,6 +577,7 @@ async function sendGroupMessage() {
     if (!currentGroup) return alert("Please open a group first.");
     if (isRecording) return alert("Stop recording first.");
 
+    const groupId = String(currentGroup._id || currentGroup.id);
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
 
@@ -544,20 +591,19 @@ async function sendGroupMessage() {
             voice: ""
         };
 
-        const message = await apiRequest(`/api/groups/${currentGroup._id}/messages`, {
+        const message = await apiRequest(`/api/groups/${groupId}/messages`, {
             method: "POST",
             body: JSON.stringify(body)
         });
 
         addMessageToScreen(message);
-        socket.emit("sendGroupMessage", { groupId: currentGroup._id, messageId: message._id });
+        socket.emit("sendGroupMessage", { groupId: groupId, messageId: String(message._id || message.id) });
 
         input.value = "";
         clearSelectedMedia();
     } catch (error) { alert(error.message); }
 }
 
-// Voice Recording Handlers
 async function toggleRecording() { isRecording ? stopRecording(false) : await startRecording(); }
 
 async function startRecording() {
@@ -613,14 +659,16 @@ function updateRecordingUI() {
 
 async function sendVoiceBlob(blob) {
     if (!currentGroup) return;
+    const groupId = String(currentGroup._id || currentGroup.id);
+
     try {
         const voiceData = await blobToDataURL(blob);
-        const message = await apiRequest(`/api/groups/${currentGroup._id}/messages`, {
+        const message = await apiRequest(`/api/groups/${groupId}/messages`, {
             method: "POST",
             body: JSON.stringify({ text: "", image: "", video: "", voice: voiceData })
         });
         addMessageToScreen(message);
-        socket.emit("sendGroupMessage", { groupId: currentGroup._id, messageId: message._id });
+        socket.emit("sendGroupMessage", { groupId: groupId, messageId: String(message._id || message.id) });
     } catch (error) { alert(error.message); }
     finally { isRecording = false; updateRecordingUI(); }
 }
@@ -634,20 +682,20 @@ function blobToDataURL(blob) {
     });
 }
 
-// User Actions: Banning & Reporting
 async function banUser(userId) {
     if (!currentGroup) return;
     if (!confirm("Are you sure you want to ban this user from the group?")) return;
 
+    const groupId = String(currentGroup._id || currentGroup.id);
     try {
-        await apiRequest(`/api/groups/${currentGroup._id}/ban`, {
+        await apiRequest(`/api/groups/${groupId}/ban`, {
             method: "POST",
-            body: JSON.stringify({ userId })
+            body: JSON.stringify({ userId: String(userId) })
         });
         alert("User has been banned.");
-        openMembersModal(); // Refresh member list
+        openMembersModal();
     } catch (error) {
-        alert(error.message); // Backend will reject if target is an Admin or Owner
+        alert(error.message);
     }
 }
 
@@ -656,34 +704,34 @@ async function reportUser(userId, username) {
     const reason = prompt(`Report ${username} for bad behaviour:`);
     if (!reason || !reason.trim()) return;
 
+    const groupId = String(currentGroup._id || currentGroup.id);
     try {
-        await apiRequest(`/api/groups/${currentGroup._id}/report`, {
+        await apiRequest(`/api/groups/${groupId}/report`, {
             method: "POST",
-            body: JSON.stringify({ userId, reason: reason.trim() })
+            body: JSON.stringify({ userId: String(userId), reason: reason.trim() })
         });
         alert("Report submitted to group administrators.");
-        loadReportSummary(currentGroup._id);
+        loadReportSummary(groupId);
     } catch (error) { alert(error.message); }
 }
 
-// Modals Management
 function openMembersModal() {
     if (!currentGroup) return;
     const modal = document.getElementById("membersModal");
     const list = document.getElementById("membersList");
-    const currentUserId = getCurrentUserId();
-    const isOwner = String(currentGroup.owner?._id || currentGroup.owner) === String(currentUserId);
+
+    const currentUserId = String(getCurrentUserId() || "");
+    const ownerId = String(currentGroup.owner?._id || currentGroup.owner?.id || currentGroup.owner || "");
+    const isOwner = ownerId === currentUserId;
 
     list.innerHTML = "";
     (currentGroup.members || []).forEach(member => {
-        const memberId = member._id || member;
+        const memberId = String(member._id || member.id || member);
         const memberName = member.username || "Member";
-        const isAdminMember = (currentGroup.admins || []).some(a => String(a._id || a) === String(memberId));
-        const isOwnerMember = String(currentGroup.owner?._id || currentGroup.owner) === String(memberId);
+        const isAdminMember = (currentGroup.admins || []).some(a => String(a._id || a.id || a) === memberId);
+        const isOwnerMember = ownerId === memberId;
 
         let roleBadge = isOwnerMember ? "👑 Owner" : (isAdminMember ? "🛡️ Admin" : "Member");
-        
-        // Owner can ban ONLY non-admin members
         let showBanBtn = isOwner && !isAdminMember && !isOwnerMember;
 
         list.innerHTML += `
@@ -704,13 +752,15 @@ function closeMembersModal() { document.getElementById("membersModal").classList
 
 async function openReportsModal() {
     if (!currentGroup) return;
+    const groupId = String(currentGroup._id || currentGroup.id);
     const modal = document.getElementById("reportsModal");
     const list = document.getElementById("reportsList");
+
     list.innerHTML = "<p class='text-center text-sm text-gray-500'>Loading reports...</p>";
     modal.classList.remove("hidden");
 
     try {
-        const reports = await apiRequest(`/api/groups/${currentGroup._id}/reports`);
+        const reports = await apiRequest(`/api/groups/${groupId}/reports`);
         list.innerHTML = "";
         if (!reports || reports.length === 0) {
             list.innerHTML = "<p class='text-center text-sm text-gray-500'>No reported behaviour found.</p>";
@@ -730,7 +780,7 @@ async function openReportsModal() {
             `;
         });
     } catch (err) {
-        list.innerHTML = `<p class="text-center text-sm text-red-500">${err.message}</p>`;
+        list.innerHTML = `<p class="text-center text-sm text-red-500">${escapeHTML(err.message)}</p>`;
     }
 }
 
@@ -748,7 +798,23 @@ function openMediaOverlay(src, type) {
 }
 
 function handleMessageKey(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendGroupMessage(); } }
-function getCurrentUserId() { try { return JSON.parse(localStorage.getItem("user"))?._id || null; } catch { return null; } }
+
+function getCurrentUserId() {
+    try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (user && (user._id || user.id)) return String(user._id || user.id);
+
+        const token = getCleanToken();
+        if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return String(payload.id || payload._id || payload.userId || "");
+        }
+    } catch (err) {
+        console.error("Error reading current user ID:", err);
+    }
+    return null;
+}
+
 function escapeHTML(str) { const d = document.createElement("div"); d.textContent = str || ""; return d.innerHTML; }
 function escapeAttribute(str) { return String(str || "").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
 

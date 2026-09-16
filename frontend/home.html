@@ -6,6 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Vryza Connect | Home & Dashboard</title>
 
+  <!-- PWA Web App Meta Tags -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<!-- iOS Safari PWA Compatibility -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Vryza+" />
+<link rel="apple-touch-icon" href="images/icon-192.png" />
+
+<!-- PWA Registration Script -->
+<script src="sw-register.js" defer></script>
+
   <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
 
   <link rel="manifest" href="manifest.json">
@@ -16,7 +30,7 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     body {
@@ -42,7 +56,6 @@
       scrollbar-width: none;
     }
 
-    /* AI Admin message styling */
     .ai-admin-message {
       background-color: #f0f4ff;
       border-left: 4px solid #3b82f6;
@@ -63,51 +76,85 @@
   </style>
 </head>
 
-<body class="bg-slate-50 pt-16 sm:pt-20 pb-12">
+<body class="bg-slate-50 pt-20 pb-12">
 
-  <nav class="bg-white/90 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
-    <div class="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5">
+  <!-- NAVIGATION BAR (ICONS OVER TEXT) -->
+  <nav class="bg-white/95 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-1.5">
       
-      <div class="flex items-center gap-3 sm:gap-8 overflow-x-auto hide-scrollbar w-full">
-        <div class="flex items-center gap-2 bg-slate-100/80 px-2.5 py-1.5 rounded-2xl border border-slate-200/60 shrink-0">
-          <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md shadow-blue-200">
-            <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
-          </div>
-          <span class="font-black text-slate-800 text-base tracking-tight hidden sm:inline">
-            Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">+</span>
-          </span>
+      <!-- LOGO -->
+      <div class="flex items-center gap-2 bg-slate-100/80 px-2.5 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer" onclick="go('home.html')">
+        <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md shadow-blue-200">
+          <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
         </div>
-
-        <div class="flex items-center gap-4 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
-          <button onclick="go('home.html')" class="text-blue-600 font-bold flex items-center gap-1 text-sm shrink-0">🏠 Home</button>
-          <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">👤 Profile</button>
-          
-          <!-- CHAT BUTTON WITH UNREAD BADGE -->
-          <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1.5 text-sm shrink-0">
-            <span>💬 Chat</span>
-            <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
-              0
-            </span>
-          </button>
-
-          <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">👥 Friends</button>
-          <button onclick="go('group.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🌍 Groups</button>
-          <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🔔 Alerts</button>
-          <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🔴 LIVE</button>
-          <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">⚙️ Settings</button>
-        </div>
+        <span class="font-black text-slate-800 text-base tracking-tight hidden md:inline">
+          Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">+</span>
+        </span>
       </div>
 
-      <button onclick="logout()" class="text-red-500 font-semibold hover:text-red-700 transition hidden sm:flex items-center gap-1 text-sm shrink-0 ml-4">
-        🚪 Logout
+      <!-- NAV ITEMS -->
+      <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
+        
+        <button onclick="go('home.html')" class="text-blue-600 font-bold flex flex-col items-center text-[11px] shrink-0 hover:opacity-80 transition">
+          <span class="text-lg leading-none mb-0.5">🏠</span>
+          <span>Home</span>
+        </button>
+
+        <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">👤</span>
+          <span>Profile</span>
+        </button>
+
+        <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">💬</span>
+          <span>Chat</span>
+          <span id="chatUnreadBadge" class="hidden absolute -top-1 -right-2 bg-blue-600 text-white text-[9px] font-black px-1 rounded-full min-w-[15px] text-center shadow-sm">
+            0
+          </span>
+        </button>
+
+        <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">👥</span>
+          <span>Friends</span>
+        </button>
+
+        <button onclick="go('group.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">🌍</span>
+          <span>Groups</span>
+        </button>
+
+        <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">🔔</span>
+          <span>Alerts</span>
+        </button>
+
+        <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">🔴</span>
+          <span>LIVE</span>
+        </button>
+
+        <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">⚙️</span>
+          <span>Settings</span>
+        </button>
+
+      </div>
+
+      <!-- LOGOUT BUTTON -->
+      <button onclick="logout()" class="text-red-500 hover:text-red-700 font-semibold flex flex-col items-center text-[11px] shrink-0 transition ml-2">
+        <span class="text-lg leading-none mb-0.5">🚪</span>
+        <span>Logout</span>
       </button>
+
     </div>
   </nav>
 
   <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-6 mt-4">
 
+    <!-- MAIN FEED COLUMN -->
     <div class="lg:col-span-8 space-y-6">
 
+      <!-- CREATE POST BOX -->
       <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200">
         <div class="flex items-center gap-3 mb-3">
           <div id="createPostUserAvatar" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-inner text-sm overflow-hidden">
@@ -131,6 +178,7 @@
         </button>
       </div>
 
+      <!-- MY GROUPS PREVIEW -->
       <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
         <div class="flex items-center justify-between mb-4">
           <h3 class="font-bold text-slate-800 text-base">🌍 Your Groups</h3>
@@ -141,7 +189,8 @@
         </div>
       </div>
 
-      <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 owner-dashboard">
+      <!-- AI / INSIGHTS DASHBOARD -->
+      <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
         <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center justify-between">
           <span>📊 Support Insights</span>
           <span class="text-xs text-slate-400 font-normal">Top Questions</span>
@@ -151,11 +200,13 @@
         </ul>
       </div>
 
+      <!-- TIMELINE POSTS FEED -->
       <div id="feed" class="space-y-6"></div>
     </div>
 
+    <!-- RIGHT SIDEBAR -->
     <div class="lg:col-span-4 space-y-6">
-      <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 lg:sticky lg:top-20">
+      <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 lg:sticky lg:top-24">
         
         <h3 class="font-bold text-slate-800 mb-3 flex items-center justify-between text-sm sm:text-base">
           <span>Active Now</span>
@@ -199,6 +250,7 @@
 
   </div>
 
+  <!-- GROUP CHAT MODAL -->
   <section id="groupChatModal" class="hidden fixed inset-0 bg-white z-50 flex flex-col">
     <div class="h-full flex flex-col">
       <div class="p-4 bg-blue-600 text-white flex justify-between items-center shadow-md">
@@ -218,66 +270,36 @@
     </div>
   </section>
 
-  <!-- Scripts -->
+  <!-- SCRIPTS -->
   <script src="script.js"></script>
 
   <script>
     const API_URL = "https://vryza-connect-backend-1.onrender.com";
     let currentGroupModal = null;
 
-    function go(page) {
-      window.location.href = page;
-    }
+    function go(page) { window.location.href = page; }
 
     function logout() {
       localStorage.clear();
       window.location.href = "auth.html";
     }
 
-    function getToken() {
-      return localStorage.getItem("token");
+    function getCleanToken() {
+      const raw = localStorage.getItem("token");
+      return raw ? raw.replace(/^Bearer\s+/i, "").trim() : null;
     }
 
     async function apiRequestHome(url, options = {}) {
-      const token = getToken();
+      const cleanToken = getCleanToken();
       options.headers = {
         "Content-Type": "application/json",
         ...(options.headers || {}),
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${cleanToken}`
       };
       const response = await fetch(API_URL + url, options);
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong");
-      }
+      if (!response.ok) throw new Error(data.message || "Something went wrong");
       return data;
-    }
-
-    if (typeof socket !== "undefined") {
-      socket.on('receive_message', (data) => {
-        const chatWindow = document.getElementById('messages');
-        if (!chatWindow) return;
-        const msgElement = document.createElement('div');
-
-        if (data.isAi) {
-          msgElement.className = 'message ai-admin-message';
-          msgElement.innerHTML = `
-            <div class="msg-header flex items-center justify-between mb-1">
-              <span class="bot-badge">🤖 AI ADMIN</span>
-              <span class="time text-[10px] text-slate-400">${new Date(data.timestamp).toLocaleTimeString()}</span>
-            </div>
-            <div class="msg-body text-xs sm:text-sm text-slate-700">${data.message}</div>
-          `;
-        } else {
-          msgElement.className = 'message user-message text-xs sm:text-sm bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm';
-          msgElement.innerHTML = `
-            <strong>${escapeHTML(data.sender || "User")}:</strong> ${escapeHTML(data.message)}
-          `;
-        }
-
-        chatWindow.appendChild(msgElement);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-      });
     }
 
     async function fetchTopQuestions() {
@@ -319,10 +341,15 @@
           return;
         }
         groups.slice(0, 4).forEach(group => {
+          const groupId = String(group._id || group.id || "");
+          const groupImg = group.image 
+            ? (group.image.startsWith("http") ? group.image : `${API_URL}/uploads/${group.image}`) 
+            : 'images/vryza connect.png';
+
           container.innerHTML += `
             <div class="bg-slate-50 border border-slate-100 p-3 rounded-2xl flex items-center justify-between gap-2 shadow-sm">
               <div class="flex items-center gap-2.5 overflow-hidden">
-                <img src="${group.image || 'images/vryza connect.png'}" class="w-9 h-9 rounded-xl object-cover shrink-0">
+                <img src="${groupImg}" class="w-9 h-9 rounded-xl object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
                 <div class="truncate">
                   <h4 class="font-bold text-xs text-slate-800 truncate">${escapeHTML(group.name)}</h4>
                   <p class="text-[10px] text-slate-500">${group.members ? group.members.length : 0} members</p>
@@ -342,7 +369,7 @@
       document.getElementById("groupChatModal").classList.remove("hidden");
       document.getElementById("chatGroupName").textContent = group.name;
       document.getElementById("chatGroupMembers").textContent = `${group.members ? group.members.length : 0} members`;
-      loadModalGroupMessages(group._id);
+      loadModalGroupMessages(group._id || group.id);
     }
 
     function closeGroupChat() {
@@ -365,14 +392,15 @@
     function appendModalMessage(message) {
       const container = document.getElementById("groupChatMessagesContainer");
       const currentUser = getCurrentUserId();
-      const isMine = message.sender && message.sender._id === currentUser;
+      const senderId = String(message.sender?._id || message.sender?.id || message.sender || "");
+      const isMine = senderId === currentUser;
 
       const div = document.createElement("div");
       div.className = `mb-3 flex ${isMine ? "justify-end" : "justify-start"}`;
       div.innerHTML = `
         <div class="${isMine ? "bg-blue-600 text-white" : "bg-white border border-slate-200 text-slate-800"} p-3 rounded-2xl max-w-xs sm:max-w-md shadow-sm text-xs sm:text-sm">
           <p class="font-semibold opacity-75 mb-0.5 text-[10px]">${escapeHTML(message.sender?.username || "User")}</p>
-          <p>${escapeHTML(message.text)}</p>
+          <p>${escapeHTML(message.text || message.message || "")}</p>
         </div>
       `;
       container.appendChild(div);
@@ -380,12 +408,13 @@
 
     async function sendModalGroupMessage() {
       if (!currentGroupModal) return;
+      const groupId = String(currentGroupModal._id || currentGroupModal.id);
       const input = document.getElementById("modalMessageInput");
       const text = input.value.trim();
       if (!text) return;
 
       try {
-        const message = await apiRequestHome(`/api/groups/${currentGroupModal._id}/messages`, {
+        const message = await apiRequestHome(`/api/groups/${groupId}/messages`, {
           method: "POST",
           body: JSON.stringify({ text })
         });
@@ -399,23 +428,24 @@
     }
 
     function handleModalMessageKey(event) {
-      if (event.key === "Enter") {
-        sendModalGroupMessage();
-      }
+      if (event.key === "Enter") sendModalGroupMessage();
     }
 
     function getCurrentUserId() {
       try {
         const user = JSON.parse(localStorage.getItem("user"));
-        return user?._id || user?.id;
-      } catch {
-        return null;
-      }
+        if (user && (user._id || user.id)) return String(user._id || user.id);
+        const cleanToken = getCleanToken();
+        if (cleanToken) {
+          const payload = JSON.parse(atob(cleanToken.split('.')[1]));
+          return String(payload.id || payload._id || payload.userId || "");
+        }
+      } catch { return null; }
     }
 
     function escapeHTML(text) {
       const div = document.createElement("div");
-      div.textContent = text;
+      div.textContent = text || "";
       return div.innerHTML;
     }
 
@@ -446,7 +476,7 @@
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         if (storedUser.profilePic) {
           const picUrl = storedUser.profilePic.startsWith('http') ? storedUser.profilePic : `${API_URL}/uploads/${storedUser.profilePic}`;
-          avatarContainer.innerHTML = `<img src="${picUrl}" class="w-full h-full object-cover" />`;
+          avatarContainer.innerHTML = `<img src="${picUrl}" class="w-full h-full object-cover" onerror="this.src='images/default-avatar.png'"/>`;
         } else if (storedUser.username) {
           avatarContainer.innerText = storedUser.username.charAt(0).toUpperCase();
         }
@@ -456,13 +486,12 @@
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/service-worker.js").then(() => {
         console.log("Service Worker Registered");
-      });
+      }).catch(() => {});
     }
 
     renderCurrentPostAvatar();
     loadHomeMyGroups();
     fetchTopQuestions();
   </script>
-  <script src="chatBadge.js"></script>
 </body>
 </html>

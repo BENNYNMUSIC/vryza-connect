@@ -6,72 +6,103 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vryza+ Friends</title>
 
+  <!-- PWA Web App Meta Tags -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<!-- iOS Safari PWA Compatibility -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Vryza+" />
+<link rel="apple-touch-icon" href="images/icon-192.png" />
+
+<!-- PWA Registration Script -->
+<script src="sw-register.js" defer></script>
+
   <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
-
   <script src="https://cdn.tailwindcss.com"></script>
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
-    body {
-      font-family: "Inter", sans-serif;
-    }
-
-    /* Custom elegant scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 20px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
+    body { font-family: "Inter", sans-serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 
-<body class="bg-slate-100 min-h-screen overflow-x-hidden">
+<body class="bg-slate-100 min-h-screen overflow-x-hidden pt-20">
 
-  <nav class="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
-    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+  <!-- NAVIGATION BAR (ICONS OVER TEXT) -->
+  <nav class="bg-white/95 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-1.5">
 
-      <div class="flex items-center gap-3">
-        <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2 rounded-xl shadow-lg">
-          <img src="images/vryza connect.png" class="w-7 h-7 invert brightness-200" alt="logo" />
+      <!-- LOGO -->
+      <div class="flex items-center gap-2 bg-slate-100/80 px-2.5 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer" onclick="go('home.html')">
+        <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md shadow-blue-200">
+          <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
         </div>
-        <h1 class="text-2xl font-black tracking-tight text-slate-800">
-          Vryza<span class="text-blue-600">+</span>
-        </h1>
+        <span class="font-black text-slate-800 text-base tracking-tight hidden md:inline">
+          Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">+</span>
+        </span>
       </div>
 
-      <div class="flex items-center gap-6 text-sm">
-        <button onclick="go('home.html')" class="text-slate-500 hover:text-blue-600 font-semibold transition">
-          🏠 Home
+      <!-- NAV ITEMS -->
+      <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
+        <button onclick="go('home.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">🏠</span>
+          <span>Home</span>
         </button>
 
-        <button onclick="go('friends.html')" class="relative text-blue-600 font-bold">
-          👥 Friends
-          <div class="absolute -bottom-2 left-0 w-full h-0.5 bg-blue-600 rounded-full"></div>
+        <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">👤</span>
+          <span>Profile</span>
         </button>
 
-        <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 font-semibold transition">
-          👤 Profile
+        <button onclick="go('chat.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">💬</span>
+          <span>Chat</span>
         </button>
 
-        <button onclick="go('chat.html')" class="text-slate-500 hover:text-blue-600 font-semibold transition">
-          💬 Chat
+        <button onclick="go('friends.html')" class="text-blue-600 font-bold flex flex-col items-center text-[11px] shrink-0 hover:opacity-80 transition">
+          <span class="text-lg leading-none mb-0.5">👥</span>
+          <span>Friends</span>
         </button>
 
-        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition">
-          Logout
+        <button onclick="go('group.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">🌍</span>
+          <span>Groups</span>
+        </button>
+
+        <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">🔔</span>
+          <span>Alerts</span>
+        </button>
+
+        <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">🔴</span>
+          <span>LIVE</span>
+        </button>
+
+        <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+          <span class="text-lg leading-none mb-0.5">⚙️</span>
+          <span>Settings</span>
         </button>
       </div>
+
+      <!-- LOGOUT -->
+      <button onclick="logout()" class="text-red-500 hover:text-red-700 font-semibold flex flex-col items-center text-[11px] shrink-0 transition ml-2">
+        <span class="text-lg leading-none mb-0.5">🚪</span>
+        <span>Logout</span>
+      </button>
 
     </div>
   </nav>
 
-  <main class="max-w-6xl mx-auto pt-28 pb-12 px-4 md:px-6">
+  <main class="max-w-6xl mx-auto pt-8 pb-12 px-4 md:px-6">
     
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div>
@@ -97,59 +128,76 @@
 
   <script>
     const API_BASE_URL = "https://vryza-connect-backend-1.onrender.com";
-    const token = localStorage.getItem("token");
 
-    // Secure Gatekeeper: redirect to auth if token is empty
-    if (!token) {
+    function getCleanToken() {
+      const raw = localStorage.getItem("token");
+      return raw ? raw.replace(/^Bearer\s+/i, "").trim() : null;
+    }
+
+    if (!getCleanToken()) {
       window.location.href = "auth.html";
     }
 
-    // Navigation Routers
-    function go(page) {
-      window.location.href = page;
-    }
+    function go(page) { window.location.href = page; }
 
     function logout() {
       localStorage.clear();
       window.location.href = "auth.html";
     }
 
-    // Instantly direct a conversation switch link
     function startChatWith(userId, username) {
-      localStorage.setItem("chatUserId", userId);
+      localStorage.setItem("chatUserId", String(userId));
       localStorage.setItem("chatUsername", username);
       window.location.href = "chat.html";
     }
 
-    // ================= DATA LOGIC ENGINE =================
+    function getAvatarUrl(picPath) {
+      if (!picPath) return "images/default-avatar.png";
+      if (picPath.startsWith("http") || picPath.startsWith("data:")) return picPath;
+      return `${API_BASE_URL}/uploads/${picPath}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     async function loadFollowedFriends() {
       const grid = document.getElementById("friendsGrid");
       const counter = document.getElementById("friendCounter");
 
       try {
-        // FIXED: URL changed from /api/users/friends to /api/friends to match backend setup
+        const cleanToken = getCleanToken();
         const response = await fetch(`${API_BASE_URL}/api/friends`, {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            "Authorization": `Bearer ${cleanToken}`,
             "Content-Type": "application/json"
           }
         });
 
+        if (response.status === 401) {
+          logout();
+          return;
+        }
+
         const data = await response.json();
 
         if (data && data.success && Array.isArray(data.friends)) {
-          grid.innerHTML = ""; // Clear existing skeletons
+          grid.innerHTML = "";
           
-          // Update Connection Counter text
           const count = data.friends.length;
-          counter.textContent = `${count} Connect${count === 1 ? '' : 'ions'}`;
+          counter.textContent = `${count} Connection${count === 1 ? '' : 's'}`;
 
           if (count === 0) {
             grid.className = "block text-center py-12";
             grid.innerHTML = `
               <div class="max-w-md mx-auto bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-                <span class="text-4xl">📭</span>
+                <span class="text-4xl">👥</span>
                 <h3 class="text-lg font-bold text-slate-700 mt-4">No connections yet</h3>
                 <p class="text-slate-400 text-sm mt-1 mb-6">Explore the home feed to find interesting profiles and follow them!</p>
                 <button onclick="go('home.html')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-xl font-bold transition shadow-md shadow-blue-100">
@@ -160,26 +208,31 @@
             return;
           }
 
-          // Restore layout grid format class parameters
           grid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6";
 
-          // Generate cards loop processing
           data.friends.forEach(friend => {
-            const avatar = friend.profilePic || "images/default-avatar.png";
+            const friendId = String(friend._id || friend.id || "");
+            const username = friend.username || "Anonymous";
+            const avatar = getAvatarUrl(friend.profilePic || friend.avatar);
             
             const card = document.createElement("div");
             card.className = "bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col items-center text-center";
             
             card.innerHTML = `
               <div class="relative mb-3">
-                <img src="${avatar}" class="w-20 h-20 rounded-full object-cover border-2 border-slate-100 shadow-sm bg-slate-50" alt="${friend.username}" />
+                <img
+                  src="${escapeHtml(avatar)}"
+                  class="w-20 h-20 rounded-full object-cover border-2 border-slate-100 shadow-sm bg-slate-50"
+                  alt="${escapeHtml(username)}"
+                  onerror="this.src='images/default-avatar.png'"
+                />
                 <span class="absolute bottom-1 right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
               </div>
               
-              <h3 class="font-bold text-slate-800 text-base truncate w-full px-2">${friend.username}</h3>
-              <p class="text-xs text-slate-400 mt-0.5 mb-5">@${friend.username.toLowerCase()}</p>
+              <h3 class="font-bold text-slate-800 text-base truncate w-full px-2">${escapeHtml(username)}</h3>
+              <p class="text-xs text-slate-400 mt-0.5 mb-5">@${escapeHtml(username.toLowerCase())}</p>
               
-              <button onclick="startChatWith('${friend._id}', '${friend.username}')" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2">
+              <button onclick="startChatWith('${friendId}', '${escapeHtml(username)}')" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 py-2.5 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2">
                 💬 Send Message
               </button>
             `;
@@ -188,7 +241,7 @@
           });
 
         } else {
-          throw new Error("Invalid format received from server");
+          throw new Error(data.message || "Invalid format received from server");
         }
       } catch (err) {
         console.error("Error loading friends list:", err);
@@ -200,7 +253,6 @@
       }
     }
 
-    // Trigger on structural readiness 
     document.addEventListener("DOMContentLoaded", loadFollowedFriends);
   </script>
 </body>

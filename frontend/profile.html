@@ -6,10 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vryza+ | Profile</title>
 
+  <!-- PWA Web App Meta Tags -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<!-- iOS Safari PWA Compatibility -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Vryza+" />
+<link rel="apple-touch-icon" href="images/icon-192.png" />
+
+<!-- PWA Registration Script -->
+<script src="sw-register.js" defer></script>
+
   <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
-
   <script src="https://cdn.tailwindcss.com"></script>
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
@@ -33,9 +45,9 @@
     <div class="max-w-6xl mx-auto flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3">
 
       <!-- Logo -->
-      <div class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-slate-200/60 shadow-inner">
+      <div class="flex items-center gap-2 sm:gap-3 bg-slate-100/80 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl border border-slate-200/60 shadow-inner cursor-pointer" onclick="go('home.html')">
         <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1 sm:p-1.5 rounded-xl shadow-md shadow-blue-200">
-          <img src="images/vryza connect.png" class="w-5 h-5 sm:w-6 sm:h-6 invert brightness-200" alt="logo" />
+          <img src="images/vryza connect.png" class="w-5 h-5 sm:w-6 sm:h-6 invert brightness-200" alt="logo" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'white\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M13 10V3L4 14h7v7l9-11h-7z\'/></svg>'" />
         </div>
         <span class="font-black text-slate-800 text-base sm:text-lg tracking-tight">
           Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">+</span>
@@ -75,9 +87,9 @@
         <div class="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           
           <div class="relative h-36 sm:h-56 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600">
-            <img id="coverPreview" class="w-full h-full object-cover" />
+            <img id="coverPreview" class="w-full h-full object-cover hidden" />
             <div class="absolute inset-0 bg-black/10"></div>
-            <div class="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10">
+            <div class="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10" id="coverUploadBtnWrapper">
               <label class="bg-white/30 backdrop-blur-md text-white border border-white/30 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl cursor-pointer hover:bg-white/40 transition text-[10px] sm:text-xs font-bold tracking-wide shadow-sm uppercase flex items-center gap-1">
                 📸 <span>Swap Cover</span>
                 <input type="file" id="coverImage" accept="image/*" class="hidden" />
@@ -89,7 +101,7 @@
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-8 sm:-mt-10 mb-6 sm:mb-8">
               
               <div class="bg-white/90 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/60 shadow-sm inline-block max-w-full">
-                <h1 id="username" class="text-xl sm:text-3xl font-black text-slate-800 tracking-tight leading-tight sm:leading-none break-words">Loading Account...</h1>
+                <h1 id="username" class="text-xl sm:text-3xl font-black text-slate-800 tracking-tight leading-tight sm:leading-none break-words">Loading Profile...</h1>
                 <p id="bioText" class="text-slate-500 text-xs sm:text-sm mt-1 sm:mt-2 font-medium italic break-words"></p>
               </div>
 
@@ -109,9 +121,18 @@
             <!-- Profile Details Grid -->
             <div id="profile" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm text-slate-700 mb-6 sm:mb-8"></div>
 
-            <button onclick="messageUser()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 sm:py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 transition duration-150 active:scale-[0.99] flex items-center justify-center gap-2 text-xs sm:text-sm">
-              💬 Direct Message Channel
-            </button>
+            <!-- ACTION BUTTONS: DIRECT MESSAGE, VOICE CALL, VIDEO CALL -->
+            <div id="actionButtons" class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+              <button onclick="messageUser()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold shadow-md shadow-blue-100 transition duration-150 active:scale-[0.99] flex items-center justify-center gap-2 text-xs sm:text-sm">
+                💬 Direct Message
+              </button>
+              <button onclick="startCall('audio')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-2xl font-bold shadow-md shadow-emerald-100 transition duration-150 active:scale-[0.99] flex items-center justify-center gap-2 text-xs sm:text-sm">
+                📞 Voice Call
+              </button>
+              <button onclick="startCall('video')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl font-bold shadow-md shadow-indigo-100 transition duration-150 active:scale-[0.99] flex items-center justify-center gap-2 text-xs sm:text-sm">
+                📹 Video Call
+              </button>
+            </div>
           </div>
         </div>
 
@@ -126,7 +147,7 @@
       </section>
 
       <!-- SIDEBAR EDIT FORM -->
-      <aside class="lg:col-span-4 order-2 lg:order-1 space-y-6">
+      <aside id="editSidebar" class="lg:col-span-4 order-2 lg:order-1 space-y-6">
         <div class="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm lg:sticky lg:top-24">
           <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4 sm:mb-6 flex items-center gap-2">
             <span>⚙️ Customize Profile</span>
@@ -134,7 +155,7 @@
 
           <div class="flex flex-col items-center mb-6">
             <div class="relative group">
-              <img id="avatar" src="images/default-avatar.png" class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover border-4 border-white shadow-md transition group-hover:opacity-90" />
+              <img id="avatar" class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover border-4 border-white shadow-md transition group-hover:opacity-90" />
               <div class="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition pointer-events-none">
                 <span class="text-white text-[10px] font-bold uppercase tracking-wider">New Image</span>
               </div>
@@ -163,6 +184,7 @@
                   <option value="">Unspecified</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
             </div>
@@ -177,7 +199,7 @@
               <textarea id="about" rows="3" placeholder="Tell the community about yourself..." class="w-full p-3 bg-slate-50 border border-transparent rounded-xl outline-none focus:border-blue-400 focus:bg-white text-slate-700 text-xs sm:text-sm resize-none transition-all shadow-inner"></textarea>
             </div>
 
-            <button onclick="updateProfile()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-2xl font-bold transition shadow-md active:scale-[0.99] mt-2 text-xs sm:text-sm">
+            <button id="saveBtn" onclick="updateProfile()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-2xl font-bold transition shadow-md active:scale-[0.99] mt-2 text-xs sm:text-sm">
               Save Profile Changes
             </button>
           </div>

@@ -6,10 +6,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Settings - Vryza+</title>
 
+  <!-- PWA Web App Meta Tags -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0f172a" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<!-- iOS Safari PWA Compatibility -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Vryza+" />
+<link rel="apple-touch-icon" href="images/icon-192.png" />
+
+<!-- PWA Registration Script -->
+<script src="sw-register.js" defer></script>
+
   <script src="https://cdn.tailwindcss.com"></script>
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800&display=swap" rel="stylesheet" />
-
   <link rel="shortcut icon" href="images/vryza connect.png" type="image/png" />
 
   <style>
@@ -32,9 +44,9 @@
   <nav class="theme-card bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='home.html'">
         <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2 rounded-xl">
-          <img src="images/vryza connect.png" class="w-7 h-7 invert brightness-200" alt="logo" />
+          <img src="images/vryza connect.png" class="w-7 h-7 invert brightness-200" alt="logo" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'white\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M13 10V3L4 14h7v7l9-11h-7z\'/></svg>';" />
         </div>
         <h1 class="text-2xl font-black text-slate-800 dark-text-target">
           Vryza<span class="text-blue-600">+</span>

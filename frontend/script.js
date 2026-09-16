@@ -1,6 +1,12 @@
 // ================= MASTER SERVER PATHWAY LOCATORS =================
 const API = "https://vryza-connect-backend-1.onrender.com";
 
+// Helper for clean token acquisition
+function getCleanToken() {
+  const raw = localStorage.getItem("token");
+  return raw ? raw.replace(/^Bearer\s+/i, "").trim() : null;
+}
+
 // ================= ACCOUNT PROFILE STATE VALIDATION =================
 let user = null;
 try {
@@ -10,9 +16,7 @@ try {
   console.error("❌ Failed to parse stored user data:", err);
 }
 
-const token = localStorage.getItem("token");
-
-// Safe extraction supporting both `_id` and `id` formats
+const token = getCleanToken();
 const currentUserId = user ? String(user._id || user.id || "") : "";
 
 if (!user || !token || !currentUserId || currentUserId === "undefined") {
@@ -25,19 +29,19 @@ if (!user || !token || !currentUserId || currentUserId === "undefined") {
 // ================= ESTABLISH REALTIME NETWORK CONDUIT =================
 const socket = io(API, {
   transports: ["websocket", "polling"],
-  secure: true
+  secure: true,
+  auth: { token: token }
 });
 
 socket.on("connect", () => {
   console.log("🟢 ENGINE: Realtime synchronization terminal online. ID:", socket.id);
+  socket.emit("join", currentUserId);
+  socket.emit("getOnlineUsers");
 });
 
 socket.on("connect_error", (err) => {
   console.warn("❌ ENGINE: Synchronization terminal dropped connection.", err.message);
 });
-
-// Initialize real-time room route
-socket.emit("join", currentUserId);
 
 // ================= UI DOM ELEMENT POOL HOOKS =================
 const onlineUsersDiv = document.getElementById("onlineUsers");
@@ -62,19 +66,19 @@ function openProfile(userId) {
 
 // ================= DIRECTORY DISCOVERY AND ACTIVE USER MANAGEMENT =================
 socket.on("onlineUsers", async (usersList) => {
-  console.log("🌐 REFRESH DIRECTORY SNAPSHOT:", usersList);
   if (!onlineUsersDiv) return;
 
   const fragment = document.createDocumentFragment();
 
   for (const id of usersList) {
-    if (String(id) === currentUserId) continue;
+    const peerId = String(id);
+    if (peerId === currentUserId) continue;
 
-    let username = `User ${String(id).substring(0, 6)}`;
+    let username = `User ${peerId.substring(0, 6)}`;
     let profilePic = "";
 
     try {
-      const res = await fetch(`${API}/api/users/${id}`, {
+      const res = await fetch(`${API}/api/users/${peerId}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -84,58 +88,64 @@ socket.on("onlineUsers", async (usersList) => {
         profilePic = profileData.profilePic || "";
       }
     } catch (err) {
-      console.warn("⚠️ Metadata stream incomplete for peer element:", id);
+      console.warn("⚠️ Metadata stream incomplete for peer element:", peerId);
     }
 
     const div = document.createElement("div");
-    const isActive = selectedUserId && selectedUserId === String(id);
+    const isActive = selectedUserId && selectedUserId === peerId;
 
     div.className = `
-      flex items-center justify-between border px-4 py-3 rounded-2xl cursor-pointer transition-all my-1.5
+      flex items-center justify-between border px-3 py-2 rounded-2xl cursor-pointer transition-all my-1.5
       ${isActive ? "bg-blue-50 border-blue-200 shadow-sm" : "bg-slate-50 border-slate-100 hover:bg-blue-50/50"}
     `;
 
     const avatarHtml = profilePic 
-      ? `<img src="${profilePic.startsWith('http') ? profilePic : `${API}/uploads/${profilePic}`}" class="w-full h-full object-cover" />`
+      ? `<img src="${profilePic.startsWith('http') ? profilePic : `${API}/uploads/${profilePic}`}" class="w-full h-full object-cover" onerror="this.src='images/default-avatar.png'"/>`
       : username.charAt(0).toUpperCase();
 
     div.innerHTML = `
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center shadow-inner text-sm font-bold text-slate-600">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center shadow-inner text-xs font-bold text-slate-600">
           ${avatarHtml}
         </div>
         <div>
-          <p class="font-semibold text-sm text-slate-700">${username}</p>
-          <p class="text-xs text-emerald-500 flex items-center gap-1">
+          <p class="font-semibold text-xs text-slate-700">${escapeHTML(username)}</p>
+          <p class="text-[10px] text-emerald-500 flex items-center gap-1">
             <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span> Online
           </p>
         </div>
       </div>
-      <button class="profileBtn bg-white hover:bg-slate-100 border border-slate-200 shadow-sm px-3 py-1 rounded-xl text-xs font-medium text-slate-600 transition">
+      <button class="profileBtn bg-white hover:bg-slate-100 border border-slate-200 shadow-sm px-2.5 py-1 rounded-xl text-[10px] font-medium text-slate-600 transition">
         Profile
       </button>
     `;
 
     div.addEventListener("click", () => {
-      selectedUserId = String(id);
+      selectedUserId = peerId;
       selectedUsername = username;
       
       if (receiverInput) receiverInput.value = `Chatting with ${selectedUsername}`;
       
       loadMessages();
-      socket.emit("getOnlineUsers"); 
     });
 
-    div.querySelector(".profileBtn").addEventListener("click", (e) => {
-      e.stopPropagation();
-      openProfile(String(id));
-    });
+    const profBtn = div.querySelector(".profileBtn");
+    if (profBtn) {
+      profBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openProfile(peerId);
+      });
+    }
 
     fragment.appendChild(div);
   }
 
   onlineUsersDiv.innerHTML = "";
-  onlineUsersDiv.appendChild(fragment);
+  if (!fragment.hasChildNodes()) {
+    onlineUsersDiv.innerHTML = `<p class="text-xs text-slate-400 italic">No other users online right now.</p>`;
+  } else {
+    onlineUsersDiv.appendChild(fragment);
+  }
 });
 
 // ================= DISCOVER TIMELINE POST FEED MANAGEMENT =================
@@ -171,7 +181,7 @@ async function loadPosts() {
 
       const profilePic = userData.profilePic;
       const avatarContent = profilePic
-        ? `<img src="${profilePic.startsWith('http') ? profilePic : `${API}/uploads/${profilePic}`}" class="w-full h-full object-cover rounded-full" />`
+        ? `<img src="${profilePic.startsWith('http') ? profilePic : `${API}/uploads/${profilePic}`}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/default-avatar.png'"/>`
         : (userData.username || "U").charAt(0).toUpperCase();
 
       const isOwner = targetAuthorId === currentUserId;
@@ -184,7 +194,7 @@ async function loadPosts() {
                 ${avatarContent}
               </div>
               <div>
-                <p class="font-bold text-slate-800 group-hover:text-blue-600 transition">${userData.username || "Anonymous User"}</p>
+                <p class="font-bold text-slate-800 group-hover:text-blue-600 transition">${escapeHTML(userData.username || "Anonymous User")}</p>
                 <p class="text-[11px] text-slate-400">Vryza Network Member</p>
               </div>
             </div>
@@ -201,7 +211,7 @@ async function loadPosts() {
               `}
             </div>
           </div>
-          <p class="text-slate-700 text-sm leading-relaxed">${post.caption || ""}</p>
+          <p class="text-slate-700 text-sm leading-relaxed">${escapeHTML(post.caption || "")}</p>
         </div>
         ${imageElement}
       `;
@@ -331,7 +341,7 @@ async function loadMessages() {
     }
 
     historicalFeed.forEach((msg) => {
-      const sender = (msg.senderId || msg.sender)?.toString();
+      const sender = String(msg.senderId || msg.sender?._id || msg.sender?.id || msg.sender || "");
       const type = sender === currentUserId ? "sent" : "received";
       if (msg.text || msg.message) addMessage(msg.text || msg.message, type);
     });
@@ -384,7 +394,7 @@ function addMessage(text, type) {
   if (!messagesDiv) return;
 
   const div = document.createElement("div");
-  const base = "max-w-[75%] px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm my-1.5 clear-both break-words transition-all";
+  const base = "max-w-[75%] px-4 py-2 rounded-2xl text-xs font-medium shadow-sm my-1 clear-both break-words transition-all";
 
   if (type === "sent") {
     div.className = `${base} ml-auto bg-blue-600 text-white rounded-tr-none`;
@@ -397,126 +407,9 @@ function addMessage(text, type) {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// ================= SOCKET & NOTIFICATIONS =================
-socket.on("notificationReceived", async (notif) => {
-  if (selectedUserId && selectedUserId === String(notif.from)) return;
-
-  let originName = "Someone";
-  try {
-    const res = await fetch(`${API}/api/users/${notif.from}`, {
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      originName = (data.user || data).username || originName;
-    }
-  } catch (e) {
-    console.warn("Unable to resolve username for alert.");
-  }
-
-  showGlobalToastAlert(originName, notif.type);
-});
-
-socket.on("incomingCall", async (data) => {
-  let callerName = "Unknown Connection";
-  try {
-    const res = await fetch(`${API}/api/users/${data.from}`, {
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    if (res.ok) {
-      const dataRes = await res.json();
-      callerName = (dataRes.user || dataRes).username || callerName;
-    }
-  } catch (e) {}
-
-  showFullScreenCallModal(callerName, data.signal, data.from);
-});
-
-function showGlobalToastAlert(senderName, type) {
-  let toastContainer = document.getElementById("global-toast-container");
-  if (!toastContainer) {
-    toastContainer = document.createElement("div");
-    toastContainer.id = "global-toast-container";
-    toastContainer.className = "fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none";
-    document.body.appendChild(toastContainer);
-  }
-
-  const toast = document.createElement("div");
-  toast.className = "bg-white/95 backdrop-blur-md border border-slate-100 shadow-xl p-4 rounded-2xl flex items-center gap-3 transition-all transform translate-x-12 opacity-0 duration-300 pointer-events-auto max-w-sm";
-  
-  let label = "Interacted with you.";
-  let badgeColor = "bg-blue-500";
-  
-  if (type === "message") { label = "sent you a direct message."; badgeColor = "bg-indigo-500"; }
-  if (type === "incoming_call") { label = "is trying to call you."; badgeColor = "bg-emerald-500"; }
-  if (type === "like") { label = "liked your post."; badgeColor = "bg-rose-500"; }
-  if (type === "comment") { label = "commented on your timeline."; badgeColor = "bg-amber-500"; }
-
-  toast.innerHTML = `
-    <div class="w-2.5 h-2.5 rounded-full ${badgeColor} shrink-0"></div>
-    <div class="flex-1">
-      <p class="text-xs font-bold text-slate-800">${senderName}</p>
-      <p class="text-[11px] text-slate-500">${label}</p>
-    </div>
-  `;
-
-  toastContainer.appendChild(toast);
-  setTimeout(() => { toast.classList.remove("translate-x-12", "opacity-0"); }, 10);
-  setTimeout(() => {
-    toast.classList.add("translate-x-12", "opacity-0");
-    setTimeout(() => { toast.remove(); }, 300);
-  }, 4500);
-}
-
-function showFullScreenCallModal(callerName, signalData, callerId) {
-  if (document.getElementById("telephony-overlay-modal")) return;
-
-  const modal = document.createElement("div");
-  modal.id = "telephony-overlay-modal";
-  modal.className = "fixed inset-0 bg-slate-900/80 backdrop-blur-lg z-[99999] flex items-center justify-center p-4 animate-fade-in";
-  
-  modal.innerHTML = `
-    <div class="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl text-center border border-slate-100 transform transition-all scale-95 duration-300">
-      <div class="relative w-20 h-20 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-full flex items-center justify-center text-white font-black text-2xl mx-auto mb-6 shadow-lg shadow-emerald-200">
-        ${callerName.charAt(0).toUpperCase()}
-        <span class="absolute inset-0 rounded-full border-4 border-emerald-400 animate-ping opacity-75"></span>
-      </div>
-      
-      <h3 class="text-xl font-black text-slate-800 tracking-tight mb-1">${callerName}</h3>
-      <p class="text-xs text-slate-400 font-medium mb-8">Incoming Communication Link...</p>
-      
-      <div class="flex gap-4 justify-center">
-        <button id="declineCallBtn" class="bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm px-6 py-3 rounded-2xl shadow-md transition flex items-center gap-2">
-          Decline
-        </button>
-        <button id="acceptCallBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm px-6 py-3 rounded-2xl shadow-md transition flex items-center gap-2">
-          Accept Call
-        </button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  modal.querySelector("#declineCallBtn").addEventListener("click", () => {
-    socket.emit("endCall", { to: callerId });
-    modal.remove();
-  });
-
-  modal.querySelector("#acceptCallBtn").addEventListener("click", () => {
-    socket.emit("answerCall", { to: callerId, signal: signalData });
-    modal.remove();
-    alert("Connection linking sequence running via signaling bridge setup...");
-  });
-
-  socket.on("callEnded", () => {
-    modal.remove();
-  });
-}
-
 // ================= SOCKET RECEIVERS =================
 socket.on("receiveMessage", (data) => {
-  const incomingSender = (data.senderId || data.sender)?.toString();
+  const incomingSender = String(data.senderId || data.sender?._id || data.sender?.id || data.sender || "");
   if (incomingSender === selectedUserId) {
     addMessage(data.message || data.text, "received");
   }
@@ -526,23 +419,30 @@ socket.on("receiveGroupMessage", (data) => {
   if (!groupMessagesDiv) return;
 
   const div = document.createElement("div");
-  const isMe = String(data.senderId || data.sender) === currentUserId;
+  const senderId = String(data.senderId || data.sender?._id || data.sender?.id || data.sender || "");
+  const isMe = senderId === currentUserId;
   
   const base = "max-w-[80%] px-3 py-2 rounded-2xl text-xs my-1 clear-both break-words shadow-sm flex flex-col";
   
   if (isMe) {
     div.className = `${base} ml-auto bg-indigo-600 text-white rounded-tr-none`;
-    div.innerHTML = `<span class="text-[10px] text-indigo-200 font-bold">You</span><span>${data.message || data.text}</span>`;
+    div.innerHTML = `<span class="text-[10px] text-indigo-200 font-bold">You</span><span>${escapeHTML(data.message || data.text)}</span>`;
   } else {
     div.className = `${base} mr-auto bg-white text-slate-700 border border-slate-100 rounded-tl-none`;
-    div.innerHTML = `<span class="text-[10px] text-indigo-500 font-bold">${data.username || "Global Peer"}</span><span>${data.message || data.text}</span>`;
+    div.innerHTML = `<span class="text-[10px] text-indigo-500 font-bold">${escapeHTML(data.username || "Global Peer")}</span><span>${escapeHTML(data.message || data.text)}</span>`;
   }
 
   groupMessagesDiv.appendChild(div);
   groupMessagesDiv.scrollTop = groupMessagesDiv.scrollHeight;
 });
 
-// ================= LISTENERS =================
+function escapeHTML(str) {
+  const d = document.createElement("div");
+  d.textContent = str || "";
+  return d.innerHTML;
+}
+
+// Listeners
 document.getElementById("message")?.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendMessage();
 });
@@ -551,7 +451,7 @@ document.getElementById("groupMessage")?.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendGroupMessage();
 });
 
-// Attach global hooks
+// Global hooks
 window.openProfile = openProfile;
 window.followUser = followUser;
 window.sendMessage = sendMessage;
@@ -560,5 +460,5 @@ window.createPost = createPost;
 window.deletePost = deletePost;
 window.loadPosts = loadPosts;
 
-// Execute timeline load
+// Execute initial load
 loadPosts();
