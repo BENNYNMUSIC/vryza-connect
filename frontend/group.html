@@ -28,7 +28,7 @@
             scrollbar-width: none;
         }
 
-        #groupMessages img {
+        #groupMessages img, #groupMessages video {
             max-width: 280px;
             max-height: 320px;
             object-fit: contain;
@@ -44,17 +44,9 @@
         }
 
         @keyframes recordingPulse {
-            0% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.45;
-            }
-
-            100% {
-                opacity: 1;
-            }
+            0% { opacity: 1; }
+            50% { opacity: 0.45; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
@@ -64,2009 +56,703 @@
     <!-- NAVIGATION BAR -->
     <nav class="bg-white/90 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
         <div class="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5">
-
             <div class="flex items-center gap-3 sm:gap-8 overflow-x-auto hide-scrollbar w-full">
-
-                <!-- LOGO -->
-                <div
-                    class="flex items-center gap-2 bg-slate-100/80 px-2.5 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer"
-                    onclick="go('home.html')">
-
+                <div class="flex items-center gap-2 bg-slate-100/80 px-2.5 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer" onclick="go('home.html')">
                     <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md shadow-blue-200">
                         <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
                     </div>
-
                     <span class="font-black text-slate-800 text-base tracking-tight hidden sm:inline">
-                        Vryza<span
-                            class="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">+</span>
+                        Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">+</span>
                     </span>
                 </div>
 
-                <!-- NAV LINKS -->
                 <div class="flex items-center gap-4 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
-
-                    <button onclick="go('home.html')"
-                        class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">
-                        🏠 Home
-                    </button>
-
-                    <button onclick="go('profile.html')"
-                        class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">
-                        👤 Profile
-                    </button>
-
-                    <button onclick="go('chat.html')"
-                        class="relative text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1.5 text-sm shrink-0">
-                        <span>💬 Chat</span>
-
-                        <span id="chatUnreadBadge"
-                            class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
-                            0
-                        </span>
-                    </button>
-
-                    <button onclick="go('friends.html')"
-                        class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">
-                        👥 Friends
-                    </button>
-
-                    <button onclick="go('group.html')"
-                        class="text-blue-600 font-bold flex items-center gap-1 text-sm shrink-0">
-                        🌍 Groups
-                    </button>
-
-                    <button onclick="go('notifications.html')"
-                        class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">
-                        🔔 Alerts
-                    </button>
-
-                    <button onclick="go('live-studio.html')"
-                        class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">
-                        🔴 LIVE
-                    </button>
-
-                    <button onclick="go('settings.html')"
-                        class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">
-                        ⚙️ Settings
-                    </button>
-
+                    <button onclick="go('home.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🏠 Home</button>
+                    <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">👤 Profile</button>
+                    <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1.5 text-sm shrink-0">💬 Chat</button>
+                    <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">👥 Friends</button>
+                    <button onclick="go('group.html')" class="text-blue-600 font-bold flex items-center gap-1 text-sm shrink-0">🌍 Groups</button>
+                    <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🔔 Alerts</button>
+                    <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">🔴 LIVE</button>
+                    <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 transition font-semibold flex items-center gap-1 text-sm shrink-0">⚙️ Settings</button>
                 </div>
             </div>
 
-            <!-- LOGOUT -->
-            <button onclick="logout()"
-                class="text-red-500 font-semibold hover:text-red-700 transition hidden sm:flex items-center gap-1 text-sm shrink-0 ml-4">
+            <button onclick="logout()" class="text-red-500 font-semibold hover:text-red-700 transition hidden sm:flex items-center gap-1 text-sm shrink-0 ml-4">
                 🚪 Logout
             </button>
-
         </div>
     </nav>
 
-
     <!-- HEADER -->
     <header class="bg-white shadow p-4 mb-6">
-
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-
             <div class="flex items-center gap-4">
-
-                <button onclick="go('home.html')"
-                    class="text-blue-600 font-semibold text-sm hover:underline">
-                    ← Home
-                </button>
-
-                <h1 class="text-2xl font-bold text-slate-800">
-                    Vryza Connect Groups
-                </h1>
-
+                <button onclick="go('home.html')" class="text-blue-600 font-semibold text-sm hover:underline">← Home</button>
+                <h1 class="text-2xl font-bold text-slate-800">Vryza Connect Groups</h1>
             </div>
-
-            <button onclick="showCreateGroup()"
-                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm">
+            <button onclick="showCreateGroup()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm">
                 + Create Group
             </button>
-
         </div>
-
     </header>
-
 
     <main class="max-w-6xl mx-auto px-4 pb-12">
 
         <!-- CREATE GROUP -->
-        <section id="createGroupSection"
-            class="hidden bg-white p-6 rounded-xl shadow mb-6 border border-slate-100">
-
-            <h2 class="text-xl font-bold mb-4 text-slate-800">
-                Create a Group
-            </h2>
-
-            <input
-                id="groupName"
-                type="text"
-                placeholder="Group name"
-                class="w-full border p-3 rounded-lg mb-3 outline-none focus:ring-2 focus:ring-blue-500">
-
-            <textarea
-                id="groupDescription"
-                placeholder="Group description"
-                class="w-full border p-3 rounded-lg mb-3 outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-
-            <label class="block font-semibold mb-2 text-sm text-gray-700">
-                Privacy Settings
-            </label>
-
-            <select
-                id="groupPrivacy"
-                class="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-blue-500">
-
-                <option value="public">
-                    Public - Anyone can join
-                </option>
-
-                <option value="private">
-                    Private - Members must be invited
-                </option>
-
+        <section id="createGroupSection" class="hidden bg-white p-6 rounded-xl shadow mb-6 border border-slate-100">
+            <h2 class="text-xl font-bold mb-4 text-slate-800">Create a Group</h2>
+            <input id="groupName" type="text" placeholder="Group name" class="w-full border p-3 rounded-lg mb-3 outline-none focus:ring-2 focus:ring-blue-500">
+            <textarea id="groupDescription" placeholder="Group description" class="w-full border p-3 rounded-lg mb-3 outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            <label class="block font-semibold mb-2 text-sm text-gray-700">Privacy Settings</label>
+            <select id="groupPrivacy" class="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="public">Public - Anyone can join</option>
+                <option value="private">Private - Members must be invited</option>
             </select>
-
             <div class="flex gap-2">
-
-                <button onclick="createGroup()"
-                    class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 font-medium transition shadow-sm">
-                    Create
-                </button>
-
-                <button onclick="hideCreateGroup()"
-                    class="bg-gray-400 text-white px-5 py-2 rounded-lg hover:bg-gray-500 font-medium transition">
-                    Cancel
-                </button>
-
+                <button onclick="createGroup()" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 font-medium transition shadow-sm">Create</button>
+                <button onclick="hideCreateGroup()" class="bg-gray-400 text-white px-5 py-2 rounded-lg hover:bg-gray-500 font-medium transition">Cancel</button>
             </div>
-
         </section>
-
 
         <!-- MY GROUPS -->
         <section class="mb-8">
-
-            <h2 class="text-xl font-bold mb-4 text-slate-800">
-                My Groups
-            </h2>
-
-            <div id="myGroups"
-                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            </div>
-
+            <h2 class="text-xl font-bold mb-4 text-slate-800">My Groups</h2>
+            <div id="myGroups" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
-
 
         <!-- PUBLIC GROUPS -->
         <section>
-
-            <h2 class="text-xl font-bold mb-4 text-slate-800">
-                Discover Public Groups
-            </h2>
-
-            <div id="publicGroups"
-                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            </div>
-
+            <h2 class="text-xl font-bold mb-4 text-slate-800">Discover Public Groups</h2>
+            <div id="publicGroups" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
-
         <!-- GROUP CHAT MODAL -->
-        <section id="groupChat"
-            class="hidden fixed inset-0 bg-white z-50">
-
+        <section id="groupChat" class="hidden fixed inset-0 bg-white z-50">
             <div class="h-full flex flex-col">
 
                 <!-- CHAT HEADER -->
                 <div class="p-4 bg-blue-600 text-white flex justify-between items-center shadow">
-
                     <div>
-
-                        <h2 id="chatGroupName"
-                            class="font-bold text-xl">
-                        </h2>
-
-                        <p id="chatGroupMembers"
-                            class="text-xs opacity-80">
-                        </p>
-
+                        <h2 id="chatGroupName" class="font-bold text-xl"></h2>
+                        <div class="flex items-center gap-3 text-xs opacity-90 mt-0.5">
+                            <span id="chatGroupMembers"></span>
+                            <!-- Publicly Visible Reported Users Count -->
+                            <span id="reportedBadge" class="bg-amber-500/30 text-amber-100 px-2 py-0.5 rounded-full font-medium">⚠️ 0 reported members</span>
+                        </div>
                     </div>
 
-                    <button onclick="closeGroupChat()"
-                        class="text-2xl font-bold px-3 py-1 hover:bg-blue-700 rounded-lg transition">
-                        ✕
-                    </button>
-
+                    <div class="flex items-center gap-2">
+                        <!-- Admin Only Reports Button -->
+                        <button id="viewReportsBtn" onclick="openReportsModal()" class="hidden bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition">
+                            🚨 Admin Reports
+                        </button>
+                        <button onclick="openMembersModal()" class="bg-blue-700 hover:bg-blue-800 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition">
+                            👥 Members
+                        </button>
+                        <button onclick="closeGroupChat()" class="text-2xl font-bold px-3 py-1 hover:bg-blue-700 rounded-lg transition">✕</button>
+                    </div>
                 </div>
-
 
                 <!-- MESSAGES -->
-                <div id="groupMessages"
-                    class="flex-1 overflow-y-auto p-4 bg-gray-100 space-y-3">
-                </div>
-
+                <div id="groupMessages" class="flex-1 overflow-y-auto p-4 bg-gray-100 space-y-3"></div>
 
                 <!-- RECORDING STATUS -->
-                <div id="recordingStatus"
-                    class="hidden px-4 py-2 bg-red-50 border-t border-red-100 text-red-600 text-sm font-semibold text-center">
-
-                    <span class="recording-pulse">
-                        🔴 Recording voice note...
-                    </span>
-
-                    <button onclick="stopRecording(true)"
-                        class="ml-3 underline hover:no-underline">
-                        Cancel
-                    </button>
-
+                <div id="recordingStatus" class="hidden px-4 py-2 bg-red-50 border-t border-red-100 text-red-600 text-sm font-semibold text-center">
+                    <span class="recording-pulse">🔴 Recording voice note...</span>
+                    <button onclick="stopRecording(true)" class="ml-3 underline hover:no-underline">Cancel</button>
                 </div>
 
-
-                <!-- SELECTED IMAGE PREVIEW -->
-                <div id="imagePreviewContainer"
-                    class="hidden px-4 pt-3 bg-white border-t">
-
+                <!-- MEDIA PREVIEW -->
+                <div id="mediaPreviewContainer" class="hidden px-4 pt-3 bg-white border-t">
                     <div class="flex items-center gap-3">
-
-                        <img id="imagePreview"
-                            src=""
-                            alt="Selected image"
-                            class="w-20 h-20 object-cover rounded-lg border">
-
+                        <div id="previewMediaBox" class="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border flex items-center justify-center"></div>
                         <div class="flex-1">
-
-                            <p class="text-sm font-semibold text-gray-700">
-                                Image selected
-                            </p>
-
-                            <button onclick="clearSelectedImage()"
-                                class="text-sm text-red-500 hover:underline">
-                                Remove
-                            </button>
-
+                            <p id="mediaPreviewType" class="text-sm font-semibold text-gray-700">Attachment selected</p>
+                            <button onclick="clearSelectedMedia()" class="text-sm text-red-500 hover:underline">Remove</button>
                         </div>
-
                     </div>
-
                 </div>
-
 
                 <!-- MESSAGE INPUT -->
                 <div class="p-3 sm:p-4 bg-white border-t">
-
                     <div class="flex gap-2 items-center">
+                        <!-- IMAGE INPUT -->
+                        <label for="groupImageInput" class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 w-11 h-11 flex items-center justify-center rounded-lg transition text-xl shrink-0" title="Send image">📷</label>
+                        <input id="groupImageInput" type="file" accept="image/*" class="hidden" onchange="handleMediaSelected(event, 'image')">
 
-                        <!-- IMAGE BUTTON -->
-                        <label
-                            for="groupImageInput"
-                            class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 w-11 h-11 flex items-center justify-center rounded-lg transition text-xl shrink-0"
-                            title="Send image">
-                            📷
-                        </label>
+                        <!-- VIDEO INPUT -->
+                        <label for="groupVideoInput" class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 w-11 h-11 flex items-center justify-center rounded-lg transition text-xl shrink-0" title="Send video">🎥</label>
+                        <input id="groupVideoInput" type="file" accept="video/*" class="hidden" onchange="handleMediaSelected(event, 'video')">
 
-                        <input
-                            id="groupImageInput"
-                            type="file"
-                            accept="image/*"
-                            class="hidden"
-                            onchange="handleImageSelected(event)">
+                        <!-- VOICE RECORDING -->
+                        <button id="voiceButton" onclick="toggleRecording()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 w-11 h-11 flex items-center justify-center rounded-lg transition text-xl shrink-0" title="Record voice note">🎤</button>
 
+                        <!-- TEXT INPUT -->
+                        <input id="messageInput" type="text" placeholder="Type a message..." class="flex-1 min-w-0 border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" onkeydown="handleMessageKey(event)">
 
-                        <!-- VOICE BUTTON -->
-                        <button
-                            id="voiceButton"
-                            onclick="toggleRecording()"
-                            class="bg-gray-100 hover:bg-gray-200 text-gray-700 w-11 h-11 flex items-center justify-center rounded-lg transition text-xl shrink-0"
-                            title="Record voice note">
-                            🎤
-                        </button>
-
-
-                        <!-- TEXT -->
-                        <input
-                            id="messageInput"
-                            type="text"
-                            placeholder="Type a message..."
-                            class="flex-1 min-w-0 border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                            onkeydown="handleMessageKey(event)">
-
-
-                        <!-- SEND -->
-                        <button
-                            onclick="sendGroupMessage()"
-                            class="bg-blue-600 text-white px-4 sm:px-6 h-11 rounded-lg font-semibold hover:bg-blue-700 transition shrink-0">
-                            Send
-                        </button>
-
+                        <!-- SEND BUTTON -->
+                        <button onclick="sendGroupMessage()" class="bg-blue-600 text-white px-4 sm:px-6 h-11 rounded-lg font-semibold hover:bg-blue-700 transition shrink-0">Send</button>
                     </div>
-
-                    <p class="text-[11px] text-gray-400 mt-2 px-1">
-                        📷 Images and 🎤 voice notes are saved with your group messages.
-                    </p>
-
                 </div>
-
             </div>
-
         </section>
+
+        <!-- MEMBERS MODAL -->
+        <div id="membersModal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl max-w-md w-full p-6 max-h-[80vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Group Members</h3>
+                    <button onclick="closeMembersModal()" class="text-gray-500 hover:text-black font-bold">✕</button>
+                </div>
+                <div id="membersList" class="flex-1 overflow-y-auto space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- ADMIN REPORTS MODAL (ADMIN ONLY) -->
+        <div id="reportsModal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl max-w-lg w-full p-6 max-h-[80vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">🚨 Reported Behaviour Log</h3>
+                    <button onclick="closeReportsModal()" class="text-gray-500 hover:text-black font-bold">✕</button>
+                </div>
+                <div id="reportsList" class="flex-1 overflow-y-auto space-y-3"></div>
+            </div>
+        </div>
 
     </main>
 
-
 <script>
-
 const API_URL = "https://vryza-connect-backend-1.onrender.com";
 
-
-// =====================================================
-// NAVIGATION
-// =====================================================
-
-function go(url) {
-    window.location.href = url;
-}
-
-
-function logout() {
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-
-    window.location.href = "auth.html";
-}
-
-
-// =====================================================
-// AUTHENTICATION
-// =====================================================
-
-function getToken() {
-    return localStorage.getItem("token");
-}
-
-
-if (!getToken()) {
-    window.location.href = "auth.html";
-}
-
-
-// =====================================================
-// GLOBAL VARIABLES
-// =====================================================
+function go(url) { window.location.href = url; }
+function logout() { localStorage.removeItem("token"); localStorage.removeItem("user"); window.location.href = "auth.html"; }
+function getToken() { return localStorage.getItem("token"); }
+if (!getToken()) { window.location.href = "auth.html"; }
 
 let currentGroup = null;
 let activeGroupMap = {};
-
 let mediaRecorder = null;
 let recordedChunks = [];
 let isRecording = false;
 
 let selectedImageData = "";
-
-
-// =====================================================
-// SOCKET.IO
-// =====================================================
+let selectedVideoData = "";
 
 const socket = io(API_URL, {
-
     transports: ["websocket", "polling"],
-
     secure: true,
-
-    auth: {
-        token: getToken()
-    }
-
+    auth: { token: getToken() }
 });
-
 
 socket.on("connect", () => {
-
-    console.log("🟢 Group Socket Connected:", socket.id);
-
     const userId = getCurrentUserId();
-
-    if (userId) {
-        socket.emit("join", userId);
-    }
-
+    if (userId) socket.emit("join", userId);
 });
-
-
-socket.on("connect_error", (error) => {
-
-    console.error("❌ Group Socket Error:", error.message);
-
-});
-
 
 socket.on("receiveGroupMessage", (data) => {
+    const targetGroupId = String(data.groupId || data.group || data.message?.group || "");
+    const senderId = String(data.senderId || data.sender?._id || data.sender?.id || data.sender || "");
+    if (senderId === String(getCurrentUserId())) return;
 
-    console.log("📩 Group message received:", data);
-
-    const targetGroupId = String(
-        data.groupId ||
-        data.group ||
-        data.message?.group ||
-        ""
-    );
-
-    const senderId = String(
-        data.senderId ||
-        data.sender?._id ||
-        data.sender?.id ||
-        data.sender ||
-        ""
-    );
-
-
-    // Don't render our own message again.
-    if (senderId === String(getCurrentUserId())) {
-        return;
-    }
-
-
-    if (
-        currentGroup &&
-        targetGroupId === String(currentGroup._id)
-    ) {
-
+    if (currentGroup && targetGroupId === String(currentGroup._id)) {
         addMessageToScreen({
-
             _id: data.messageId || data._id,
-
             group: targetGroupId,
-
-            sender: data.sender || {
-                _id: senderId,
-                username: data.username || "User"
-            },
-
+            sender: data.sender || { _id: senderId, username: data.username || "User" },
             text: data.message || data.text || "",
-
             image: data.image || "",
-
+            video: data.video || "",
             voice: data.voice || "",
-
             createdAt: data.createdAt || new Date().toISOString()
-
         });
-
     }
-
 });
 
-
-// =====================================================
-// API REQUEST
-// =====================================================
-
 async function apiRequest(url, options = {}) {
-
     const token = getToken();
-
     options.headers = {
-
         "Content-Type": "application/json",
-
         ...(options.headers || {}),
-
         Authorization: `Bearer ${token}`
-
     };
-
-
     const response = await fetch(API_URL + url, options);
-
     let data;
-
-    try {
-        data = await response.json();
-    } catch {
-        data = {};
-    }
-
-
-    if (!response.ok) {
-
-        throw new Error(
-            data.message ||
-            "Something went wrong"
-        );
-
-    }
-
-
+    try { data = await response.json(); } catch { data = {}; }
+    if (!response.ok) throw new Error(data.message || "Something went wrong");
     return data;
 }
 
-
-// =====================================================
-// CREATE GROUP
-// =====================================================
-
-function showCreateGroup() {
-
-    document
-        .getElementById("createGroupSection")
-        .classList
-        .remove("hidden");
-
-}
-
-
-function hideCreateGroup() {
-
-    document
-        .getElementById("createGroupSection")
-        .classList
-        .add("hidden");
-
-}
-
+function showCreateGroup() { document.getElementById("createGroupSection").classList.remove("hidden"); }
+function hideCreateGroup() { document.getElementById("createGroupSection").classList.add("hidden"); }
 
 async function createGroup() {
+    const name = document.getElementById("groupName").value.trim();
+    const description = document.getElementById("groupDescription").value.trim();
+    const privacy = document.getElementById("groupPrivacy").value;
 
-    const name =
-        document.getElementById("groupName").value.trim();
-
-    const description =
-        document.getElementById("groupDescription").value.trim();
-
-    const privacy =
-        document.getElementById("groupPrivacy").value;
-
-
-    if (!name) {
-
-        alert("Please enter a group name");
-
-        return;
-    }
-
-
+    if (!name) return alert("Please enter a group name");
     try {
-
-        const group = await apiRequest(
-            "/api/groups",
-            {
-                method: "POST",
-
-                body: JSON.stringify({
-                    name,
-                    description,
-                    privacy
-                })
-            }
-        );
-
-
+        const group = await apiRequest("/api/groups", {
+            method: "POST",
+            body: JSON.stringify({ name, description, privacy })
+        });
         alert("Group created!");
-
-
-        document.getElementById("groupName").value = "";
-        document.getElementById("groupDescription").value = "";
-
-
         hideCreateGroup();
-
-
         await loadGroups();
-
-
-        // Your backend returns the group directly,
-        // not { group: ... }.
-        if (group && group._id) {
-
-            openGroupById(group._id);
-
-        }
-
-    } catch (error) {
-
-        console.error("Create group error:", error);
-
-        alert(error.message);
-
-    }
-
+        if (group && group._id) openGroupById(group._id);
+    } catch (error) { alert(error.message); }
 }
-
-
-// =====================================================
-// LOAD GROUPS
-// =====================================================
 
 async function loadGroups() {
-
     try {
-
-        const myGroups =
-            await apiRequest("/api/groups/my");
-
-        const publicGroups =
-            await apiRequest("/api/groups/public");
-
-
+        const myGroups = await apiRequest("/api/groups/my");
+        const publicGroups = await apiRequest("/api/groups/public");
         activeGroupMap = {};
-
-
-        const allGroups = [
-
-            ...(Array.isArray(myGroups)
-                ? myGroups
-                : []),
-
-            ...(Array.isArray(publicGroups)
-                ? publicGroups
-                : [])
-
-        ];
-
-
-        allGroups.forEach(group => {
-
-            if (group && group._id) {
-
-                activeGroupMap[group._id] = group;
-
-            }
-
-        });
-
-
+        const allGroups = [...(Array.isArray(myGroups) ? myGroups : []), ...(Array.isArray(publicGroups) ? publicGroups : [])];
+        allGroups.forEach(g => { if (g && g._id) activeGroupMap[g._id] = g; });
         displayMyGroups(myGroups);
-
-        displayPublicGroups(
-            publicGroups,
-            myGroups
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Load groups error:",
-            error
-        );
-
-    }
-
+        displayPublicGroups(publicGroups, myGroups);
+    } catch (error) { console.error("Load groups error:", error); }
 }
-
-
-// =====================================================
-// DISPLAY GROUPS
-// =====================================================
 
 function displayMyGroups(groups) {
-
-    const container =
-        document.getElementById("myGroups");
-
+    const container = document.getElementById("myGroups");
     container.innerHTML = "";
-
-
     if (!groups || groups.length === 0) {
-
-        container.innerHTML =
-            `<p class="text-gray-500 col-span-3">
-                You haven't joined any groups yet.
-            </p>`;
-
+        container.innerHTML = `<p class="text-gray-500 col-span-3">You haven't joined any groups yet.</p>`;
         return;
     }
-
-
-    groups.forEach(group => {
-
-        container.innerHTML +=
-            groupCard(group, true);
-
-    });
-
+    groups.forEach(group => container.innerHTML += groupCard(group, true));
 }
-
 
 function displayPublicGroups(groups, myGroups) {
-
-    const container =
-        document.getElementById("publicGroups");
-
+    const container = document.getElementById("publicGroups");
     container.innerHTML = "";
-
-
-    const myGroupIds =
-        (myGroups || []).map(
-            group => String(group._id)
-        );
-
-
+    const myGroupIds = (myGroups || []).map(g => String(g._id));
     let count = 0;
-
-
     (groups || []).forEach(group => {
-
-        if (
-            !myGroupIds.includes(
-                String(group._id)
-            )
-        ) {
-
-            container.innerHTML +=
-                groupCard(group, false);
-
+        if (!myGroupIds.includes(String(group._id))) {
+            container.innerHTML += groupCard(group, false);
             count++;
-
         }
-
     });
-
-
-    if (count === 0) {
-
-        container.innerHTML =
-            `<p class="text-gray-500 col-span-3">
-                No new public groups available to discover.
-            </p>`;
-
-    }
-
+    if (count === 0) container.innerHTML = `<p class="text-gray-500 col-span-3">No new public groups available.</p>`;
 }
-
-
-// =====================================================
-// GROUP CARD
-// =====================================================
 
 function groupCard(group, isMember) {
-
-    const memberCount =
-        group.members
-            ? group.members.length
-            : 0;
-
-
     return `
-
         <div class="bg-white rounded-xl shadow p-5 flex flex-col justify-between border border-gray-100">
-
             <div>
-
                 <div class="flex items-center gap-3 mb-3">
-
                     <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-lg shrink-0">
-
-                        ${(group.name || "G")
-                            .charAt(0)
-                            .toUpperCase()}
-
+                        ${(group.name || "G").charAt(0).toUpperCase()}
                     </div>
-
                     <div>
-
-                        <h3 class="font-bold text-lg text-gray-800 leading-snug">
-
-                            ${escapeHTML(group.name)}
-
-                        </h3>
-
-                        <p class="text-gray-500 text-xs">
-
-                            ${memberCount} members
-
-                        </p>
-
+                        <h3 class="font-bold text-lg text-gray-800 leading-snug">${escapeHTML(group.name)}</h3>
+                        <p class="text-gray-500 text-xs">${group.members ? group.members.length : 0} members</p>
                     </div>
-
                 </div>
-
-
-                <p class="text-gray-600 text-sm mb-4 leading-relaxed line-clamp-2">
-
-                    ${escapeHTML(
-                        group.description ||
-                        "No description provided."
-                    )}
-
-                </p>
-
+                <p class="text-gray-600 text-sm mb-4 line-clamp-2">${escapeHTML(group.description || "No description provided.")}</p>
             </div>
-
-
             <div>
-
-                <p class="text-xs font-semibold mb-3 ${
-                    group.privacy === "private"
-                        ? "text-amber-600"
-                        : "text-emerald-600"
-                }">
-
-                    ${
-                        group.privacy === "private"
-                            ? "🔒 Private"
-                            : "🌎 Public"
-                    }
-
-                </p>
-
-
-                ${
-                    isMember
-
-                        ? `
-
-                            <button
-                                onclick="openGroupById('${group._id}')"
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition shadow-sm">
-
-                                Open Group
-
-                            </button>
-
-                        `
-
-                        : `
-
-                            <button
-                                onclick="joinGroup('${group._id}')"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition shadow-sm">
-
-                                Join Group
-
-                            </button>
-
-                        `
-                }
-
+                ${isMember 
+                    ? `<button onclick="openGroupById('${group._id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition shadow-sm">Open Group</button>`
+                    : `<button onclick="joinGroup('${group._id}')" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition shadow-sm">Join Group</button>`}
             </div>
-
         </div>
-
     `;
-
 }
-
-
-// =====================================================
-// JOIN GROUP
-// =====================================================
 
 async function joinGroup(groupId) {
-
     try {
-
-        await apiRequest(
-            `/api/groups/${groupId}/join`,
-            {
-                method: "POST"
-            }
-        );
-
-
+        await apiRequest(`/api/groups/${groupId}/join`, { method: "POST" });
         alert("You joined the group!");
-
-
         await loadGroups();
-
-
-    } catch (error) {
-
-        alert(error.message);
-
-    }
-
+    } catch (error) { alert(error.message); }
 }
 
+async function openGroupById(groupId) {
+    const group = activeGroupMap[groupId];
+    if (!group) return;
 
-// =====================================================
-// OPEN GROUP
-// =====================================================
-
-function openGroupById(groupId) {
-
-    const group =
-        activeGroupMap[groupId];
-
-
-    if (!group) {
-
-        console.error(
-            "Group not found:",
-            groupId
-        );
-
-        return;
+    if (currentGroup && String(currentGroup._id) !== String(groupId)) {
+        socket.emit("leaveGroup", currentGroup._id);
     }
-
-
-    if (
-        currentGroup &&
-        String(currentGroup._id) !== String(groupId)
-    ) {
-
-        socket.emit(
-            "leaveGroup",
-            currentGroup._id
-        );
-
-    }
-
 
     currentGroup = group;
+    socket.emit("joinGroup", groupId);
 
+    document.getElementById("groupChat").classList.remove("hidden");
+    document.getElementById("chatGroupName").textContent = group.name;
+    document.getElementById("chatGroupMembers").textContent = `${group.members ? group.members.length : 0} members`;
 
-    socket.emit(
-        "joinGroup",
-        groupId
-    );
+    // Configure Owner / Admin status
+    const currentUserId = getCurrentUserId();
+    const isOwner = String(group.owner?._id || group.owner) === String(currentUserId);
+    const isAdmin = isOwner || (group.admins || []).some(a => String(a._id || a) === String(currentUserId));
 
+    // Show/Hide Admin Reports Button
+    const viewReportsBtn = document.getElementById("viewReportsBtn");
+    if (isAdmin) {
+        viewReportsBtn.classList.remove("hidden");
+    } else {
+        viewReportsBtn.classList.add("hidden");
+    }
 
-    document
-        .getElementById("groupChat")
-        .classList
-        .remove("hidden");
-
-
-    document
-        .getElementById("chatGroupName")
-        .textContent = group.name;
-
-
-    document
-        .getElementById("chatGroupMembers")
-        .textContent =
-        `${group.members ? group.members.length : 0} members`;
-
+    // Load Public Report Summary Counter
+    loadReportSummary(group._id);
 
     loadMessages(group._id);
-
 }
 
-
-// =====================================================
-// CLOSE GROUP
-// =====================================================
+async function loadReportSummary(groupId) {
+    try {
+        const data = await apiRequest(`/api/groups/${groupId}/reports/summary`);
+        const badge = document.getElementById("reportedBadge");
+        badge.textContent = `⚠️ ${data.totalReportedUsersCount || 0} reported members`;
+    } catch (err) {
+        console.warn("Could not load report summary", err);
+    }
+}
 
 function closeGroupChat() {
-
-    if (currentGroup) {
-
-        socket.emit(
-            "leaveGroup",
-            currentGroup._id
-        );
-
-    }
-
-
+    if (currentGroup) socket.emit("leaveGroup", currentGroup._id);
     stopRecording(true);
-
-
-    clearSelectedImage();
-
-
+    clearSelectedMedia();
     currentGroup = null;
-
-
-    document
-        .getElementById("groupChat")
-        .classList
-        .add("hidden");
-
+    document.getElementById("groupChat").classList.add("hidden");
 }
-
-
-// =====================================================
-// LOAD GROUP MESSAGES
-// =====================================================
 
 async function loadMessages(groupId) {
-
     try {
-
-        const messages =
-            await apiRequest(
-                `/api/groups/${groupId}/messages`
-            );
-
-
-        const container =
-            document.getElementById("groupMessages");
-
-
+        const messages = await apiRequest(`/api/groups/${groupId}/messages`);
+        const container = document.getElementById("groupMessages");
         container.innerHTML = "";
-
-
-        if (Array.isArray(messages)) {
-
-            messages.forEach(message => {
-
-                addMessageToScreen(message);
-
-            });
-
-        }
-
-
-        container.scrollTop =
-            container.scrollHeight;
-
-
-    } catch (error) {
-
-        console.error(
-            "Load messages error:",
-            error
-        );
-
-    }
-
+        if (Array.isArray(messages)) messages.forEach(msg => addMessageToScreen(msg));
+        container.scrollTop = container.scrollHeight;
+    } catch (error) { console.error("Load messages error:", error); }
 }
 
-
-// =====================================================
-// DISPLAY MESSAGE
-// =====================================================
-
 function addMessageToScreen(message) {
-
-    const container =
-        document.getElementById("groupMessages");
-
-
+    const container = document.getElementById("groupMessages");
     if (!container) return;
 
+    if (message._id && document.querySelector(`[data-message-id="${message._id}"]`)) return;
 
-    // Prevent duplicate messages
-    if (message._id) {
+    const currentUser = getCurrentUserId();
+    const senderId = message.sender?._id || message.sender?.id || message.sender;
+    const isMine = String(senderId) === String(currentUser);
 
-        const existing =
-            document.querySelector(
-                `[data-message-id="${message._id}"]`
-            );
+    const div = document.createElement("div");
+    if (message._id) div.dataset.messageId = message._id;
+    div.className = `flex ${isMine ? "justify-end" : "justify-start"}`;
 
-
-        if (existing) {
-            return;
-        }
-
-    }
-
-
-    const currentUser =
-        getCurrentUserId();
-
-
-    const senderId =
-        message.sender?._id ||
-        message.sender?.id ||
-        message.sender;
-
-
-    const isMine =
-        String(senderId) === String(currentUser);
-
-
-    const div =
-        document.createElement("div");
-
-
-    if (message._id) {
-
-        div.dataset.messageId =
-            message._id;
-
-    }
-
-
-    div.className =
-        `flex ${
-            isMine
-                ? "justify-end"
-                : "justify-start"
-        }`;
-
-
-    const bubbleClass =
-        isMine
-            ? "bg-blue-600 text-white rounded-br-none"
-            : "bg-white border text-gray-800 rounded-bl-none";
-
-
+    const bubbleClass = isMine ? "bg-blue-600 text-white rounded-br-none" : "bg-white border text-gray-800 rounded-bl-none";
     let contentHTML = "";
-
 
     // IMAGE
     if (message.image) {
-
-        contentHTML += `
-
-            <div class="mb-2">
-
-                <img
-                    src="${escapeAttribute(message.image)}"
-                    alt="Group image"
-                    class="rounded-xl cursor-pointer border border-black/10"
-                    onclick="openImage('${escapeAttribute(message.image)}')"
-                    loading="lazy">
-
-            </div>
-
-        `;
-
+        contentHTML += `<div class="mb-2"><img src="${escapeAttribute(message.image)}" class="rounded-xl cursor-pointer border border-black/10" onclick="openMediaOverlay('${escapeAttribute(message.image)}', 'image')"></div>`;
     }
 
+    // VIDEO
+    if (message.video) {
+        contentHTML += `<div class="mb-2"><video controls class="rounded-xl max-w-full"><source src="${escapeAttribute(message.video)}">Your browser does not support video.</video></div>`;
+    }
 
     // VOICE
     if (message.voice) {
-
-        contentHTML += `
-
-            <div class="mb-2">
-
-                <audio
-                    controls
-                    preload="metadata"
-                    class="w-full">
-
-                    <source
-                        src="${escapeAttribute(message.voice)}">
-
-                    Your browser does not support audio.
-
-                </audio>
-
-            </div>
-
-        `;
-
+        contentHTML += `<div class="mb-2"><audio controls class="w-full"><source src="${escapeAttribute(message.voice)}"></audio></div>`;
     }
-
 
     // TEXT
     if (message.text) {
-
-        contentHTML += `
-
-            <p class="text-sm leading-relaxed break-words whitespace-pre-wrap">
-                ${escapeHTML(message.text)}
-            </p>
-
-        `;
-
+        contentHTML += `<p class="text-sm leading-relaxed break-words whitespace-pre-wrap">${escapeHTML(message.text)}</p>`;
     }
 
-
-    // If somehow empty, don't display it.
-    if (!contentHTML.trim()) {
-        return;
-    }
-
+    if (!contentHTML.trim()) return;
 
     div.innerHTML = `
-
-        <div
-            class="${bubbleClass}
-            p-3
-            rounded-2xl
-            max-w-xs
-            sm:max-w-md
-            shadow-sm">
-
-            <p
-                class="font-bold text-[10px]
-                ${
-                    isMine
-                        ? "text-blue-200"
-                        : "text-blue-600"
-                }
-                mb-1">
-
-                ${escapeHTML(
-                    message.sender?.username ||
-                    "User"
-                )}
-
-            </p>
-
-
+        <div class="${bubbleClass} p-3 rounded-2xl max-w-xs sm:max-w-md shadow-sm">
+            <div class="flex justify-between items-center mb-1 gap-2">
+                <p class="font-bold text-[10px] ${isMine ? "text-blue-200" : "text-blue-600"}">${escapeHTML(message.sender?.username || "User")}</p>
+                ${!isMine ? `<button onclick="reportUser('${senderId}', '${escapeHTML(message.sender?.username || "User")}')" class="text-[10px] opacity-70 hover:opacity-100 hover:underline">⚠️ Report</button>` : ""}
+            </div>
             ${contentHTML}
-
         </div>
-
     `;
-
 
     container.appendChild(div);
-
-
-    container.scrollTop =
-        container.scrollHeight;
-
+    container.scrollTop = container.scrollHeight;
 }
 
+// Media Selection & Preview
+function handleMediaSelected(event, type) {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-// =====================================================
-// OPEN IMAGE
-// =====================================================
+    if (type === 'image' && !file.type.startsWith("image/")) return alert("Select a valid image file.");
+    if (type === 'video' && !file.type.startsWith("video/")) return alert("Select a valid video file.");
 
-function openImage(src) {
+    if (file.size > 20 * 1024 * 1024) return alert("Please choose a media file smaller than 20 MB.");
 
-    const overlay =
-        document.createElement("div");
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        clearSelectedMedia();
+        const container = document.getElementById("mediaPreviewContainer");
+        const previewBox = document.getElementById("previewMediaBox");
+        const typeText = document.getElementById("mediaPreviewType");
 
-
-    overlay.className =
-        "fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4";
-
-
-    overlay.innerHTML = `
-
-        <button
-            class="absolute top-4 right-4 text-white text-3xl font-bold"
-            onclick="this.parentElement.remove()">
-
-            ✕
-
-        </button>
-
-
-        <img
-            src="${escapeAttribute(src)}"
-            class="max-w-full max-h-full object-contain rounded-lg">
-
-    `;
-
-
-    overlay.onclick = function(event) {
-
-        if (event.target === overlay) {
-
-            overlay.remove();
-
+        if (type === 'image') {
+            selectedImageData = e.target.result;
+            previewBox.innerHTML = `<img src="${selectedImageData}" class="w-full h-full object-cover">`;
+            typeText.textContent = "Image selected";
+        } else {
+            selectedVideoData = e.target.result;
+            previewBox.innerHTML = `<video src="${selectedVideoData}" class="w-full h-full object-cover"></video>`;
+            typeText.textContent = "Video selected";
         }
-
+        container.classList.remove("hidden");
     };
-
-
-    document.body.appendChild(overlay);
-
+    reader.readAsDataURL(file);
 }
 
-
-// =====================================================
-// SEND TEXT / IMAGE / VOICE
-// =====================================================
+function clearSelectedMedia() {
+    selectedImageData = "";
+    selectedVideoData = "";
+    document.getElementById("groupImageInput").value = "";
+    document.getElementById("groupVideoInput").value = "";
+    document.getElementById("mediaPreviewContainer").classList.add("hidden");
+    document.getElementById("previewMediaBox").innerHTML = "";
+}
 
 async function sendGroupMessage() {
+    if (!currentGroup) return alert("Please open a group first.");
+    if (isRecording) return alert("Stop recording first.");
 
-    if (!currentGroup) {
+    const input = document.getElementById("messageInput");
+    const text = input.value.trim();
 
-        alert("Please open a group first.");
-
-        return;
-    }
-
-
-    // Don't send while recording.
-    if (isRecording) {
-
-        alert("Stop the recording first.");
-
-        return;
-    }
-
-
-    const input =
-        document.getElementById("messageInput");
-
-
-    const text =
-        input.value.trim();
-
-
-    // Nothing selected
-    if (!text && !selectedImageData) {
-
-        return;
-    }
-
+    if (!text && !selectedImageData && !selectedVideoData) return;
 
     try {
-
         const body = {
-
             text: text,
-
             image: selectedImageData || "",
-
+            video: selectedVideoData || "",
             voice: ""
-
         };
 
+        const message = await apiRequest(`/api/groups/${currentGroup._id}/messages`, {
+            method: "POST",
+            body: JSON.stringify(body)
+        });
 
-        const message =
-            await apiRequest(
-                `/api/groups/${currentGroup._id}/messages`,
-                {
-                    method: "POST",
-
-                    body: JSON.stringify(body)
-                }
-            );
-
-
-        // Show immediately for sender.
         addMessageToScreen(message);
-
-
-        // Tell other group members about the SAVED message.
-        socket.emit(
-            "sendGroupMessage",
-            {
-                groupId: currentGroup._id,
-
-                messageId: message._id
-            }
-        );
-
+        socket.emit("sendGroupMessage", { groupId: currentGroup._id, messageId: message._id });
 
         input.value = "";
-
-
-        clearSelectedImage();
-
-
-    } catch (error) {
-
-        console.error(
-            "Send group message error:",
-            error
-        );
-
-        alert(error.message);
-
-    }
-
+        clearSelectedMedia();
+    } catch (error) { alert(error.message); }
 }
 
-
-// =====================================================
-// IMAGE SELECT
-// =====================================================
-
-function handleImageSelected(event) {
-
-    const file =
-        event.target.files?.[0];
-
-
-    if (!file) {
-        return;
-    }
-
-
-    if (!file.type.startsWith("image/")) {
-
-        alert("Please select an image.");
-
-        event.target.value = "";
-
-        return;
-    }
-
-
-    // Keep the payload reasonably small.
-    if (file.size > 7 * 1024 * 1024) {
-
-        alert(
-            "Please choose an image smaller than 7 MB."
-        );
-
-        event.target.value = "";
-
-        return;
-    }
-
-
-    const reader =
-        new FileReader();
-
-
-    reader.onload = function(e) {
-
-        selectedImageData =
-            e.target.result;
-
-
-        document
-            .getElementById("imagePreview")
-            .src = selectedImageData;
-
-
-        document
-            .getElementById("imagePreviewContainer")
-            .classList
-            .remove("hidden");
-
-    };
-
-
-    reader.onerror = function() {
-
-        alert("Could not read the image.");
-
-        clearSelectedImage();
-
-    };
-
-
-    reader.readAsDataURL(file);
-
-}
-
-
-// =====================================================
-// CLEAR IMAGE
-// =====================================================
-
-function clearSelectedImage() {
-
-    selectedImageData = "";
-
-
-    const input =
-        document.getElementById("groupImageInput");
-
-
-    if (input) {
-        input.value = "";
-    }
-
-
-    document
-        .getElementById("imagePreviewContainer")
-        .classList
-        .add("hidden");
-
-
-    document
-        .getElementById("imagePreview")
-        .src = "";
-
-}
-
-
-// =====================================================
-// VOICE RECORDING
-// =====================================================
-
-async function toggleRecording() {
-
-    if (isRecording) {
-
-        stopRecording(false);
-
-        return;
-    }
-
-
-    await startRecording();
-
-}
-
-
-// =====================================================
-// START RECORDING
-// =====================================================
+// Voice Recording Handlers
+async function toggleRecording() { isRecording ? stopRecording(false) : await startRecording(); }
 
 async function startRecording() {
-
-    if (!currentGroup) {
-
-        alert("Please open a group first.");
-
-        return;
-    }
-
-
-    if (!navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia) {
-
-        alert(
-            "Voice recording is not supported by this browser."
-        );
-
-        return;
-    }
-
+    if (!currentGroup) return alert("Please open a group first.");
+    if (!navigator.mediaDevices?.getUserMedia) return alert("Voice recording not supported.");
 
     try {
-
-        const stream =
-            await navigator.mediaDevices.getUserMedia({
-                audio: true
-            });
-
-
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         recordedChunks = [];
+        let mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
 
-
-        let mimeType = "";
-
-
-        if (
-            MediaRecorder.isTypeSupported(
-                "audio/webm;codecs=opus"
-            )
-        ) {
-
-            mimeType =
-                "audio/webm;codecs=opus";
-
-        } else if (
-            MediaRecorder.isTypeSupported(
-                "audio/webm"
-            )
-        ) {
-
-            mimeType =
-                "audio/webm";
-
-        }
-
-
-        mediaRecorder =
-            mimeType
-                ? new MediaRecorder(
-                    stream,
-                    { mimeType }
-                )
-                : new MediaRecorder(stream);
-
-
-        mediaRecorder.ondataavailable =
-            function(event) {
-
-                if (
-                    event.data &&
-                    event.data.size > 0
-                ) {
-
-                    recordedChunks.push(
-                        event.data
-                    );
-
-                }
-
-            };
-
-
-        mediaRecorder.onstop =
-            async function() {
-
-                stream
-                    .getTracks()
-                    .forEach(
-                        track => track.stop()
-                    );
-
-
-                if (!recordedChunks.length) {
-
-                    isRecording = false;
-
-                    updateRecordingUI();
-
-                    return;
-                }
-
-
-                const finalType =
-                    mediaRecorder.mimeType ||
-                    "audio/webm";
-
-
-                const blob =
-                    new Blob(
-                        recordedChunks,
-                        {
-                            type: finalType
-                        }
-                    );
-
-
-                recordedChunks = [];
-
-
-                // Cancelled recording.
-                if (mediaRecorder.cancelled) {
-
-                    isRecording = false;
-
-                    updateRecordingUI();
-
-                    return;
-                }
-
-
-                await sendVoiceBlob(blob);
-
-            };
-
-
-        mediaRecorder.onerror =
-            function(error) {
-
-                console.error(
-                    "MediaRecorder error:",
-                    error
-                );
-
-
-                stream
-                    .getTracks()
-                    .forEach(
-                        track => track.stop()
-                    );
-
-
-                isRecording = false;
-
-                updateRecordingUI();
-
-
-                alert(
-                    "There was a problem recording your voice note."
-                );
-
-            };
-
-
+        mediaRecorder = new MediaRecorder(stream, { mimeType });
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop());
+            if (!recordedChunks.length || mediaRecorder.cancelled) {
+                isRecording = false; updateRecordingUI(); return;
+            }
+            const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+            await sendVoiceBlob(blob);
+        };
         mediaRecorder.start();
-
-
         isRecording = true;
-
-
         updateRecordingUI();
-
-
-    } catch (error) {
-
-        console.error(
-            "Microphone error:",
-            error
-        );
-
-
-        alert(
-            "Microphone access was denied or unavailable."
-        );
-
-    }
-
+    } catch (err) { alert("Microphone access denied or unavailable."); }
 }
-
-
-// =====================================================
-// STOP RECORDING
-// =====================================================
 
 function stopRecording(cancel = false) {
-
-    if (!mediaRecorder) {
-
-        isRecording = false;
-
-        updateRecordingUI();
-
-        return;
-    }
-
-
-    if (
-        mediaRecorder.state === "recording" ||
-        mediaRecorder.state === "paused"
-    ) {
-
-        mediaRecorder.cancelled =
-            Boolean(cancel);
-
-
+    if (mediaRecorder && (mediaRecorder.state === "recording" || mediaRecorder.state === "paused")) {
+        mediaRecorder.cancelled = Boolean(cancel);
         mediaRecorder.stop();
-
     } else {
-
         isRecording = false;
-
         updateRecordingUI();
-
     }
-
 }
-
-
-// =====================================================
-// RECORDING UI
-// =====================================================
 
 function updateRecordingUI() {
-
-    const status =
-        document.getElementById(
-            "recordingStatus"
-        );
-
-
-    const button =
-        document.getElementById(
-            "voiceButton"
-        );
-
-
+    const status = document.getElementById("recordingStatus");
+    const button = document.getElementById("voiceButton");
     if (isRecording) {
-
         status.classList.remove("hidden");
-
-
-        button.classList.remove(
-            "bg-gray-100",
-            "text-gray-700"
-        );
-
-
-        button.classList.add(
-            "bg-red-100",
-            "text-red-600"
-        );
-
-
+        button.classList.replace("bg-gray-100", "bg-red-100");
+        button.classList.replace("text-gray-700", "text-red-600");
         button.textContent = "⏹️";
-
     } else {
-
         status.classList.add("hidden");
-
-
-        button.classList.remove(
-            "bg-red-100",
-            "text-red-600"
-        );
-
-
-        button.classList.add(
-            "bg-gray-100",
-            "text-gray-700"
-        );
-
-
+        button.classList.replace("bg-red-100", "bg-gray-100");
+        button.classList.replace("text-red-600", "text-gray-700");
         button.textContent = "🎤";
-
     }
-
 }
-
-
-// =====================================================
-// SEND VOICE BLOB
-// =====================================================
 
 async function sendVoiceBlob(blob) {
-
-    if (!currentGroup) {
-
-        return;
-    }
-
-
-    // Keep voice notes reasonably small.
-    if (blob.size > 7 * 1024 * 1024) {
-
-        alert(
-            "That voice note is too large. Please record a shorter one."
-        );
-
-        isRecording = false;
-
-        updateRecordingUI();
-
-        return;
-    }
-
-
+    if (!currentGroup) return;
     try {
-
-        const voiceData =
-            await blobToDataURL(blob);
-
-
-        const message =
-            await apiRequest(
-                `/api/groups/${currentGroup._id}/messages`,
-                {
-                    method: "POST",
-
-                    body: JSON.stringify({
-
-                        text: "",
-
-                        image: "",
-
-                        voice: voiceData
-
-                    })
-                }
-            );
-
-
-        // Show immediately for sender.
+        const voiceData = await blobToDataURL(blob);
+        const message = await apiRequest(`/api/groups/${currentGroup._id}/messages`, {
+            method: "POST",
+            body: JSON.stringify({ text: "", image: "", video: "", voice: voiceData })
+        });
         addMessageToScreen(message);
-
-
-        // Tell other group members about saved message.
-        socket.emit(
-            "sendGroupMessage",
-            {
-                groupId: currentGroup._id,
-
-                messageId: message._id
-            }
-        );
-
-
-        isRecording = false;
-
-        updateRecordingUI();
-
-
-    } catch (error) {
-
-        console.error(
-            "Send voice error:",
-            error
-        );
-
-
-        isRecording = false;
-
-        updateRecordingUI();
-
-
-        alert(error.message);
-
-    }
-
+        socket.emit("sendGroupMessage", { groupId: currentGroup._id, messageId: message._id });
+    } catch (error) { alert(error.message); }
+    finally { isRecording = false; updateRecordingUI(); }
 }
-
-
-// =====================================================
-// BLOB TO DATA URL
-// =====================================================
 
 function blobToDataURL(blob) {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            const reader =
-                new FileReader();
-
-
-            reader.onloadend =
-                function() {
-
-                    resolve(
-                        reader.result
-                    );
-
-                };
-
-
-            reader.onerror =
-                reject;
-
-
-            reader.readAsDataURL(blob);
-
-        }
-    );
-
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
 }
 
-
-// =====================================================
-// ENTER KEY
-// =====================================================
-
-function handleMessageKey(event) {
-
-    if (
-        event.key === "Enter" &&
-        !event.shiftKey
-    ) {
-
-        event.preventDefault();
-
-        sendGroupMessage();
-
-    }
-
-}
-
-
-// =====================================================
-// CURRENT USER
-// =====================================================
-
-function getCurrentUserId() {
+// User Actions: Banning & Reporting
+async function banUser(userId) {
+    if (!currentGroup) return;
+    if (!confirm("Are you sure you want to ban this user from the group?")) return;
 
     try {
-
-        const user =
-            JSON.parse(
-                localStorage.getItem("user")
-            );
-
-
-        return (
-            user?._id ||
-            user?.id ||
-            null
-        );
-
-    } catch {
-
-        return null;
-
+        await apiRequest(`/api/groups/${currentGroup._id}/ban`, {
+            method: "POST",
+            body: JSON.stringify({ userId })
+        });
+        alert("User has been banned.");
+        openMembersModal(); // Refresh member list
+    } catch (error) {
+        alert(error.message); // Backend will reject if target is an Admin or Owner
     }
-
 }
 
+async function reportUser(userId, username) {
+    if (!currentGroup) return;
+    const reason = prompt(`Report ${username} for bad behaviour:`);
+    if (!reason || !reason.trim()) return;
 
-// =====================================================
-// HTML SAFETY
-// =====================================================
-
-function escapeHTML(text) {
-
-    const div =
-        document.createElement("div");
-
-
-    div.textContent =
-        text || "";
-
-
-    return div.innerHTML;
-
+    try {
+        await apiRequest(`/api/groups/${currentGroup._id}/report`, {
+            method: "POST",
+            body: JSON.stringify({ userId, reason: reason.trim() })
+        });
+        alert("Report submitted to group administrators.");
+        loadReportSummary(currentGroup._id);
+    } catch (error) { alert(error.message); }
 }
 
+// Modals Management
+function openMembersModal() {
+    if (!currentGroup) return;
+    const modal = document.getElementById("membersModal");
+    const list = document.getElementById("membersList");
+    const currentUserId = getCurrentUserId();
+    const isOwner = String(currentGroup.owner?._id || currentGroup.owner) === String(currentUserId);
 
-function escapeAttribute(text) {
+    list.innerHTML = "";
+    (currentGroup.members || []).forEach(member => {
+        const memberId = member._id || member;
+        const memberName = member.username || "Member";
+        const isAdminMember = (currentGroup.admins || []).some(a => String(a._id || a) === String(memberId));
+        const isOwnerMember = String(currentGroup.owner?._id || currentGroup.owner) === String(memberId);
 
-    return String(text || "")
-        .replace(/&/g, "&amp;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+        let roleBadge = isOwnerMember ? "👑 Owner" : (isAdminMember ? "🛡️ Admin" : "Member");
+        
+        // Owner can ban ONLY non-admin members
+        let showBanBtn = isOwner && !isAdminMember && !isOwnerMember;
+
+        list.innerHTML += `
+            <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg border">
+                <div>
+                    <p class="font-bold text-sm text-gray-800">${escapeHTML(memberName)}</p>
+                    <p class="text-xs text-gray-500">${roleBadge}</p>
+                </div>
+                ${showBanBtn ? `<button onclick="banUser('${memberId}')" class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded font-bold transition">Ban</button>` : ""}
+            </div>
+        `;
+    });
+
+    modal.classList.remove("hidden");
 }
 
+function closeMembersModal() { document.getElementById("membersModal").classList.add("hidden"); }
 
-// =====================================================
-// INITIAL BOOT
-// =====================================================
+async function openReportsModal() {
+    if (!currentGroup) return;
+    const modal = document.getElementById("reportsModal");
+    const list = document.getElementById("reportsList");
+    list.innerHTML = "<p class='text-center text-sm text-gray-500'>Loading reports...</p>";
+    modal.classList.remove("hidden");
+
+    try {
+        const reports = await apiRequest(`/api/groups/${currentGroup._id}/reports`);
+        list.innerHTML = "";
+        if (!reports || reports.length === 0) {
+            list.innerHTML = "<p class='text-center text-sm text-gray-500'>No reported behaviour found.</p>";
+            return;
+        }
+
+        reports.forEach(r => {
+            list.innerHTML += `
+                <div class="p-3 bg-red-50 border border-red-100 rounded-lg">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-bold text-sm text-red-700">User: ${escapeHTML(r.reportedUser?.username || "Unknown")}</span>
+                        <span class="text-[10px] text-gray-400">${new Date(r.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <p class="text-xs text-gray-700 mb-1"><strong>Reason:</strong> ${escapeHTML(r.reason)}</p>
+                    <p class="text-[10px] text-gray-500">Reported by: ${escapeHTML(r.reportedBy?.username || "Anonymous")}</p>
+                </div>
+            `;
+        });
+    } catch (err) {
+        list.innerHTML = `<p class="text-center text-sm text-red-500">${err.message}</p>`;
+    }
+}
+
+function closeReportsModal() { document.getElementById("reportsModal").classList.add("hidden"); }
+
+function openMediaOverlay(src, type) {
+    const overlay = document.createElement("div");
+    overlay.className = "fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4";
+    overlay.innerHTML = `
+        <button class="absolute top-4 right-4 text-white text-3xl font-bold" onclick="this.parentElement.remove()">✕</button>
+        <img src="${escapeAttribute(src)}" class="max-w-full max-h-full object-contain rounded-lg">
+    `;
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+}
+
+function handleMessageKey(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendGroupMessage(); } }
+function getCurrentUserId() { try { return JSON.parse(localStorage.getItem("user"))?._id || null; } catch { return null; } }
+function escapeHTML(str) { const d = document.createElement("div"); d.textContent = str || ""; return d.innerHTML; }
+function escapeAttribute(str) { return String(str || "").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
 
 loadGroups();
-
 </script>
-
 </body>
 </html>
