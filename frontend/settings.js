@@ -135,6 +135,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+
+
 // ================= EXPORT METHODS FOR DOM BINDINGS =================
 window.logout = logout;
 window.setDark = setDark;

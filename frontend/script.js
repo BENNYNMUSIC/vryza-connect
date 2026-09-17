@@ -36,7 +36,6 @@ const socket = io(API, {
 socket.on("connect", () => {
   console.log("🟢 ENGINE: Realtime synchronization terminal online. ID:", socket.id);
   socket.emit("join", currentUserId);
-  socket.emit("getOnlineUsers");
 });
 
 socket.on("connect_error", (err) => {
@@ -78,9 +77,14 @@ socket.on("onlineUsers", async (usersList) => {
     let profilePic = "";
 
     try {
-      const res = await fetch(`${API}/api/users/${peerId}`, {
+      let res = await fetch(`${API}/api/user/${peerId}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
+      if (!res.ok) {
+        res = await fetch(`${API}/api/users/${peerId}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+      }
       if (res.ok) {
         const data = await res.json();
         const profileData = data.user || data;
@@ -101,7 +105,7 @@ socket.on("onlineUsers", async (usersList) => {
 
     const avatarHtml = profilePic 
       ? `<img src="${profilePic.startsWith('http') ? profilePic : `${API}/uploads/${profilePic}`}" class="w-full h-full object-cover" onerror="this.src='images/default-avatar.png'"/>`
-      : username.charAt(0).toUpperCase();
+      : escapeHTML(username.charAt(0).toUpperCase());
 
     div.innerHTML = `
       <div class="flex items-center gap-2.5">
@@ -168,7 +172,7 @@ async function loadPosts() {
       return;
     }
 
-    posts.reverse().forEach(post => {
+    posts.forEach(post => {
       const postId = String(post._id || post.id || "");
       const userData = post.userId || post.user || {};
       const targetAuthorId = String(userData._id || userData.id || post.userId || "");
@@ -176,13 +180,13 @@ async function loadPosts() {
       div.className = "bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm my-4";
 
       const imageElement = post.image
-        ? `<div class="border-t border-slate-100 bg-slate-50"><img src="${API}/uploads/${post.image}" class="w-full max-h-[500px] object-cover block" loading="lazy"/></div>`
+        ? `<div class="border-t border-slate-100 bg-slate-50"><img src="${post.image.startsWith('http') ? post.image : `${API}/uploads/${post.image}`}" class="w-full max-h-[500px] object-cover block" loading="lazy" onerror="this.parentElement.style.display='none'"/></div>`
         : "";
 
       const profilePic = userData.profilePic;
       const avatarContent = profilePic
         ? `<img src="${profilePic.startsWith('http') ? profilePic : `${API}/uploads/${profilePic}`}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/default-avatar.png'"/>`
-        : (userData.username || "U").charAt(0).toUpperCase();
+        : escapeHTML((userData.username || "U").charAt(0).toUpperCase());
 
       const isOwner = targetAuthorId === currentUserId;
 
@@ -280,7 +284,7 @@ async function createPost() {
       const previewBox = document.getElementById("mediaDisplayPreview");
       const placeholderTxt = document.getElementById("uploadPlaceholderText");
       if (previewBox) { previewBox.innerHTML = ""; previewBox.classList.add("hidden"); }
-      if (placeholderTxt) placeholderTxt.innerText = "Click to upload image";
+      if (placeholderTxt) placeholderTxt.innerHTML = `<span class="text-blue-600 font-semibold">Tap to upload media</span> (Image / Video)`;
 
       loadPosts();
     } else {
@@ -450,6 +454,53 @@ document.getElementById("message")?.addEventListener("keypress", (e) => {
 document.getElementById("groupMessage")?.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendGroupMessage();
 });
+// ================= GLOBAL THEME ENGINE =================
+function applyGlobalTheme(theme) {
+  const body = document.body || document.getElementById("body");
+  if (!body) return;
+
+  if (theme === "dark") {
+    body.classList.remove("bg-slate-100", "text-slate-800", "bg-slate-50");
+    body.classList.add("bg-slate-900", "text-white");
+  } else {
+    body.classList.remove("bg-slate-900", "text-white");
+    body.classList.add("bg-slate-100", "text-slate-800");
+  }
+
+  // Update all cards / containers dynamically across the page
+  const cards = document.querySelectorAll(".theme-card, .bg-white");
+  cards.forEach((card) => {
+    if (theme === "dark") {
+      card.classList.remove("bg-white", "text-slate-800", "border-slate-200");
+      card.classList.add("bg-slate-800", "text-white", "border-slate-700");
+    } else {
+      card.classList.remove("bg-slate-800", "text-white", "border-slate-700");
+      card.classList.add("bg-white", "text-slate-800", "border-slate-200");
+    }
+  });
+}
+
+function setDark() {
+  localStorage.setItem("theme", "dark");
+  applyGlobalTheme("dark");
+}
+
+function setLight() {
+  localStorage.setItem("theme", "light");
+  applyGlobalTheme("light");
+}
+
+// Auto-initialize theme on every page load immediately
+document.addEventListener("DOMContentLoaded", () => {
+  const savedTheme = localStorage.getItem("theme") || "light";
+  applyGlobalTheme(savedTheme);
+});
+
+// Expose globally
+window.setDark = setDark;
+window.setLight = setLight;
+window.applyGlobalTheme = applyGlobalTheme;
+
 
 // Global hooks
 window.openProfile = openProfile;

@@ -7,26 +7,28 @@
   <title>Vryza Connect | Home & Dashboard</title>
 
   <!-- PWA Web App Meta Tags -->
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#0f172a" />
-<meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
 
-<!-- iOS Safari PWA Compatibility -->
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Vryza+" />
-<link rel="apple-touch-icon" href="images/icon-192.png" />
-
-<!-- PWA Registration Script -->
-<script src="sw-register.js" defer></script>
+  <!-- iOS Safari PWA Compatibility -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Vryza+" />
+  <link rel="apple-touch-icon" href="images/icon-192.png" />
 
   <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
 
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f172a">
-  <link rel="apple-touch-icon" href="images/icon-192.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <script>
+  // Instant theme loader before render to prevent white flash
+  (function() {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      document.documentElement.style.background = "#0f172a";
+      document.documentElement.style.color = "#fff";
+    }
+  })();
+</script>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
@@ -55,30 +57,12 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-
-    .ai-admin-message {
-      background-color: #f0f4ff;
-      border-left: 4px solid #3b82f6;
-      padding: 10px 14px;
-      margin: 8px 0;
-      border-radius: 8px;
-    }
-
-    .bot-badge {
-      background-color: #2563eb;
-      color: #ffffff;
-      font-size: 11px;
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-right: 6px;
-    }
   </style>
 </head>
 
 <body class="bg-slate-50 pt-20 pb-12">
 
-  <!-- NAVIGATION BAR (ICONS OVER TEXT) -->
+  <!-- NAVIGATION BAR -->
   <nav class="bg-white/95 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
     <div class="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-1.5">
       
@@ -94,50 +78,38 @@
 
       <!-- NAV ITEMS -->
       <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
-        
         <button onclick="go('home.html')" class="text-blue-600 font-bold flex flex-col items-center text-[11px] shrink-0 hover:opacity-80 transition">
           <span class="text-lg leading-none mb-0.5">🏠</span>
           <span>Home</span>
         </button>
-
         <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
           <span class="text-lg leading-none mb-0.5">👤</span>
           <span>Profile</span>
         </button>
-
         <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
           <span class="text-lg leading-none mb-0.5">💬</span>
           <span>Chat</span>
-          <span id="chatUnreadBadge" class="hidden absolute -top-1 -right-2 bg-blue-600 text-white text-[9px] font-black px-1 rounded-full min-w-[15px] text-center shadow-sm">
-            0
-          </span>
         </button>
-
         <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
           <span class="text-lg leading-none mb-0.5">👥</span>
           <span>Friends</span>
         </button>
-
         <button onclick="go('group.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
           <span class="text-lg leading-none mb-0.5">🌍</span>
           <span>Groups</span>
         </button>
-
         <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
           <span class="text-lg leading-none mb-0.5">🔔</span>
           <span>Alerts</span>
         </button>
-
         <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
           <span class="text-lg leading-none mb-0.5">🔴</span>
           <span>LIVE</span>
         </button>
-
         <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
           <span class="text-lg leading-none mb-0.5">⚙️</span>
           <span>Settings</span>
         </button>
-
       </div>
 
       <!-- LOGOUT BUTTON -->
@@ -284,13 +256,13 @@
       window.location.href = "auth.html";
     }
 
-    function getCleanToken() {
+    function getCleanTokenHome() {
       const raw = localStorage.getItem("token");
       return raw ? raw.replace(/^Bearer\s+/i, "").trim() : null;
     }
 
     async function apiRequestHome(url, options = {}) {
-      const cleanToken = getCleanToken();
+      const cleanToken = getCleanTokenHome();
       options.headers = {
         "Content-Type": "application/json",
         ...(options.headers || {}),
@@ -341,7 +313,6 @@
           return;
         }
         groups.slice(0, 4).forEach(group => {
-          const groupId = String(group._id || group.id || "");
           const groupImg = group.image 
             ? (group.image.startsWith("http") ? group.image : `${API_URL}/uploads/${group.image}`) 
             : 'images/vryza connect.png';
@@ -435,7 +406,7 @@
       try {
         const user = JSON.parse(localStorage.getItem("user"));
         if (user && (user._id || user.id)) return String(user._id || user.id);
-        const cleanToken = getCleanToken();
+        const cleanToken = getCleanTokenHome();
         if (cleanToken) {
           const payload = JSON.parse(atob(cleanToken.split('.')[1]));
           return String(payload.id || payload._id || payload.userId || "");
@@ -481,12 +452,6 @@
           avatarContainer.innerText = storedUser.username.charAt(0).toUpperCase();
         }
       } catch (e) {}
-    }
-
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/service-worker.js").then(() => {
-        console.log("Service Worker Registered");
-      }).catch(() => {});
     }
 
     renderCurrentPostAvatar();

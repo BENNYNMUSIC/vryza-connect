@@ -7,6 +7,17 @@
 
     <title>Groups - Vryza Connect</title>
 
+    <script>
+  // Instant theme loader before render to prevent white flash
+  (function() {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      document.documentElement.style.background = "#0f172a";
+      document.documentElement.style.color = "#fff";
+    }
+  })();
+</script>
+
     <!-- PWA Web App Meta Tags -->
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#0f172a" />
