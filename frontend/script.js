@@ -26,6 +26,44 @@ if (!user || !token || !currentUserId || currentUserId === "undefined") {
   window.location.href = "auth.html";
 }
 
+// ================= MEDIA & TIME HELPERS =================
+function getMediaUrl(filePath) {
+  if (!filePath) return "";
+  if (filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("data:")) {
+    return filePath;
+  }
+  const cleanPath = filePath.startsWith("/") ? filePath.substring(1) : filePath;
+  return `${API}/uploads/${cleanPath}`;
+}
+
+function isVideoFile(filename, mediaType) {
+  if (mediaType === "video") return true;
+  if (!filename) return false;
+  return /\.(mp4|webm|ogg|mov|m4v|mkv|3gp)$/i.test(filename);
+}
+
+function formatTimeAgo(dateInput) {
+  if (!dateInput) return "Just now";
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return "Just now";
+  
+  const seconds = Math.floor((new Date() - date) / 1000);
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return date.toLocaleDateString();
+}
+
+function escapeHTML(str) {
+  const d = document.createElement("div");
+  d.textContent = str || "";
+  return d.innerHTML;
+}
+
 // ================= ESTABLISH REALTIME NETWORK CONDUIT =================
 const socket = io(API, {
   transports: ["websocket", "polling"],
@@ -104,7 +142,7 @@ socket.on("onlineUsers", async (usersList) => {
     `;
 
     const avatarHtml = profilePic 
-      ? `<img src="${profilePic.startsWith('http') ? profilePic : `${API}/uploads/${profilePic}`}" class="w-full h-full object-cover" onerror="this.src='images/default-avatar.png'"/>`
+      ? `<img src="${getMediaUrl(profilePic)}" class="w-full h-full object-cover" onerror="this.src='images/default-avatar.png'"/>`
       : escapeHTML(username.charAt(0).toUpperCase());
 
     div.innerHTML = `
@@ -168,7 +206,7 @@ async function loadPosts() {
     feedDiv.innerHTML = "";
 
     if (!Array.isArray(posts) || posts.length === 0) {
-      feedDiv.innerHTML = `<div class="text-center text-slate-400 py-8 italic text-sm">No activity inside the local feed cluster yet.</div>`;
+      feedDiv.innerHTML = `<div class="text-center text-slate-400 py-8 italic text-sm bg-white rounded-3xl border border-slate-200">No activity in feed yet. Be the first to share an update!</div>`;
       return;
     }
 
@@ -176,30 +214,60 @@ async function loadPosts() {
       const postId = String(post._id || post.id || "");
       const userData = post.userId || post.user || {};
       const targetAuthorId = String(userData._id || userData.id || post.userId || "");
+      const authorName = userData.username || "Anonymous User";
+      const isOwner = targetAuthorId === currentUserId;
+
+      // Check media format
+      const hasMedia = Boolean(post.image && post.image.trim().length > 0);
+      const isVideo = hasMedia && isVideoFile(post.image, post.mediaType);
+      const mediaUrl = hasMedia ? getMediaUrl(post.image) : "";
+
+      let mediaMarkup = "";
+      if (hasMedia) {
+        if (isVideo) {
+          mediaMarkup = `
+            <div class="border-t border-slate-100 bg-black flex items-center justify-center">
+              <video src="${mediaUrl}" controls preload="metadata" class="w-full max-h-[500px] object-contain rounded-none"></video>
+            </div>
+          `;
+        } else {
+          mediaMarkup = `
+            <div class="border-t border-slate-100 bg-slate-50">
+              <img src="${mediaUrl}" class="w-full max-h-[500px] object-cover block" loading="lazy" onerror="this.parentElement.style.display='none'"/>
+            </div>
+          `;
+        }
+      }
+
+      // Likes calculation
+      const likesArray = Array.isArray(post.likes) ? post.likes : [];
+      const hasLiked = likesArray.some(id => {
+        const likeId = typeof id === "object" ? (id._id || id.id) : id;
+        return String(likeId) === currentUserId;
+      });
+
+      // Comments calculation
+      const commentsArray = Array.isArray(post.comments) ? post.comments : [];
+
+      // Avatar setup
+      const profilePic = userData.profilePic;
+      const avatarContent = profilePic
+        ? `<img src="${getMediaUrl(profilePic)}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/default-avatar.png'"/>`
+        : escapeHTML(authorName.charAt(0).toUpperCase());
+
       const div = document.createElement("div");
       div.className = "bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm my-4";
 
-      const imageElement = post.image
-        ? `<div class="border-t border-slate-100 bg-slate-50"><img src="${post.image.startsWith('http') ? post.image : `${API}/uploads/${post.image}`}" class="w-full max-h-[500px] object-cover block" loading="lazy" onerror="this.parentElement.style.display='none'"/></div>`
-        : "";
-
-      const profilePic = userData.profilePic;
-      const avatarContent = profilePic
-        ? `<img src="${profilePic.startsWith('http') ? profilePic : `${API}/uploads/${profilePic}`}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/default-avatar.png'"/>`
-        : escapeHTML((userData.username || "U").charAt(0).toUpperCase());
-
-      const isOwner = targetAuthorId === currentUserId;
-
       div.innerHTML = `
         <div class="p-5">
-          <div class="flex justify-between items-center mb-4">
+          <div class="flex justify-between items-center mb-3">
             <div class="flex items-center gap-3 cursor-pointer group" onclick="openProfile('${targetAuthorId}')">
-              <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center rounded-full font-bold shadow-md overflow-hidden">
+              <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center rounded-full font-bold shadow-md overflow-hidden shrink-0">
                 ${avatarContent}
               </div>
               <div>
-                <p class="font-bold text-slate-800 group-hover:text-blue-600 transition">${escapeHTML(userData.username || "Anonymous User")}</p>
-                <p class="text-[11px] text-slate-400">Vryza Network Member</p>
+                <p class="font-bold text-slate-800 group-hover:text-blue-600 transition text-sm sm:text-base">${escapeHTML(authorName)}</p>
+                <p class="text-[11px] text-slate-400">${formatTimeAgo(post.createdAt)}</p>
               </div>
             </div>
 
@@ -215,9 +283,54 @@ async function loadPosts() {
               `}
             </div>
           </div>
-          <p class="text-slate-700 text-sm leading-relaxed">${escapeHTML(post.caption || "")}</p>
+          ${post.caption ? `<p class="text-slate-700 text-sm leading-relaxed">${escapeHTML(post.caption)}</p>` : ''}
         </div>
-        ${imageElement}
+
+        ${mediaMarkup}
+
+        <!-- INTERACTION BAR -->
+        <div class="px-5 py-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-600">
+          <button onclick="likePost('${postId}')" class="flex items-center gap-1.5 hover:text-rose-600 transition ${hasLiked ? 'text-rose-600 font-bold' : ''}">
+            <span>${hasLiked ? '❤️' : '🤍'}</span>
+            <span>${likesArray.length} ${likesArray.length === 1 ? 'Like' : 'Likes'}</span>
+          </button>
+          
+          <button onclick="toggleComments('${postId}')" class="flex items-center gap-1.5 hover:text-blue-600 transition">
+            <span>💬</span>
+            <span>${commentsArray.length} ${commentsArray.length === 1 ? 'Comment' : 'Comments'}</span>
+          </button>
+        </div>
+
+        <!-- COMMENTS THREAD -->
+        <div id="commentsSection-${postId}" class="hidden border-t border-slate-100 bg-slate-50/50 p-4 space-y-3">
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+            ${commentsArray.length === 0 ? `<p class="text-[11px] text-slate-400 italic">No comments yet. Be the first!</p>` : ''}
+            ${commentsArray.map(c => {
+              const cUser = c.userId || {};
+              const cAuthor = cUser.username || "User";
+              const cPic = cUser.profilePic ? getMediaUrl(cUser.profilePic) : "";
+              const cAvatar = cPic 
+                ? `<img src="${cPic}" class="w-6 h-6 rounded-full object-cover shrink-0" onerror="this.src='images/default-avatar.png'"/>`
+                : `<div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-bold shrink-0">${escapeHTML(cAuthor.charAt(0).toUpperCase())}</div>`;
+              return `
+                <div class="flex items-start gap-2 text-xs bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm">
+                  ${cAvatar}
+                  <div class="flex-1">
+                    <span class="font-bold text-slate-800">${escapeHTML(cAuthor)}</span>
+                    <p class="text-slate-600 mt-0.5">${escapeHTML(c.text)}</p>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="flex gap-2 pt-2">
+            <input type="text" id="commentInput-${postId}" placeholder="Write a comment..." class="flex-1 text-xs p-2.5 rounded-xl border border-slate-200 outline-none focus:border-blue-500 bg-white" onkeydown="if(event.key==='Enter') addComment('${postId}')">
+            <button onclick="addComment('${postId}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-sm shrink-0">
+              Post
+            </button>
+          </div>
+        </div>
       `;
 
       feedDiv.appendChild(div);
@@ -225,6 +338,65 @@ async function loadPosts() {
 
   } catch (err) {
     console.error("❌ CRITICAL SOCIAL TIMELINE EXTRACTION ERROR:", err);
+  }
+}
+
+// ================= TOGGLE COMMENTS DISPLAY =================
+function toggleComments(postId) {
+  const elem = document.getElementById(`commentsSection-${postId}`);
+  if (elem) elem.classList.toggle("hidden");
+}
+
+// ================= LIKE POST ENGINE =================
+async function likePost(postId) {
+  if (!postId) return;
+  try {
+    const res = await fetch(`${API}/api/posts/${postId}/like`, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      loadPosts();
+    } else {
+      alert(data.message || "Failed to update like status.");
+    }
+  } catch (err) {
+    console.error("❌ LIKE POST ERROR:", err);
+  }
+}
+
+// ================= ADD COMMENT ENGINE =================
+async function addComment(postId) {
+  const input = document.getElementById(`commentInput-${postId}`);
+  if (!input) return;
+
+  const text = input.value.trim();
+  if (!text) return;
+
+  try {
+    const res = await fetch(`${API}/api/posts/${postId}/comment`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ text })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      input.value = "";
+      loadPosts();
+    } else {
+      alert(data.message || "Failed to post comment.");
+    }
+  } catch (err) {
+    console.error("❌ ADD COMMENT ERROR:", err);
   }
 }
 
@@ -255,19 +427,26 @@ async function deletePost(postId) {
 async function createPost() {
   const captionInput = document.getElementById("caption");
   const fileInput = document.getElementById("imageFile");
+  const submitBtn = document.getElementById("submitPostBtn");
+
   if (!captionInput) return;
 
   const caption = captionInput.value.trim();
   const file = fileInput?.files[0];
 
   if (!caption && !file) {
-    alert("Please provide either a caption or a media element before uploading.");
+    alert("Please provide either a caption or attach an image/video before posting.");
     return;
   }
 
   const formData = new FormData();
   formData.append("caption", caption);
   if (file) formData.append("image", file);
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span class="inline-block animate-spin mr-1">⏳</span> Publishing...`;
+  }
 
   try {
     const res = await fetch(`${API}/api/posts`, {
@@ -277,6 +456,7 @@ async function createPost() {
     });
 
     const data = await res.json();
+
     if (res.ok) {
       captionInput.value = "";
       if (fileInput) fileInput.value = "";
@@ -286,12 +466,18 @@ async function createPost() {
       if (previewBox) { previewBox.innerHTML = ""; previewBox.classList.add("hidden"); }
       if (placeholderTxt) placeholderTxt.innerHTML = `<span class="text-blue-600 font-semibold">Tap to upload media</span> (Image / Video)`;
 
-      loadPosts();
+      await loadPosts();
     } else {
-      alert(data.message || "Post transmission processing rejected by storage engine.");
+      alert(data.message || "Post upload rejected by storage server.");
     }
   } catch (err) {
     console.error("❌ CRITICAL FEED POST COMPILING FAULT:", err);
+    alert("Network request failed while attempting to upload post.");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Post to Feed";
+    }
   }
 }
 
@@ -440,13 +626,7 @@ socket.on("receiveGroupMessage", (data) => {
   groupMessagesDiv.scrollTop = groupMessagesDiv.scrollHeight;
 });
 
-function escapeHTML(str) {
-  const d = document.createElement("div");
-  d.textContent = str || "";
-  return d.innerHTML;
-}
-
-// Listeners
+// Event Listeners
 document.getElementById("message")?.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendMessage();
 });
@@ -454,6 +634,7 @@ document.getElementById("message")?.addEventListener("keypress", (e) => {
 document.getElementById("groupMessage")?.addEventListener("keypress", (e) => {
   if (e.key === "Enter") sendGroupMessage();
 });
+
 // ================= GLOBAL THEME ENGINE =================
 function applyGlobalTheme(theme) {
   const body = document.body || document.getElementById("body");
@@ -467,7 +648,6 @@ function applyGlobalTheme(theme) {
     body.classList.add("bg-slate-100", "text-slate-800");
   }
 
-  // Update all cards / containers dynamically across the page
   const cards = document.querySelectorAll(".theme-card, .bg-white");
   cards.forEach((card) => {
     if (theme === "dark") {
@@ -490,7 +670,6 @@ function setLight() {
   applyGlobalTheme("light");
 }
 
-// Auto-initialize theme on every page load immediately
 document.addEventListener("DOMContentLoaded", () => {
   const savedTheme = localStorage.getItem("theme") || "light";
   applyGlobalTheme(savedTheme);
@@ -501,15 +680,16 @@ window.setDark = setDark;
 window.setLight = setLight;
 window.applyGlobalTheme = applyGlobalTheme;
 
-
-// Global hooks
 window.openProfile = openProfile;
 window.followUser = followUser;
 window.sendMessage = sendMessage;
 window.sendGroupMessage = sendGroupMessage;
 window.createPost = createPost;
 window.deletePost = deletePost;
+window.likePost = likePost;
+window.addComment = addComment;
+window.toggleComments = toggleComments;
 window.loadPosts = loadPosts;
 
-// Execute initial load
+// Execute initial feed load
 loadPosts();

@@ -20,15 +20,14 @@
   <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
 
   <script>
-  // Instant theme loader before render to prevent white flash
-  (function() {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      document.documentElement.style.background = "#0f172a";
-      document.documentElement.style.color = "#fff";
-    }
-  })();
-</script>
+    (function() {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme === "dark") {
+        document.documentElement.style.background = "#0f172a";
+        document.documentElement.style.color = "#fff";
+      }
+    })();
+  </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
@@ -136,16 +135,16 @@
         </div>
 
         <div class="relative group border-2 border-dashed border-slate-200 rounded-2xl p-3 sm:p-4 transition hover:border-blue-300 mb-3 bg-slate-50/50 text-center">
-          <input type="file" id="imageFile" accept="image/*,video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewUploadFile(this)">
-          <div id="uploadPlaceholderText" class="text-slate-500 text-xs sm:text-sm py-1">
+          <input type="file" id="imageFile" accept="image/*,video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="previewUploadFile(this)">
+          <div id="uploadPlaceholderText" class="text-slate-500 text-xs sm:text-sm py-1 pointer-events-none">
             <span class="text-blue-600 font-semibold">Tap to upload media</span> (Image / Video)
           </div>
-          <div id="mediaDisplayPreview" class="hidden mt-2 max-w-xs mx-auto relative rounded-xl overflow-hidden border border-slate-200 shadow-sm"></div>
+          <div id="mediaDisplayPreview" class="hidden mt-2 max-w-xs mx-auto relative rounded-xl overflow-hidden border border-slate-200 shadow-sm z-20"></div>
         </div>
 
         <textarea id="caption" placeholder="What's happening?" class="w-full p-3 sm:p-4 bg-slate-50 border border-transparent rounded-2xl mb-3 focus:border-blue-300 focus:bg-white focus:ring-0 outline-none text-slate-700 text-sm resize-none transition-all" rows="3"></textarea>
 
-        <button onclick="createPost()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98] text-sm sm:text-base">
+        <button id="submitPostBtn" onclick="createPost()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98] text-sm sm:text-base flex items-center justify-center gap-2">
           Post to Feed
         </button>
       </div>
@@ -414,12 +413,6 @@
       } catch { return null; }
     }
 
-    function escapeHTML(text) {
-      const div = document.createElement("div");
-      div.textContent = text || "";
-      return div.innerHTML;
-    }
-
     function previewUploadFile(input) {
       const targetBox = document.getElementById("mediaDisplayPreview");
       const labelText = document.getElementById("uploadPlaceholderText");
@@ -432,9 +425,9 @@
       reader.onload = function(e) {
         targetBox.classList.remove("hidden");
         if (file.type.startsWith("image/")) {
-          targetBox.innerHTML = `<img src="${e.target.result}" class="w-full h-auto object-cover max-h-40 block rounded-xl"/>`;
+          targetBox.innerHTML = `<img src="${e.target.result}" class="w-full h-auto object-cover max-h-48 block rounded-xl"/>`;
         } else {
-          targetBox.innerHTML = `<video src="${e.target.result}" class="w-full h-auto object-cover max-h-40 block rounded-xl" muted autoplay loop></video>`;
+          targetBox.innerHTML = `<video src="${e.target.result}" class="w-full h-auto object-cover max-h-48 block rounded-xl" muted autoplay loop></video>`;
         }
       }
       reader.readAsDataURL(file);
@@ -447,7 +440,7 @@
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         if (storedUser.profilePic) {
           const picUrl = storedUser.profilePic.startsWith('http') ? storedUser.profilePic : `${API_URL}/uploads/${storedUser.profilePic}`;
-          avatarContainer.innerHTML = `<img src="${picUrl}" class="w-full h-full object-cover" onerror="this.src='images/default-avatar.png'"/>`;
+          avatarContainer.innerHTML = `<img src="${picUrl}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/default-avatar.png'"/>`;
         } else if (storedUser.username) {
           avatarContainer.innerText = storedUser.username.charAt(0).toUpperCase();
         }
