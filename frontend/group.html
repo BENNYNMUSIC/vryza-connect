@@ -302,14 +302,14 @@ socket.on("receiveGroupMessage", (data) => {
 
     if (currentGroup && targetGroupId === currentGroupId) {
         addMessageToScreen({
-            _id: data.messageId || data._id,
+            _id: data.messageId || data._id || data.message?._id,
             group: targetGroupId,
             sender: data.sender || { _id: senderId, username: data.username || "User" },
-            text: data.message || data.text || "",
-            image: data.image || "",
-            video: data.video || "",
-            voice: data.voice || "",
-            createdAt: data.createdAt || new Date().toISOString()
+            text: data.message || data.text || data.message?.text || "",
+            image: data.image || data.message?.image || "",
+            video: data.video || data.message?.video || "",
+            voice: data.voice || data.message?.voice || "",
+            createdAt: data.createdAt || data.message?.createdAt || new Date().toISOString()
         });
     }
 });
@@ -338,24 +338,31 @@ async function createGroup() {
 
     if (!name) return alert("Please enter a group name");
     try {
-        const group = await apiRequest("/api/groups", {
+        const response = await apiRequest("/api/groups", {
             method: "POST",
             body: JSON.stringify({ name, description, privacy })
         });
         alert("Group created!");
         hideCreateGroup();
+        document.getElementById("groupName").value = "";
+        document.getElementById("groupDescription").value = "";
         await loadGroups();
-        const createdGroupId = group ? String(group._id || group.id) : null;
+        const createdGroup = response.group || response;
+        const createdGroupId = createdGroup ? String(createdGroup._id || createdGroup.id || "") : null;
         if (createdGroupId) openGroupById(createdGroupId);
     } catch (error) { alert(error.message); }
 }
 
 async function loadGroups() {
     try {
-        const myGroups = await apiRequest("/api/groups/my");
-        const publicGroups = await apiRequest("/api/groups/public");
+        const myRes = await apiRequest("/api/groups/my");
+        const pubRes = await apiRequest("/api/groups/public");
+
+        const myGroups = myRes.groups || (Array.isArray(myRes) ? myRes : []);
+        const publicGroups = pubRes.groups || (Array.isArray(pubRes) ? pubRes : []);
+
         activeGroupMap = {};
-        const allGroups = [...(Array.isArray(myGroups) ? myGroups : []), ...(Array.isArray(publicGroups) ? publicGroups : [])];
+        const allGroups = [...myGroups, ...publicGroups];
         allGroups.forEach(g => {
             if (g) {
                 const gId = String(g._id || g.id || "");
@@ -442,7 +449,8 @@ async function openGroupById(groupId) {
     document.getElementById("chatGroupMembers").textContent = `${group.members ? group.members.length : 0} members`;
 
     const currentUserId = String(getCurrentUserId() || "");
-    const ownerId = String(group.owner?._id || group.owner?.id || group.owner || "");
+    const creator = group.creator || group.owner;
+    const ownerId = String(creator?._id || creator?.id || creator || "");
     const isOwner = ownerId === currentUserId;
     const isAdmin = isOwner || (group.admins || []).some(a => String(a._id || a.id || a) === currentUserId);
 
@@ -477,7 +485,8 @@ function closeGroupChat() {
 
 async function loadMessages(groupId) {
     try {
-        const messages = await apiRequest(`/api/groups/${groupId}/messages`);
+        const response = await apiRequest(`/api/groups/${groupId}/messages`);
+        const messages = response.messages || (Array.isArray(response) ? response : []);
         const container = document.getElementById("groupMessages");
         container.innerHTML = "";
         if (Array.isArray(messages)) messages.forEach(msg => addMessageToScreen(msg));
@@ -493,7 +502,7 @@ function resolveMediaUrl(path) {
 
 function addMessageToScreen(message) {
     const container = document.getElementById("groupMessages");
-    if (!container) return;
+    if (!container || !message) return;
 
     const msgId = String(message._id || message.id || "");
     if (msgId && document.querySelector(`[data-message-id="${msgId}"]`)) return;
@@ -602,13 +611,15 @@ async function sendGroupMessage() {
             voice: ""
         };
 
-        const message = await apiRequest(`/api/groups/${groupId}/messages`, {
+        const response = await apiRequest(`/api/groups/${groupId}/messages`, {
             method: "POST",
             body: JSON.stringify(body)
         });
 
-        addMessageToScreen(message);
-        socket.emit("sendGroupMessage", { groupId: groupId, messageId: String(message._id || message.id) });
+        const newMessage = response.message || response;
+
+        addMessageToScreen(newMessage);
+        socket.emit("sendGroupMessage", { groupId: groupId, messageId: String(newMessage._id || newMessage.id || "") });
 
         input.value = "";
         clearSelectedMedia();
@@ -674,12 +685,13 @@ async function sendVoiceBlob(blob) {
 
     try {
         const voiceData = await blobToDataURL(blob);
-        const message = await apiRequest(`/api/groups/${groupId}/messages`, {
+        const response = await apiRequest(`/api/groups/${groupId}/messages`, {
             method: "POST",
             body: JSON.stringify({ text: "", image: "", video: "", voice: voiceData })
         });
-        addMessageToScreen(message);
-        socket.emit("sendGroupMessage", { groupId: groupId, messageId: String(message._id || message.id) });
+        const newMessage = response.message || response;
+        addMessageToScreen(newMessage);
+        socket.emit("sendGroupMessage", { groupId: groupId, messageId: String(newMessage._id || newMessage.id || "") });
     } catch (error) { alert(error.message); }
     finally { isRecording = false; updateRecordingUI(); }
 }
@@ -732,7 +744,8 @@ function openMembersModal() {
     const list = document.getElementById("membersList");
 
     const currentUserId = String(getCurrentUserId() || "");
-    const ownerId = String(currentGroup.owner?._id || currentGroup.owner?.id || currentGroup.owner || "");
+    const creator = currentGroup.creator || currentGroup.owner;
+    const ownerId = String(creator?._id || creator?.id || creator || "");
     const isOwner = ownerId === currentUserId;
 
     list.innerHTML = "";
@@ -771,7 +784,8 @@ async function openReportsModal() {
     modal.classList.remove("hidden");
 
     try {
-        const reports = await apiRequest(`/api/groups/${groupId}/reports`);
+        const response = await apiRequest(`/api/groups/${groupId}/reports`);
+        const reports = response.reports || (Array.isArray(response) ? response : []);
         list.innerHTML = "";
         if (!reports || reports.length === 0) {
             list.innerHTML = "<p class='text-center text-sm text-gray-500'>No reported behaviour found.</p>";
@@ -783,7 +797,7 @@ async function openReportsModal() {
                 <div class="p-3 bg-red-50 border border-red-100 rounded-lg">
                     <div class="flex justify-between items-start mb-1">
                         <span class="font-bold text-sm text-red-700">User: ${escapeHTML(r.reportedUser?.username || "Unknown")}</span>
-                        <span class="text-[10px] text-gray-400">${new Date(r.createdAt).toLocaleDateString()}</span>
+                        <span class="text-[10px] text-gray-400">${r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""}</span>
                     </div>
                     <p class="text-xs text-gray-700 mb-1"><strong>Reason:</strong> ${escapeHTML(r.reason)}</p>
                     <p class="text-[10px] text-gray-500">Reported by: ${escapeHTML(r.reportedBy?.username || "Anonymous")}</p>
