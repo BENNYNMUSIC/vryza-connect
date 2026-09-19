@@ -23,7 +23,6 @@ if (!user || !token || !currentUserId || currentUserId === "undefined") {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   window.location.href = "auth.html";
-  // HALT EXECUTION: Prevents downstream connection calls & errors on unauthorized redirect
   throw new Error("Authentication failed: Halting script execution.");
 }
 
@@ -63,6 +62,23 @@ function escapeHTML(str) {
   const d = document.createElement("div");
   d.textContent = str || "";
   return d.innerHTML;
+}
+
+// ================= LIGHTBOX IMAGE MODAL =================
+function openFullImage(imageUrl) {
+  const modal = document.getElementById("imageLightbox");
+  const img = document.getElementById("lightboxImage");
+  if (modal && img) {
+    img.src = imageUrl;
+    modal.classList.remove("hidden");
+  }
+}
+
+function closeFullImage() {
+  const modal = document.getElementById("imageLightbox");
+  if (modal) {
+    modal.classList.add("hidden");
+  }
 }
 
 // ================= ESTABLISH REALTIME NETWORK CONDUIT =================
@@ -166,9 +182,7 @@ socket.on("onlineUsers", async (usersList) => {
     div.addEventListener("click", () => {
       selectedUserId = peerId;
       selectedUsername = username;
-      
       if (receiverInput) receiverInput.value = `Chatting with ${selectedUsername}`;
-      
       loadMessages();
     });
 
@@ -246,9 +260,7 @@ async function createPost() {
   try {
     const res = await fetch(`${API}/api/posts`, {
       method: "POST",
-      headers: { 
-        "Authorization": `Bearer ${token}` 
-      },
+      headers: { "Authorization": `Bearer ${token}` },
       body: formData
     });
 
@@ -257,7 +269,6 @@ async function createPost() {
     if (res.ok) {
       captionInput.value = "";
       if (fileInput) fileInput.value = "";
-      
       applyPostPreset("#ffffff", "#1e293b");
 
       const previewBox = document.getElementById("mediaDisplayPreview");
@@ -324,16 +335,19 @@ async function loadPosts() {
           `;
         } else {
           mediaMarkup = `
-            <div class="border-t border-slate-500/10">
-              <img src="${mediaUrl}" class="w-full max-h-[500px] object-cover block" loading="lazy" onerror="this.parentElement.style.display='none'"/>
+            <div class="border-t border-slate-500/10 cursor-pointer overflow-hidden bg-slate-900/5" onclick="openFullImage('${mediaUrl}')">
+              <img src="${mediaUrl}" class="w-full max-h-[500px] object-cover block hover:scale-[1.01] transition-transform duration-200" loading="lazy" onerror="this.parentElement.style.display='none'"/>
             </div>
           `;
         }
       }
 
       const likesArray = Array.isArray(post.likes) ? post.likes : [];
-      const hasLiked = likesArray.some(id => String(typeof id === "object" ? (id._id || id.id) : id) === currentUserId);
+      const dislikesArray = Array.isArray(post.dislikes) ? post.dislikes : [];
       const commentsArray = Array.isArray(post.comments) ? post.comments : [];
+
+      const hasLiked = likesArray.some(id => String(typeof id === "object" ? (id._id || id.id) : id) === currentUserId);
+      const hasDisliked = dislikesArray.some(id => String(typeof id === "object" ? (id._id || id.id) : id) === currentUserId);
 
       const profilePic = userData.profilePic;
       const avatarContent = profilePic
@@ -376,24 +390,39 @@ async function loadPosts() {
         ${mediaMarkup}
 
         <!-- INTERACTION BAR -->
-        <div class="px-5 py-3 border-t border-slate-500/10 flex items-center justify-between text-xs font-semibold opacity-90">
+        <div class="px-5 py-3 border-t border-slate-500/10 flex items-center justify-between text-xs font-semibold opacity-90 gap-1">
           <button onclick="likePost('${postId}')" class="flex items-center gap-1.5 hover:opacity-100 transition ${hasLiked ? 'text-rose-500 font-bold' : ''}">
             <span>${hasLiked ? '❤️' : '🤍'}</span>
             <span>${likesArray.length} ${likesArray.length === 1 ? 'Like' : 'Likes'}</span>
           </button>
-          
+
+          <button onclick="dislikePost('${postId}')" class="flex items-center gap-1.5 hover:opacity-100 transition ${hasDisliked ? 'text-amber-500 font-bold' : ''}">
+            <span>👎</span>
+            <span>${dislikesArray.length}</span>
+          </button>
+
           <button onclick="toggleComments('${postId}')" class="flex items-center gap-1.5 hover:opacity-100 transition">
             <span>💬</span>
             <span>${commentsArray.length} ${commentsArray.length === 1 ? 'Comment' : 'Comments'}</span>
+          </button>
+
+          <button onclick="sharePost('${postId}')" class="flex items-center gap-1.5 hover:opacity-100 transition text-blue-500">
+            <span>🔗</span>
+            <span>Share</span>
           </button>
         </div>
 
         <!-- COMMENTS THREAD -->
         <div id="commentsSection-${postId}" class="hidden border-t border-slate-500/10 bg-black/5 p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold opacity-75">Comments (${commentsArray.length})</span>
+            <button onclick="openFullCommentsPage('${postId}')" class="text-[11px] text-blue-600 font-bold hover:underline">Open Full Page ↗</button>
+          </div>
+
           <div class="space-y-2 max-h-60 overflow-y-auto">
             ${commentsArray.length === 0 ? `<p class="text-[11px] opacity-60 italic">No comments yet. Be the first!</p>` : ''}
             ${commentsArray.map(c => {
-              const cUser = c.userId || {};
+              const cUser = c.userId || c.user || {};
               const cAuthor = cUser.username || "User";
               const cPic = cUser.profilePic ? getMediaUrl(cUser.profilePic) : "";
               const cAvatar = cPic 
@@ -402,9 +431,12 @@ async function loadPosts() {
               return `
                 <div class="flex items-start gap-2 text-xs bg-white/90 text-slate-800 p-2.5 rounded-xl shadow-sm">
                   ${cAvatar}
-                  <div class="flex-1">
-                    <span class="font-bold text-slate-900">${escapeHTML(cAuthor)}</span>
-                    <p class="text-slate-700 mt-0.5">${escapeHTML(c.text)}</p>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                      <span class="font-bold text-slate-900 text-[11px]">${escapeHTML(cAuthor)}</span>
+                      <span class="text-[9px] text-slate-400">${formatTimeAgo(c.createdAt)}</span>
+                    </div>
+                    <p class="text-slate-700 mt-0.5 break-words">${escapeHTML(c.text)}</p>
                   </div>
                 </div>
               `;
@@ -434,6 +466,11 @@ function toggleComments(postId) {
   if (elem) elem.classList.toggle("hidden");
 }
 
+function openFullCommentsPage(postId) {
+  localStorage.setItem("commentPostId", String(postId));
+  window.location.href = "comments.html";
+}
+
 // ================= LIKE POST ENGINE =================
 async function likePost(postId) {
   if (!postId) return;
@@ -454,6 +491,52 @@ async function likePost(postId) {
     }
   } catch (err) {
     console.error("❌ LIKE POST ERROR:", err);
+  }
+}
+
+// ================= DISLIKE POST ENGINE =================
+async function dislikePost(postId) {
+  if (!postId) return;
+  try {
+    const res = await fetch(`${API}/api/posts/${postId}/dislike`, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      loadPosts();
+    } else {
+      alert(data.message || "Failed to update dislike status.");
+    }
+  } catch (err) {
+    console.error("❌ DISLIKE POST ERROR:", err);
+  }
+}
+
+// ================= SHARE POST ENGINE =================
+async function sharePost(postId) {
+  const shareUrl = `${window.location.origin}/comments.html?id=${postId}`;
+  localStorage.setItem("commentPostId", String(postId));
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: "Vryza+ Post",
+        text: "Check out this post on Vryza+!",
+        url: shareUrl
+      });
+    } catch (err) {}
+  } else {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      alert("Post link copied to clipboard!");
+    } catch (err) {
+      alert(`Share link: ${shareUrl}`);
+    }
   }
 }
 
@@ -669,8 +752,13 @@ window.sendGroupMessage = sendGroupMessage;
 window.createPost = createPost;
 window.deletePost = deletePost;
 window.likePost = likePost;
+window.dislikePost = dislikePost;
+window.sharePost = sharePost;
 window.addComment = addComment;
 window.toggleComments = toggleComments;
+window.openFullCommentsPage = openFullCommentsPage;
+window.openFullImage = openFullImage;
+window.closeFullImage = closeFullImage;
 window.loadPosts = loadPosts;
 window.updatePostPreviewTheme = updatePostPreviewTheme;
 window.applyPostPreset = applyPostPreset;

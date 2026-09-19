@@ -274,6 +274,12 @@
     </div>
   </section>
 
+  <!-- FULL IMAGE LIGHTBOX MODAL -->
+<div id="imageLightbox" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer" onclick="closeFullImage()">
+  <button onclick="closeFullImage()" class="absolute top-4 right-4 text-white text-2xl font-bold bg-white/20 hover:bg-white/40 w-10 h-10 rounded-full flex items-center justify-center transition">&times;</button>
+  <img id="lightboxImage" src="" class="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" onclick="event.stopPropagation()">
+</div>
+
   <!-- SCRIPTS -->
   <!-- Corrected script file reference -->
   <script src="script_3.js"></script>
