@@ -23,6 +23,8 @@ if (!user || !token || !currentUserId || currentUserId === "undefined") {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   window.location.href = "auth.html";
+  // HALT EXECUTION: Prevents downstream connection calls & errors on unauthorized redirect
+  throw new Error("Authentication failed: Halting script execution.");
 }
 
 // ================= MEDIA & TIME HELPERS =================

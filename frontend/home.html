@@ -25,6 +25,13 @@
         document.documentElement.style.color = "#fff";
       }
     })();
+
+    // Early Navigation & Utility Hooks to avoid inline reference errors
+    function go(page) { window.location.href = page; }
+    function logout() {
+      localStorage.clear();
+      window.location.href = "auth.html";
+    }
   </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -268,18 +275,12 @@
   </section>
 
   <!-- SCRIPTS -->
-  <script src="script.js"></script>
+  <!-- Corrected script file reference -->
+  <script src="script_3.js"></script>
 
   <script>
     const API_URL = "https://vryza-connect-backend-1.onrender.com";
     let currentGroupModal = null;
-
-    function go(page) { window.location.href = page; }
-
-    function logout() {
-      localStorage.clear();
-      window.location.href = "auth.html";
-    }
 
     function getCleanTokenHome() {
       const raw = localStorage.getItem("token");
