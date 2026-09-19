@@ -6,12 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Vryza Connect | Home & Dashboard</title>
 
-  <!-- PWA Web App Meta Tags -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0f172a" />
   <meta name="mobile-web-app-capable" content="yes" />
 
-  <!-- iOS Safari PWA Compatibility -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Vryza+" />
@@ -125,15 +123,42 @@
     <!-- MAIN FEED COLUMN -->
     <div class="lg:col-span-8 space-y-6">
 
-      <!-- CREATE POST BOX -->
+      <!-- CREATE POST BOX WITH THEME CONTROLS -->
       <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200">
-        <div class="flex items-center gap-3 mb-3">
-          <div id="createPostUserAvatar" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-inner text-sm overflow-hidden">
-            You
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div id="createPostUserAvatar" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-inner text-sm overflow-hidden">
+              You
+            </div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">Share an update</h2>
           </div>
-          <h2 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">Share an update</h2>
         </div>
 
+        <!-- POST THEME COLOR SELECTOR BAR -->
+        <div class="flex flex-wrap items-center gap-2 mb-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 text-xs">
+          <span class="font-bold text-slate-600 mr-1">Post Style:</span>
+          
+          <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-xl border border-slate-200 font-semibold text-slate-700 shadow-sm">
+            <span>Text Color</span>
+            <input type="color" id="postTextColor" value="#1e293b" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" onchange="updatePostPreviewTheme()">
+          </label>
+
+          <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-xl border border-slate-200 font-semibold text-slate-700 shadow-sm">
+            <span>Background</span>
+            <input type="color" id="postBgColor" value="#ffffff" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" onchange="updatePostPreviewTheme()">
+          </label>
+
+          <!-- PRESETS -->
+          <div class="flex items-center gap-1.5 ml-auto">
+            <button onclick="applyPostPreset('#ffffff', '#1e293b')" class="w-5 h-5 rounded-full border border-slate-300 bg-white" title="White Light"></button>
+            <button onclick="applyPostPreset('#0f172a', '#ffffff')" class="w-5 h-5 rounded-full border border-slate-600 bg-slate-900" title="Dark Mode"></button>
+            <button onclick="applyPostPreset('#1d4ed8', '#ffffff')" class="w-5 h-5 rounded-full border border-blue-600 bg-blue-700" title="Vryza Blue"></button>
+            <button onclick="applyPostPreset('#be123c', '#ffffff')" class="w-5 h-5 rounded-full border border-rose-600 bg-rose-700" title="Crimson"></button>
+            <button onclick="applyPostPreset('#15803d', '#ffffff')" class="w-5 h-5 rounded-full border border-emerald-600 bg-emerald-700" title="Emerald"></button>
+          </div>
+        </div>
+
+        <!-- MEDIA FILE INPUT -->
         <div class="relative group border-2 border-dashed border-slate-200 rounded-2xl p-3 sm:p-4 transition hover:border-blue-300 mb-3 bg-slate-50/50 text-center">
           <input type="file" id="imageFile" accept="image/*,video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="previewUploadFile(this)">
           <div id="uploadPlaceholderText" class="text-slate-500 text-xs sm:text-sm py-1 pointer-events-none">
@@ -142,7 +167,8 @@
           <div id="mediaDisplayPreview" class="hidden mt-2 max-w-xs mx-auto relative rounded-xl overflow-hidden border border-slate-200 shadow-sm z-20"></div>
         </div>
 
-        <textarea id="caption" placeholder="What's happening?" class="w-full p-3 sm:p-4 bg-slate-50 border border-transparent rounded-2xl mb-3 focus:border-blue-300 focus:bg-white focus:ring-0 outline-none text-slate-700 text-sm resize-none transition-all" rows="3"></textarea>
+        <!-- TEXTAREA CAPTION WITH LIVE STYLING PREVIEW -->
+        <textarea id="caption" placeholder="What's happening?" class="w-full p-3 sm:p-4 border border-slate-200 rounded-2xl mb-3 focus:ring-2 focus:ring-blue-400 outline-none text-sm resize-none transition-all" rows="3" style="background-color: #ffffff; color: #1e293b;"></textarea>
 
         <button id="submitPostBtn" onclick="createPost()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98] text-sm sm:text-base flex items-center justify-center gap-2">
           Post to Feed
