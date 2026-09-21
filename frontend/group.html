@@ -37,7 +37,7 @@
 
     <style>
         body { background: #f3f4f6; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -147,13 +147,26 @@
         <!-- CREATE GROUP -->
         <section id="createGroupSection" class="hidden bg-white p-6 rounded-xl shadow mb-6 border border-slate-100">
             <h2 class="text-xl font-bold mb-4 text-slate-800">Create a Group</h2>
-            <input id="groupName" type="text" placeholder="Group name" class="w-full border p-3 rounded-lg mb-3 outline-none focus:ring-2 focus:ring-blue-500">
-            <textarea id="groupDescription" placeholder="Group description" class="w-full border p-3 rounded-lg mb-3 outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-            <label class="block font-semibold mb-2 text-sm text-gray-700">Privacy Settings</label>
-            <select id="groupPrivacy" class="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+            
+            <!-- Group Avatar Selection -->
+            <div class="mb-4">
+                <label class="block font-semibold mb-1 text-sm text-slate-700">Group Logo / Avatar</label>
+                <input id="groupAvatarInput" type="file" accept="image/*" class="w-full border p-2 rounded-lg text-slate-800 bg-white text-sm" onchange="handleGroupAvatarSelect(event)">
+                <div id="avatarPreviewContainer" class="hidden mt-3 flex items-center gap-3">
+                    <img id="avatarPreview" class="w-16 h-16 rounded-full object-cover border-2 border-blue-500">
+                    <button type="button" onclick="clearGroupAvatar()" class="text-xs text-red-500 hover:underline">Remove logo</button>
+                </div>
+            </div>
+
+            <input id="groupName" type="text" placeholder="Group name" class="w-full border p-3 rounded-lg mb-3 outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 bg-white placeholder-slate-400">
+            <textarea id="groupDescription" placeholder="Group description" class="w-full border p-3 rounded-lg mb-3 outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 bg-white placeholder-slate-400"></textarea>
+            
+            <label class="block font-semibold mb-2 text-sm text-slate-700">Privacy Settings</label>
+            <select id="groupPrivacy" class="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 bg-white">
                 <option value="public">Public - Anyone can join</option>
                 <option value="private">Private - Members must be invited</option>
             </select>
+
             <div class="flex gap-2">
                 <button onclick="createGroup()" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 font-medium transition shadow-sm">Create</button>
                 <button onclick="hideCreateGroup()" class="bg-gray-400 text-white px-5 py-2 rounded-lg hover:bg-gray-500 font-medium transition">Cancel</button>
@@ -178,15 +191,21 @@
 
                 <!-- CHAT HEADER -->
                 <div class="p-4 bg-blue-600 text-white flex justify-between items-center shadow">
-                    <div>
-                        <h2 id="chatGroupName" class="font-bold text-xl"></h2>
-                        <div class="flex items-center gap-3 text-xs opacity-90 mt-0.5">
-                            <span id="chatGroupMembers"></span>
-                            <span id="reportedBadge" class="bg-amber-500/30 text-amber-100 px-2 py-0.5 rounded-full font-medium">⚠️ 0 reported members</span>
+                    <div class="flex items-center gap-3">
+                        <div id="chatGroupAvatarBox"></div>
+                        <div>
+                            <h2 id="chatGroupName" class="font-bold text-xl"></h2>
+                            <div class="flex items-center gap-3 text-xs opacity-90 mt-0.5">
+                                <span id="chatGroupMembers"></span>
+                                <span id="reportedBadge" class="bg-amber-500/30 text-amber-100 px-2 py-0.5 rounded-full font-medium">⚠️ 0 reported members</span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-2">
+                        <button id="deleteGroupHeaderBtn" onclick="deleteActiveGroup()" class="hidden bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition">
+                            🗑️ Delete Group
+                        </button>
                         <button id="viewReportsBtn" onclick="openReportsModal()" class="hidden bg-amber-500 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition">
                             🚨 Admin Reports
                         </button>
@@ -228,7 +247,7 @@
 
                         <button id="voiceButton" onclick="toggleRecording()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 w-11 h-11 flex items-center justify-center rounded-lg transition text-xl shrink-0" title="Record voice note">🎤</button>
 
-                        <input id="messageInput" type="text" placeholder="Type a message..." class="flex-1 min-w-0 border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" onkeydown="handleMessageKey(event)">
+                        <input id="messageInput" type="text" placeholder="Type a message..." class="flex-1 min-w-0 border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 bg-white placeholder-slate-400" onkeydown="handleMessageKey(event)">
 
                         <button onclick="sendGroupMessage()" class="bg-blue-600 text-white px-4 sm:px-6 h-11 rounded-lg font-semibold hover:bg-blue-700 transition shrink-0">Send</button>
                     </div>
@@ -279,6 +298,7 @@ let mediaRecorder = null;
 let recordedChunks = [];
 let isRecording = false;
 
+let selectedGroupAvatarData = "";
 let selectedImageData = "";
 let selectedVideoData = "";
 
@@ -329,7 +349,33 @@ async function apiRequest(url, options = {}) {
 }
 
 function showCreateGroup() { document.getElementById("createGroupSection").classList.remove("hidden"); }
-function hideCreateGroup() { document.getElementById("createGroupSection").classList.add("hidden"); }
+function hideCreateGroup() { 
+    document.getElementById("createGroupSection").classList.add("hidden"); 
+    clearGroupAvatar();
+}
+
+function handleGroupAvatarSelect(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return alert("Please select a valid image file.");
+    if (file.size > 5 * 1024 * 1024) return alert("Logo image must be smaller than 5 MB.");
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        selectedGroupAvatarData = e.target.result;
+        document.getElementById("avatarPreview").src = selectedGroupAvatarData;
+        document.getElementById("avatarPreviewContainer").classList.remove("hidden");
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearGroupAvatar() {
+    selectedGroupAvatarData = "";
+    const input = document.getElementById("groupAvatarInput");
+    if (input) input.value = "";
+    const container = document.getElementById("avatarPreviewContainer");
+    if (container) container.classList.add("hidden");
+}
 
 async function createGroup() {
     const name = document.getElementById("groupName").value.trim();
@@ -340,7 +386,7 @@ async function createGroup() {
     try {
         const response = await apiRequest("/api/groups", {
             method: "POST",
-            body: JSON.stringify({ name, description, privacy })
+            body: JSON.stringify({ name, description, privacy, avatar: selectedGroupAvatarData })
         });
         alert("Group created!");
         hideCreateGroup();
@@ -351,6 +397,28 @@ async function createGroup() {
         const createdGroupId = createdGroup ? String(createdGroup._id || createdGroup.id || "") : null;
         if (createdGroupId) openGroupById(createdGroupId);
     } catch (error) { alert(error.message); }
+}
+
+async function deleteGroup(groupId) {
+    if (!confirm("Are you sure you want to permanently delete this group? This action cannot be undone.")) return;
+
+    try {
+        await apiRequest(`/api/groups/${groupId}`, { method: "DELETE" });
+        alert("Group deleted successfully.");
+
+        if (currentGroup && String(currentGroup._id || currentGroup.id) === String(groupId)) {
+            closeGroupChat();
+        }
+        await loadGroups();
+    } catch (error) {
+        alert(error.message || "Failed to delete group.");
+    }
+}
+
+async function deleteActiveGroup() {
+    if (!currentGroup) return;
+    const groupId = String(currentGroup._id || currentGroup.id);
+    await deleteGroup(groupId);
 }
 
 async function loadGroups() {
@@ -401,17 +469,31 @@ function displayPublicGroups(groups, myGroups) {
 
 function groupCard(group, isMember) {
     const groupId = String(group._id || group.id);
+    const currentUserId = String(getCurrentUserId() || "");
+    const creator = group.creator || group.owner;
+    const ownerId = String(creator?._id || creator?.id || creator || "");
+    const isOwner = currentUserId && ownerId === currentUserId;
+
+    const avatarUrl = resolveMediaUrl(group.avatar || group.icon || group.logo);
+
+    const logoHtml = avatarUrl
+        ? `<img src="${escapeAttribute(avatarUrl)}" class="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0">`
+        : `<div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-lg shrink-0">
+            ${(group.name || "G").charAt(0).toUpperCase()}
+           </div>`;
+
     return `
         <div class="bg-white rounded-xl shadow p-5 flex flex-col justify-between border border-gray-100">
             <div>
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-lg shrink-0">
-                        ${(group.name || "G").charAt(0).toUpperCase()}
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        ${logoHtml}
+                        <div class="truncate">
+                            <h3 class="font-bold text-lg text-gray-800 leading-snug truncate">${escapeHTML(group.name)}</h3>
+                            <p class="text-gray-500 text-xs">${group.members ? group.members.length : 0} members</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="font-bold text-lg text-gray-800 leading-snug">${escapeHTML(group.name)}</h3>
-                        <p class="text-gray-500 text-xs">${group.members ? group.members.length : 0} members</p>
-                    </div>
+                    ${isOwner ? `<button onclick="deleteGroup('${groupId}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition shrink-0" title="Delete Group">🗑️</button>` : ""}
                 </div>
                 <p class="text-gray-600 text-sm mb-4 line-clamp-2">${escapeHTML(group.description || "No description provided.")}</p>
             </div>
@@ -448,11 +530,26 @@ async function openGroupById(groupId) {
     document.getElementById("chatGroupName").textContent = group.name;
     document.getElementById("chatGroupMembers").textContent = `${group.members ? group.members.length : 0} members`;
 
+    const avatarUrl = resolveMediaUrl(group.avatar || group.icon || group.logo);
+    const avatarBox = document.getElementById("chatGroupAvatarBox");
+    if (avatarUrl) {
+        avatarBox.innerHTML = `<img src="${escapeAttribute(avatarUrl)}" class="w-10 h-10 rounded-full object-cover border-2 border-white shrink-0">`;
+    } else {
+        avatarBox.innerHTML = `<div class="w-10 h-10 rounded-full bg-white/20 text-white font-bold flex items-center justify-center text-lg shrink-0">${(group.name || "G").charAt(0).toUpperCase()}</div>`;
+    }
+
     const currentUserId = String(getCurrentUserId() || "");
     const creator = group.creator || group.owner;
     const ownerId = String(creator?._id || creator?.id || creator || "");
     const isOwner = ownerId === currentUserId;
     const isAdmin = isOwner || (group.admins || []).some(a => String(a._id || a.id || a) === currentUserId);
+
+    const deleteGroupHeaderBtn = document.getElementById("deleteGroupHeaderBtn");
+    if (isOwner) {
+        deleteGroupHeaderBtn.classList.remove("hidden");
+    } else {
+        deleteGroupHeaderBtn.classList.add("hidden");
+    }
 
     const viewReportsBtn = document.getElementById("viewReportsBtn");
     if (isAdmin) {
