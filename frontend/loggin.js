@@ -25,6 +25,27 @@ function showLogin() {
   document.getElementById("loginBox")?.classList.remove("hidden");
 }
 
+// ================= RESERVED USERNAME DETECTOR =================
+function isReservedUsername(username) {
+  if (!username) return false;
+
+  const normalized = username
+    .toLowerCase()
+    .replace(/[@4]/g, "a")
+    .replace(/[1!|]/g, "i")
+    .replace(/0/g, "o")
+    .replace(/[$5]/g, "s")
+    .replace(/3/g, "e");
+
+  const strictTerms = ["admin", "administrator", "system", "support", "moderator"];
+  if (strictTerms.some((term) => normalized.includes(term))) {
+    return true;
+  }
+
+  const rawLower = username.toLowerCase();
+  return /(^|[^a-z])mod($|[^a-z])/i.test(rawLower);
+}
+
 // ================= DISPATCH NEW ACCOUNT REGISTRATION =================
 async function register() {
   const registerBtn = document.getElementById("registerBtn");
@@ -36,6 +57,12 @@ async function register() {
 
     if (!username || !email || !password) {
       alert("Form submission incomplete. Please fill out all fields.");
+      return;
+    }
+
+    // Immediate frontend check for reserved/leetspeak usernames
+    if (isReservedUsername(username)) {
+      alert("This username contains reserved words and cannot be used.");
       return;
     }
 
@@ -92,11 +119,11 @@ async function login() {
   const loginBtn = document.getElementById("loginBtn");
 
   try {
-    const email = document.getElementById("logEmail")?.value.trim();
+    const loginInput = document.getElementById("logIdentifier")?.value.trim();
     const password = document.getElementById("logPass")?.value.trim();
 
-    if (!email || !password) {
-      alert("Identity values required. Please provide email and password.");
+    if (!loginInput || !password) {
+      alert("Identity values required. Please provide your username or email and password.");
       return;
     }
 
@@ -108,7 +135,7 @@ async function login() {
     const res = await fetch(`${AUTH_API}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ loginInput, password }),
     });
 
     const data = await res.json();
