@@ -18,15 +18,16 @@
   <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
 
   <script>
+    // Early Navigation & Theme Loader
     (function() {
       const savedTheme = localStorage.getItem("theme");
       if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
         document.documentElement.style.background = "#0f172a";
         document.documentElement.style.color = "#fff";
       }
     })();
 
-    // Early Navigation & Utility Hooks to avoid inline reference errors
     function go(page) { window.location.href = page; }
     function logout() {
       localStorage.clear();
@@ -60,6 +61,32 @@
     .hide-scrollbar {
       -ms-overflow-style: none;
       scrollbar-width: none;
+    }
+
+    /* Dark Mode Theme Overrides */
+    html.dark body {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+    }
+    html.dark .bg-white {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    html.dark .bg-slate-50 {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    html.dark .text-slate-800, html.dark .text-slate-700, html.dark .text-slate-600 {
+      color: #f1f5f9 !important;
+    }
+    html.dark .border-slate-200, html.dark .border-slate-100 {
+      border-color: #334155 !important;
+    }
+    html.dark nav {
+      background-color: rgba(15, 23, 42, 0.95) !important;
+      border-color: #334155 !important;
     }
   </style>
 </head>
@@ -268,25 +295,41 @@
       <div id="groupChatMessagesContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 space-y-3"></div>
 
       <div class="p-3 sm:p-4 bg-white border-t border-slate-200 flex gap-2 max-w-4xl mx-auto w-full">
-        <input id="modalMessageInput" type="text" placeholder="Type a message..." class="flex-1 border border-slate-200 p-3 rounded-xl outline-none focus:border-blue-500 text-sm transition" onkeydown="handleModalMessageKey(event)">
+        <input id="modalMessageInput" type="text" placeholder="Type a message..." class="flex-1 border border-slate-200 p-3 rounded-xl outline-none focus:border-blue-500 text-sm transition text-slate-800 bg-white" onkeydown="handleModalMessageKey(event)">
         <button onclick="sendModalGroupMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-6 rounded-xl font-semibold text-sm shadow-md transition">Send</button>
       </div>
     </div>
   </section>
 
   <!-- FULL IMAGE LIGHTBOX MODAL -->
-<div id="imageLightbox" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer" onclick="closeFullImage()">
-  <button onclick="closeFullImage()" class="absolute top-4 right-4 text-white text-2xl font-bold bg-white/20 hover:bg-white/40 w-10 h-10 rounded-full flex items-center justify-center transition">&times;</button>
-  <img id="lightboxImage" src="" class="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" onclick="event.stopPropagation()">
-</div>
+  <div id="imageLightbox" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer" onclick="closeFullImage()">
+    <button onclick="closeFullImage()" class="absolute top-4 right-4 text-white text-2xl font-bold bg-white/20 hover:bg-white/40 w-10 h-10 rounded-full flex items-center justify-center transition">&times;</button>
+    <img id="lightboxImage" src="" class="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" onclick="event.stopPropagation()">
+  </div>
 
   <!-- SCRIPTS -->
-  <!-- Corrected script file reference -->
   <script src="script_3.js"></script>
 
   <script>
     const API_URL = "https://vryza-connect-backend-1.onrender.com";
     let currentGroupModal = null;
+    let homeGroupsMap = {};
+
+    function escapeHTML(str) {
+      const d = document.createElement("div");
+      d.textContent = str || "";
+      return d.innerHTML;
+    }
+
+    function escapeAttribute(str) {
+      return String(str || "").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function resolveMediaUrl(path) {
+      if (!path) return "";
+      if (path.startsWith("http") || path.startsWith("data:")) return path;
+      return `${API_URL}/uploads/${path}`;
+    }
 
     function getCleanTokenHome() {
       const raw = localStorage.getItem("token");
@@ -304,6 +347,42 @@
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Something went wrong");
       return data;
+    }
+
+    /* THEME FUNCTIONS */
+    function updatePostPreviewTheme() {
+      const caption = document.getElementById("caption");
+      const bgInput = document.getElementById("postBgColor");
+      const textInput = document.getElementById("postTextColor");
+      if (!caption || !bgInput || !textInput) return;
+
+      caption.style.backgroundColor = bgInput.value;
+      caption.style.color = textInput.value;
+    }
+
+    function applyPostPreset(bgColor, textColor) {
+      const bgInput = document.getElementById("postBgColor");
+      const textInput = document.getElementById("postTextColor");
+      if (bgInput) bgInput.value = bgColor;
+      if (textInput) textInput.value = textColor;
+      updatePostPreviewTheme();
+    }
+
+    /* LIGHTBOX FUNCTIONS */
+    function openFullImage(src) {
+      const lightbox = document.getElementById("imageLightbox");
+      const img = document.getElementById("lightboxImage");
+      if (lightbox && img) {
+        img.src = src;
+        lightbox.classList.remove("hidden");
+      }
+    }
+
+    function closeFullImage() {
+      const lightbox = document.getElementById("imageLightbox");
+      if (lightbox) {
+        lightbox.classList.add("hidden");
+      }
     }
 
     async function fetchTopQuestions() {
@@ -338,33 +417,44 @@
       const container = document.getElementById("homeMyGroups");
       if (!container) return;
       try {
-        const groups = await apiRequestHome("/api/groups/my");
+        const response = await apiRequestHome("/api/groups/my");
+        const groups = response.groups || (Array.isArray(response) ? response : []);
         container.innerHTML = "";
+        homeGroupsMap = {};
+
         if (!groups || groups.length === 0) {
           container.innerHTML = `<p class="text-xs text-slate-400 col-span-2">No groups joined yet. <a href="group.html" class="text-blue-600 underline">Explore groups</a></p>`;
           return;
         }
+
         groups.slice(0, 4).forEach(group => {
-          const groupImg = group.image 
-            ? (group.image.startsWith("http") ? group.image : `${API_URL}/uploads/${group.image}`) 
-            : 'images/vryza connect.png';
+          const gId = String(group._id || group.id || "");
+          if (gId) homeGroupsMap[gId] = group;
+
+          const avatarPath = group.avatar || group.image || group.icon || group.logo;
+          const groupImg = resolveMediaUrl(avatarPath) || 'images/vryza connect.png';
 
           container.innerHTML += `
             <div class="bg-slate-50 border border-slate-100 p-3 rounded-2xl flex items-center justify-between gap-2 shadow-sm">
               <div class="flex items-center gap-2.5 overflow-hidden">
-                <img src="${groupImg}" class="w-9 h-9 rounded-xl object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
+                <img src="${escapeAttribute(groupImg)}" class="w-9 h-9 rounded-xl object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
                 <div class="truncate">
                   <h4 class="font-bold text-xs text-slate-800 truncate">${escapeHTML(group.name)}</h4>
                   <p class="text-[10px] text-slate-500">${group.members ? group.members.length : 0} members</p>
                 </div>
               </div>
-              <button onclick='openGroupModal(${JSON.stringify(group)})' class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0">Open</button>
+              <button onclick="openGroupByIdHome('${gId}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0">Open</button>
             </div>
           `;
         });
       } catch (err) {
         console.error("Failed to load user groups on home", err);
       }
+    }
+
+    function openGroupByIdHome(groupId) {
+      const group = homeGroupsMap[groupId];
+      if (group) openGroupModal(group);
     }
 
     function openGroupModal(group) {
@@ -382,18 +472,21 @@
 
     async function loadModalGroupMessages(groupId) {
       try {
-        const messages = await apiRequestHome(`/api/groups/${groupId}/messages`);
+        const response = await apiRequestHome(`/api/groups/${groupId}/messages`);
+        const messages = response.messages || (Array.isArray(response) ? response : []);
         const container = document.getElementById("groupChatMessagesContainer");
         container.innerHTML = "";
         messages.forEach(msg => appendModalMessage(msg));
         container.scrollTop = container.scrollHeight;
       } catch (err) {
-        console.error(err);
+        console.error("Load modal messages error:", err);
       }
     }
 
     function appendModalMessage(message) {
       const container = document.getElementById("groupChatMessagesContainer");
+      if (!container || !message) return;
+
       const currentUser = getCurrentUserId();
       const senderId = String(message.sender?._id || message.sender?.id || message.sender || "");
       const isMine = senderId === currentUser;
@@ -417,11 +510,12 @@
       if (!text) return;
 
       try {
-        const message = await apiRequestHome(`/api/groups/${groupId}/messages`, {
+        const response = await apiRequestHome(`/api/groups/${groupId}/messages`, {
           method: "POST",
           body: JSON.stringify({ text })
         });
-        appendModalMessage(message);
+        const newMessage = response.message || response;
+        appendModalMessage(newMessage);
         input.value = "";
         const container = document.getElementById("groupChatMessagesContainer");
         container.scrollTop = container.scrollHeight;
@@ -472,14 +566,15 @@
       try {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         if (storedUser.profilePic) {
-          const picUrl = storedUser.profilePic.startsWith('http') ? storedUser.profilePic : `${API_URL}/uploads/${storedUser.profilePic}`;
-          avatarContainer.innerHTML = `<img src="${picUrl}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/default-avatar.png'"/>`;
+          const picUrl = resolveMediaUrl(storedUser.profilePic);
+          avatarContainer.innerHTML = `<img src="${escapeAttribute(picUrl)}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/default-avatar.png'"/>`;
         } else if (storedUser.username) {
           avatarContainer.innerText = storedUser.username.charAt(0).toUpperCase();
         }
       } catch (e) {}
     }
 
+    // Initialize Page
     renderCurrentPostAvatar();
     loadHomeMyGroups();
     fetchTopQuestions();
