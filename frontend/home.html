@@ -237,43 +237,81 @@
 
     <!-- RIGHT SIDEBAR -->
     <div class="lg:col-span-4 space-y-6">
-      <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 lg:sticky lg:top-24">
+      <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 lg:sticky lg:top-24 space-y-5">
         
-        <h3 class="font-bold text-slate-800 mb-3 flex items-center justify-between text-sm sm:text-base">
-          <span>Active Now</span>
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-        </h3>
-        <div id="onlineUsers" class="space-y-2.5 max-h-[160px] overflow-y-auto pr-1 text-sm"></div>
+        <!-- SEARCH & RECOMMENDED USERS SECTION -->
+        <div>
+          <h3 class="font-bold text-slate-800 mb-3 text-sm sm:text-base flex items-center justify-between">
+            <span>🔍 Find & Connect</span>
+            <button onclick="loadRecommendedUsers()" class="text-xs text-blue-600 font-semibold hover:underline">Refresh</button>
+          </h3>
 
-        <hr class="my-5 border-slate-100">
+          <!-- Search Users Input & Button -->
+          <div class="flex gap-2 mb-3">
+            <input id="userSearchInput" type="text" placeholder="Search users by name..." class="flex-1 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs outline-none focus:border-blue-500 transition text-slate-800" onkeydown="if(event.key==='Enter') searchUsers()">
+            <button onclick="searchUsers()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm shrink-0">
+              Search
+            </button>
+          </div>
 
-        <h3 class="font-bold text-slate-800 mb-3 text-sm sm:text-base">💬 Quick Chat</h3>
-        <div class="bg-slate-50 rounded-2xl p-2.5 mb-2.5 border border-slate-100 shadow-inner">
-          <input id="receiverId" placeholder="Select an active user..." class="w-full bg-transparent text-xs text-slate-600 font-bold outline-none border-none placeholder-slate-400" readonly>
+          <!-- Search Results Container -->
+          <div id="searchResults" class="hidden mb-4 bg-slate-50 border border-slate-200 rounded-2xl p-2 space-y-2 max-h-48 overflow-y-auto text-xs"></div>
+
+          <!-- Recommended Users Box -->
+          <div class="mt-3">
+            <h4 class="font-bold text-slate-500 text-[11px] uppercase tracking-wider mb-2">Recommended Users</h4>
+            <div id="recommendedUsers" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+              <p class="text-xs text-slate-400">Loading recommendations...</p>
+            </div>
+          </div>
         </div>
-        
-        <div id="messages" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-100 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
-        
-        <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-blue-400 transition shadow-sm">
-          <input id="message" placeholder="Say hi..." class="flex-1 px-2.5 py-1.5 text-xs sm:text-sm outline-none bg-transparent">
-          <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-md transition shrink-0">
-            ➤
-          </button>
+
+        <hr class="border-slate-100">
+
+        <!-- ACTIVE NOW -->
+        <div>
+          <h3 class="font-bold text-slate-800 mb-3 flex items-center justify-between text-sm sm:text-base">
+            <span>Active Now</span>
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+          </h3>
+          <div id="onlineUsers" class="space-y-2.5 max-h-[160px] overflow-y-auto pr-1 text-sm"></div>
         </div>
 
-        <hr class="my-5 border-slate-100">
+        <hr class="border-slate-100">
 
-        <h3 class="font-bold text-slate-800 mb-3 text-sm sm:text-base">🌍 Community Group Chat</h3>
-        <div id="groupMessages" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-100 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
-        
-        <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-indigo-400 transition shadow-sm">
-          <input id="groupMessage" placeholder="Message everyone..." class="flex-1 px-2.5 py-1.5 text-xs sm:text-sm outline-none bg-transparent">
-          <button onclick="sendGroupMessage()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-md transition shrink-0">
-            ➤
-          </button>
+        <!-- QUICK CHAT -->
+        <div>
+          <h3 class="font-bold text-slate-800 mb-3 text-sm sm:text-base">💬 Quick Chat</h3>
+          <div class="bg-slate-50 rounded-2xl p-2.5 mb-2.5 border border-slate-100 shadow-inner">
+            <input id="receiverId" placeholder="Select an active user..." class="w-full bg-transparent text-xs text-slate-600 font-bold outline-none border-none placeholder-slate-400" readonly>
+          </div>
+          
+          <div id="messages" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-100 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
+          
+          <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-blue-400 transition shadow-sm">
+            <input id="message" placeholder="Say hi..." class="flex-1 px-2.5 py-1.5 text-xs sm:text-sm outline-none bg-transparent">
+            <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-md transition shrink-0">
+              ➤
+            </button>
+          </div>
+        </div>
+
+        <hr class="border-slate-100">
+
+        <!-- COMMUNITY GROUP CHAT -->
+        <div>
+          <h3 class="font-bold text-slate-800 mb-3 text-sm sm:text-base">🌍 Community Group Chat</h3>
+          <div id="groupMessages" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-100 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
+          
+          <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-indigo-400 transition shadow-sm">
+            <input id="groupMessage" placeholder="Message everyone..." class="flex-1 px-2.5 py-1.5 text-xs sm:text-sm outline-none bg-transparent">
+            <button onclick="sendGroupMessage()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-md transition shrink-0">
+              ➤
+            </button>
+          </div>
         </div>
 
       </div>
@@ -383,6 +421,139 @@
       if (lightbox) {
         lightbox.classList.add("hidden");
       }
+    }
+
+    /* SEARCH USERS FUNCTIONALITY */
+    async function searchUsers() {
+      const queryInput = document.getElementById("userSearchInput");
+      const resultsContainer = document.getElementById("searchResults");
+      if (!queryInput || !resultsContainer) return;
+
+      const query = queryInput.value.trim();
+      if (!query) {
+        resultsContainer.classList.add("hidden");
+        return;
+      }
+
+      resultsContainer.classList.remove("hidden");
+      resultsContainer.innerHTML = '<p class="text-xs text-slate-400 p-2">Searching users...</p>';
+
+      try {
+        let users = [];
+        try {
+          const res = await apiRequestHome(`/api/users/search?q=${encodeURIComponent(query)}`);
+          users = res.users || (Array.isArray(res) ? res : []);
+        } catch (e) {
+          const res = await apiRequestHome(`/api/users`);
+          const allUsers = res.users || (Array.isArray(res) ? res : []);
+          users = allUsers.filter(u => 
+            (u.username && u.username.toLowerCase().includes(query.toLowerCase())) ||
+            (u.name && u.name.toLowerCase().includes(query.toLowerCase()))
+          );
+        }
+
+        if (users.length === 0) {
+          resultsContainer.innerHTML = '<p class="text-xs text-slate-400 p-2">No users found.</p>';
+          return;
+        }
+
+        const currentUserId = getCurrentUserId();
+        resultsContainer.innerHTML = "";
+
+        users.forEach(user => {
+          const uId = String(user._id || user.id || "");
+          const isMe = uId === currentUserId;
+          const isAdmin = user.role === 'admin' || user.role === 'Admin' || user.isAdmin === true;
+          const avatarUrl = resolveMediaUrl(user.profilePic || user.avatar) || 'images/vryza connect.png';
+
+          resultsContainer.innerHTML += `
+            <div class="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100 shadow-sm">
+              <div class="flex items-center gap-2 overflow-hidden">
+                <img src="${escapeAttribute(avatarUrl)}" class="w-7 h-7 rounded-full object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
+                <div class="truncate">
+                  <p class="font-bold text-xs text-slate-800 truncate">
+                    ${escapeHTML(user.username || user.name)}
+                    ${isAdmin ? '<span class="text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded ml-1 font-semibold">Admin</span>' : ''}
+                  </p>
+                </div>
+              </div>
+              ${!isMe ? `
+                <button onclick="selectUserForChat('${uId}', '${escapeAttribute(user.username || user.name)}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-2 py-1 rounded-lg text-[11px] font-semibold transition shrink-0">
+                  Chat
+                </button>
+              ` : '<span class="text-[10px] text-slate-400">You</span>'}
+            </div>
+          `;
+        });
+      } catch (err) {
+        resultsContainer.innerHTML = `<p class="text-xs text-red-400 p-2">Error: ${escapeHTML(err.message)}</p>`;
+      }
+    }
+
+    /* RECOMMENDED USERS (ADMINS STRICTLY EXCLUDED) */
+    async function loadRecommendedUsers() {
+      const container = document.getElementById("recommendedUsers");
+      if (!container) return;
+
+      container.innerHTML = '<p class="text-xs text-slate-400 p-2">Finding suggested users...</p>';
+
+      try {
+        let users = [];
+        try {
+          const res = await apiRequestHome('/api/users/recommended');
+          users = res.users || (Array.isArray(res) ? res : []);
+        } catch (e) {
+          const res = await apiRequestHome('/api/users');
+          users = res.users || (Array.isArray(res) ? res : []);
+        }
+
+        const currentUserId = getCurrentUserId();
+
+        // STRICT FILTER: Filter out current user AND ALL ADMINS
+        const recommended = users.filter(user => {
+          const uId = String(user._id || user.id || "");
+          const isMe = uId === currentUserId;
+          const isAdmin = user.role === 'admin' || user.role === 'Admin' || user.isAdmin === true;
+          return !isMe && !isAdmin;
+        });
+
+        if (recommended.length === 0) {
+          container.innerHTML = '<p class="text-xs text-slate-400 p-2">No recommended users at this time.</p>';
+          return;
+        }
+
+        container.innerHTML = "";
+        recommended.slice(0, 5).forEach(user => {
+          const uId = String(user._id || user.id || "");
+          const avatarUrl = resolveMediaUrl(user.profilePic || user.avatar) || 'images/vryza connect.png';
+
+          container.innerHTML += `
+            <div class="flex items-center justify-between p-2 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-100 transition shadow-sm">
+              <div class="flex items-center gap-2 overflow-hidden">
+                <img src="${escapeAttribute(avatarUrl)}" class="w-8 h-8 rounded-full object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
+                <div class="truncate">
+                  <p class="font-bold text-xs text-slate-800 truncate">${escapeHTML(user.username || user.name)}</p>
+                  <p class="text-[10px] text-slate-400 truncate">${user.bio ? escapeHTML(user.bio) : 'Suggested user'}</p>
+                </div>
+              </div>
+              <button onclick="selectUserForChat('${uId}', '${escapeAttribute(user.username || user.name)}')" class="bg-blue-600 text-white hover:bg-blue-700 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 shadow-sm">
+                Connect
+              </button>
+            </div>
+          `;
+        });
+      } catch (err) {
+        container.innerHTML = '<p class="text-xs text-slate-400 p-2">Unable to load recommendations.</p>';
+      }
+    }
+
+    function selectUserForChat(userId, username) {
+      const receiverInput = document.getElementById("receiverId");
+      if (receiverInput) {
+        receiverInput.value = username || userId;
+        receiverInput.dataset.userId = userId;
+      }
+      receiverInput?.scrollIntoView({ behavior: 'smooth' });
     }
 
     async function fetchTopQuestions() {
@@ -567,7 +738,7 @@
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         if (storedUser.profilePic) {
           const picUrl = resolveMediaUrl(storedUser.profilePic);
-          avatarContainer.innerHTML = `<img src="${escapeAttribute(picUrl)}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/default-avatar.png'"/>`;
+          avatarContainer.innerHTML = `<img src="${escapeAttribute(picUrl)}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/vryza connect.png'"/>`;
         } else if (storedUser.username) {
           avatarContainer.innerText = storedUser.username.charAt(0).toUpperCase();
         }
@@ -578,6 +749,7 @@
     renderCurrentPostAvatar();
     loadHomeMyGroups();
     fetchTopQuestions();
+    loadRecommendedUsers();
   </script>
 </body>
 </html>
