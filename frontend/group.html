@@ -7,30 +7,28 @@
 
     <title>Groups - Vryza Connect</title>
 
+    <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
+
     <script>
-  // Instant theme loader before render to prevent white flash
-  (function() {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      document.documentElement.style.background = "#0f172a";
-      document.documentElement.style.color = "#fff";
-    }
-  })();
-</script>
+      (function() {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "dark") {
+          document.documentElement.style.background = "#0f172a";
+          document.documentElement.style.color = "#fff";
+        }
+      })();
+    </script>
 
-    <!-- PWA Web App Meta Tags -->
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#0f172a" />
-<meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
 
-<!-- iOS Safari PWA Compatibility -->
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Vryza+" />
-<link rel="apple-touch-icon" href="images/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Vryza+" />
+    <link rel="apple-touch-icon" href="images/icon-192.png" />
 
-<!-- PWA Registration Script -->
-<script src="sw-register.js" defer></script>
+    <script src="sw-register.js" defer></script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
@@ -64,11 +62,8 @@
 
 <body class="pt-20">
 
-    <!-- NAVIGATION BAR (ICONS OVER TEXT) -->
     <nav class="bg-white/95 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
         <div class="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-1.5">
-            
-            <!-- LOGO -->
             <div class="flex items-center gap-2 bg-slate-100/80 px-2.5 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer" onclick="go('home.html')">
                 <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md shadow-blue-200">
                     <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
@@ -78,7 +73,6 @@
                 </span>
             </div>
 
-            <!-- NAV ITEMS -->
             <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
                 <button onclick="go('home.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
                     <span class="text-lg leading-none mb-0.5">🏠</span>
@@ -121,7 +115,6 @@
                 </button>
             </div>
 
-            <!-- LOGOUT -->
             <button onclick="logout()" class="text-red-500 hover:text-red-700 font-semibold flex flex-col items-center text-[11px] shrink-0 transition ml-2">
                 <span class="text-lg leading-none mb-0.5">🚪</span>
                 <span>Logout</span>
@@ -129,7 +122,6 @@
         </div>
     </nav>
 
-    <!-- HEADER -->
     <header class="bg-white shadow p-4 mb-6">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
@@ -144,11 +136,9 @@
 
     <main class="max-w-6xl mx-auto px-4 pb-12">
 
-        <!-- CREATE GROUP -->
         <section id="createGroupSection" class="hidden bg-white p-6 rounded-xl shadow mb-6 border border-slate-100">
             <h2 class="text-xl font-bold mb-4 text-slate-800">Create a Group</h2>
             
-            <!-- Group Avatar Selection -->
             <div class="mb-4">
                 <label class="block font-semibold mb-1 text-sm text-slate-700">Group Logo / Avatar</label>
                 <input id="groupAvatarInput" type="file" accept="image/*" class="w-full border p-2 rounded-lg text-slate-800 bg-white text-sm" onchange="handleGroupAvatarSelect(event)">
@@ -173,23 +163,19 @@
             </div>
         </section>
 
-        <!-- MY GROUPS -->
         <section class="mb-8">
             <h2 class="text-xl font-bold mb-4 text-slate-800">My Groups</h2>
             <div id="myGroups" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
-        <!-- PUBLIC GROUPS -->
         <section>
             <h2 class="text-xl font-bold mb-4 text-slate-800">Discover Public Groups</h2>
             <div id="publicGroups" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
-        <!-- GROUP CHAT MODAL -->
         <section id="groupChat" class="hidden fixed inset-0 bg-white z-50">
             <div class="h-full flex flex-col">
 
-                <!-- CHAT HEADER -->
                 <div class="p-4 bg-blue-600 text-white flex justify-between items-center shadow">
                     <div class="flex items-center gap-3">
                         <div id="chatGroupAvatarBox"></div>
@@ -216,16 +202,13 @@
                     </div>
                 </div>
 
-                <!-- MESSAGES -->
                 <div id="groupMessages" class="flex-1 overflow-y-auto p-4 bg-gray-100 space-y-3"></div>
 
-                <!-- RECORDING STATUS -->
                 <div id="recordingStatus" class="hidden px-4 py-2 bg-red-50 border-t border-red-100 text-red-600 text-sm font-semibold text-center">
                     <span class="recording-pulse">🔴 Recording voice note...</span>
                     <button onclick="stopRecording(true)" class="ml-3 underline hover:no-underline">Cancel</button>
                 </div>
 
-                <!-- MEDIA PREVIEW -->
                 <div id="mediaPreviewContainer" class="hidden px-4 pt-3 bg-white border-t">
                     <div class="flex items-center gap-3">
                         <div id="previewMediaBox" class="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border flex items-center justify-center"></div>
@@ -236,7 +219,6 @@
                     </div>
                 </div>
 
-                <!-- MESSAGE INPUT -->
                 <div class="p-3 sm:p-4 bg-white border-t">
                     <div class="flex gap-2 items-center">
                         <label for="groupImageInput" class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-700 w-11 h-11 flex items-center justify-center rounded-lg transition text-xl shrink-0" title="Send image">📷</label>
@@ -255,7 +237,6 @@
             </div>
         </section>
 
-        <!-- MEMBERS MODAL -->
         <div id="membersModal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
             <div class="bg-white rounded-xl max-w-md w-full p-6 max-h-[80vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4">
@@ -266,7 +247,6 @@
             </div>
         </div>
 
-        <!-- ADMIN REPORTS MODAL -->
         <div id="reportsModal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
             <div class="bg-white rounded-xl max-w-lg w-full p-6 max-h-[80vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4">
@@ -386,7 +366,13 @@ async function createGroup() {
     try {
         const response = await apiRequest("/api/groups", {
             method: "POST",
-            body: JSON.stringify({ name, description, privacy, avatar: selectedGroupAvatarData })
+            body: JSON.stringify({ 
+                name, 
+                description, 
+                privacy, 
+                image: selectedGroupAvatarData,
+                avatar: selectedGroupAvatarData 
+            })
         });
         alert("Group created!");
         hideCreateGroup();
@@ -474,7 +460,7 @@ function groupCard(group, isMember) {
     const ownerId = String(creator?._id || creator?.id || creator || "");
     const isOwner = currentUserId && ownerId === currentUserId;
 
-    const avatarUrl = resolveMediaUrl(group.avatar || group.icon || group.logo);
+    const avatarUrl = resolveMediaUrl(group.image || group.avatar || group.icon || group.logo);
 
     const logoHtml = avatarUrl
         ? `<img src="${escapeAttribute(avatarUrl)}" class="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0">`
@@ -530,7 +516,7 @@ async function openGroupById(groupId) {
     document.getElementById("chatGroupName").textContent = group.name;
     document.getElementById("chatGroupMembers").textContent = `${group.members ? group.members.length : 0} members`;
 
-    const avatarUrl = resolveMediaUrl(group.avatar || group.icon || group.logo);
+    const avatarUrl = resolveMediaUrl(group.image || group.avatar || group.icon || group.logo);
     const avatarBox = document.getElementById("chatGroupAvatarBox");
     if (avatarUrl) {
         avatarBox.innerHTML = `<img src="${escapeAttribute(avatarUrl)}" class="w-10 h-10 rounded-full object-cover border-2 border-white shrink-0">`;
