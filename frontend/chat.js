@@ -113,7 +113,10 @@ const videoArea = document.getElementById("videoArea");
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 const mediaInput = document.getElementById("mediaInput");
+const attachBtn = document.getElementById("attachBtn");
 const micBtn = document.getElementById("micBtn");
+const emojiBtn = document.getElementById("emojiBtn");
+const emojiPickerContainer = document.getElementById("emojiPickerContainer");
 
 // ======================================================
 // LOAD CONVERSATIONS & SEARCH
@@ -327,7 +330,7 @@ function appendMessageToUI(msg) {
 
   const msgId = String(msg._id || msg.id || "");
   if (msgId && renderedMessageIds.has(msgId)) {
-    return; // Prevent duplicate rendering
+    return;
   }
   if (msgId) renderedMessageIds.add(msgId);
 
@@ -345,8 +348,8 @@ function appendMessageToUI(msg) {
         ${escapeHTML(String(msg.text))}
       </div>
     `;
-  } else if (msg.media) {
-    const rawMedia = String(msg.media);
+  } else if (msg.media || msg.mediaUrl) {
+    const rawMedia = String(msg.media || msg.mediaUrl);
     const mediaUrl = rawMedia.startsWith("http://") || rawMedia.startsWith("https://") || rawMedia.startsWith("data:")
       ? rawMedia
       : `${API}/uploads/${rawMedia}`;
@@ -385,6 +388,53 @@ function appendMessageToUI(msg) {
 }
 
 // ======================================================
+// EMOJI PICKER SETUP & INSERTION LOGIC
+// ======================================================
+function insertEmoji(emoji) {
+  if (!messageInput) return;
+  const start = messageInput.selectionStart || messageInput.value.length;
+  const end = messageInput.selectionEnd || messageInput.value.length;
+  const text = messageInput.value;
+
+  messageInput.value = text.substring(0, start) + emoji + text.substring(end);
+  messageInput.selectionStart = messageInput.selectionEnd = start + emoji.length;
+  messageInput.focus();
+}
+
+function initEmojiPicker() {
+  if (!emojiPickerContainer || !emojiBtn) return;
+
+  if (!emojiPickerContainer.querySelector("emoji-picker")) {
+    const picker = document.createElement("emoji-picker");
+    picker.className = "light";
+    picker.style.cssText = "width: 100%; height: 320px; border-radius: 1rem;";
+    
+    picker.addEventListener("emoji-click", (e) => {
+      if (e.detail && e.detail.unicode) {
+        insertEmoji(e.detail.unicode);
+      }
+    });
+
+    emojiPickerContainer.appendChild(picker);
+  }
+
+  emojiBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    emojiPickerContainer.classList.toggle("hidden");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (
+      emojiPickerContainer &&
+      !emojiPickerContainer.contains(e.target) &&
+      e.target !== emojiBtn
+    ) {
+      emojiPickerContainer.classList.add("hidden");
+    }
+  });
+}
+
+// ======================================================
 // SEND TEXT MESSAGES
 // ======================================================
 function sendMessage() {
@@ -404,6 +454,10 @@ function sendMessage() {
     receiverId: activeChatUserId,
     text: text
   });
+
+  if (emojiPickerContainer) {
+    emojiPickerContainer.classList.add("hidden");
+  }
 }
 
 socket.on("messageSaved", (data) => {
@@ -423,7 +477,6 @@ socket.on("messageError", (data) => {
   alert(data?.message || "Message delivery failed.");
 });
 
-// Handle incoming messages (Text, Audio, Media)
 socket.on("receiveMessage", (message) => {
   if (!message) return;
 
@@ -497,6 +550,10 @@ socket.on("userStopTyping", ({ senderId }) => {
 // ======================================================
 // MEDIA ATTACHMENTS (IMAGE & VIDEO)
 // ======================================================
+if (attachBtn && mediaInput) {
+  attachBtn.addEventListener("click", () => mediaInput.click());
+}
+
 if (mediaInput) {
   mediaInput.addEventListener("change", async (e) => {
     const file = e.target.files[0];
@@ -504,6 +561,13 @@ if (mediaInput) {
 
     if (!socket.connected) {
       alert("Chat connection is lost. Please reconnect.");
+      return;
+    }
+
+    // Warn or prevent payloads larger than 2MB over web sockets
+    if (file.size > 2 * 1024 * 1024) {
+      alert("File size exceeds 2MB limit for socket transmission.");
+      e.target.value = "";
       return;
     }
 
@@ -609,7 +673,7 @@ async function toggleRecording() {
 }
 
 // ======================================================
-// WEBRTC CALL SIGNALING (FIXED)
+// WEBRTC CALL SIGNALING
 // ======================================================
 async function startVideoCall() {
   if (!activeChatUserId) {
@@ -770,6 +834,7 @@ function showContactsView() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initEmojiPicker();
   loadConversations();
   if (activeChatUserId) {
     selectChatTarget(activeChatUserId, activeChatUsername);
