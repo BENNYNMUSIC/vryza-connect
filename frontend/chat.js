@@ -119,7 +119,7 @@ const emojiBtn = document.getElementById("emojiBtn");
 const emojiPickerContainer = document.getElementById("emojiPickerContainer");
 
 // ======================================================
-// LOAD CONVERSATIONS & SEARCH
+// LOAD CONVERSATIONS (SORTED BY LAST MESSAGE SENT)
 // ======================================================
 async function loadConversations() {
   if (!onlineUsersDiv) return;
@@ -138,12 +138,19 @@ async function loadConversations() {
 
     if (conversations.length === 0) {
       onlineUsersDiv.innerHTML = `
-        <div class="text-center text-slate-400 text-xs py-4 italic">
+        <div class="text-center text-slate-400 text-xs py-8 px-4 italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">
           No active conversations yet. Search users above to start chatting!
         </div>
       `;
       return;
     }
+
+    // Sort conversations descending by latest message timestamp / updatedAt
+    conversations.sort((a, b) => {
+      const timeA = new Date(a.updatedAt || a.lastMessageTime || a.createdAt || 0).getTime();
+      const timeB = new Date(b.updatedAt || b.lastMessageTime || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
 
     conversations.forEach((conv) => {
       const contact = conv.contactDetails || {};
@@ -162,21 +169,24 @@ async function loadConversations() {
       }
 
       const card = document.createElement("div");
+      const isActive = activeChatUserId === contactId;
       card.className = `
-        flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition
-        ${activeChatUserId === contactId ? "bg-blue-50 border border-blue-200" : "hover:bg-slate-50 border border-transparent"}
+        flex items-center gap-3.5 p-3 rounded-2xl cursor-pointer transition group
+        ${isActive ? "bg-blue-50/80 border border-blue-200/80 shadow-2xs" : "hover:bg-slate-50 border border-transparent"}
       `;
       card.setAttribute("data-user-id", contactId);
       card.onclick = () => selectChatTarget(contactId, username);
 
       card.innerHTML = `
         <div class="relative shrink-0">
-          <img src="${escapeAttribute(avatar)}" class="w-12 h-12 rounded-full object-cover border border-slate-200" onerror="this.onerror=null; this.src='${DEFAULT_AVATAR}';" />
-          <span class="online-dot absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isOnline ? "bg-green-500" : "bg-slate-300"}"></span>
+          <img src="${escapeAttribute(avatar)}" class="w-12 h-12 rounded-2xl object-cover border border-slate-200/80 shadow-xs group-hover:scale-105 transition" onerror="this.onerror=null; this.src='${DEFAULT_AVATAR}';" />
+          <span class="online-dot absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${isOnline ? "bg-emerald-500" : "bg-slate-300"}"></span>
         </div>
         <div class="flex-1 min-w-0">
-          <h3 class="font-bold text-slate-800 text-sm truncate">${escapeHTML(username)}</h3>
-          <p class="text-slate-500 text-xs truncate mt-0.5">${escapeHTML(lastMsg)}</p>
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="font-bold text-slate-900 text-xs tracking-tight truncate">${escapeHTML(username)}</h3>
+          </div>
+          <p class="text-slate-500 text-xs truncate font-medium">${escapeHTML(lastMsg)}</p>
         </div>
       `;
       onlineUsersDiv.appendChild(card);
@@ -195,9 +205,9 @@ function updateOnlineBadgesInUI() {
     if (dot) {
       if (onlineUserIdsSet.has(uid)) {
         dot.classList.remove("bg-slate-300");
-        dot.classList.add("bg-green-500");
+        dot.classList.add("bg-emerald-500");
       } else {
-        dot.classList.remove("bg-green-500");
+        dot.classList.remove("bg-emerald-500");
         dot.classList.add("bg-slate-300");
       }
     }
@@ -222,7 +232,7 @@ if (searchUserInput) {
 
       onlineUsersDiv.innerHTML = "";
       if (!Array.isArray(users) || users.length === 0) {
-        onlineUsersDiv.innerHTML = `<div class="text-center text-slate-400 text-xs py-4">No users found matching "${escapeHTML(query)}"</div>`;
+        onlineUsersDiv.innerHTML = `<div class="text-center text-slate-400 text-xs py-8 px-4 italic">No users found matching "${escapeHTML(query)}"</div>`;
         return;
       }
 
@@ -234,16 +244,16 @@ if (searchUserInput) {
         const isOnline = onlineUserIdsSet.has(uId);
         const card = document.createElement("div");
 
-        card.className = "flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-slate-50 border border-transparent transition";
+        card.className = "flex items-center gap-3.5 p-3 rounded-2xl cursor-pointer hover:bg-slate-50 border border-transparent transition group";
         card.onclick = () => selectChatTarget(uId, user.username);
         card.innerHTML = `
           <div class="relative shrink-0">
-            <img src="${escapeAttribute(avatar)}" class="w-12 h-12 rounded-full object-cover border border-slate-200" onerror="this.onerror=null; this.src='${DEFAULT_AVATAR}';" />
-            <span class="w-3 h-3 rounded-full border-2 border-white absolute bottom-0 right-0 ${isOnline ? "bg-green-500" : "bg-slate-300"}"></span>
+            <img src="${escapeAttribute(avatar)}" class="w-12 h-12 rounded-2xl object-cover border border-slate-200/80 shadow-xs group-hover:scale-105 transition" onerror="this.onerror=null; this.src='${DEFAULT_AVATAR}';" />
+            <span class="w-3.5 h-3.5 rounded-full border-2 border-white absolute -bottom-0.5 -right-0.5 ${isOnline ? "bg-emerald-500" : "bg-slate-300"}"></span>
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="font-bold text-slate-800 text-sm truncate">@${escapeHTML(user.username || "User")}</h3>
-            <p class="text-blue-600 text-xs font-semibold mt-0.5">Click to chat</p>
+            <h3 class="font-bold text-slate-900 text-xs tracking-tight truncate">@${escapeHTML(user.username || "User")}</h3>
+            <p class="text-blue-600 text-[11px] font-semibold mt-0.5">Click to chat</p>
           </div>
         `;
         onlineUsersDiv.appendChild(card);
@@ -311,7 +321,7 @@ async function loadChatHistory(userId) {
 
     const msgs = data.messages || [];
     if (msgs.length === 0) {
-      messagesDiv.innerHTML = `<div class="text-center text-slate-400 text-xs my-6 italic">No messages yet. Say hello to @${escapeHTML(activeChatUsername)}!</div>`;
+      messagesDiv.innerHTML = `<div class="text-center text-slate-400 text-xs my-8 italic bg-white/60 p-4 rounded-2xl border border-dashed border-slate-200 max-w-sm mx-auto">No messages yet. Say hello to @${escapeHTML(activeChatUsername)}!</div>`;
       return;
     }
 
@@ -338,13 +348,13 @@ function appendMessageToUI(msg) {
   const isSelf = senderId === currentUserId;
 
   const msgDiv = document.createElement("div");
-  msgDiv.className = `flex flex-col ${isSelf ? "items-end" : "items-start"} my-2`;
+  msgDiv.className = `flex flex-col ${isSelf ? "items-end" : "items-start"} my-1.5`;
 
   let contentHTML = "";
 
   if (msg.text) {
     contentHTML = `
-      <div class="${isSelf ? "bg-blue-600 text-white" : "bg-white text-slate-800 border border-slate-200"} px-4 py-2.5 rounded-2xl max-w-[80%] text-sm shadow-sm break-words">
+      <div class="${isSelf ? "bg-blue-600 text-white rounded-2xl rounded-tr-xs shadow-xs" : "bg-white text-slate-900 border border-slate-200/80 rounded-2xl rounded-tl-xs shadow-xs"} px-4 py-2.5 max-w-[80%] md:max-w-[70%] text-xs md:text-sm break-words leading-relaxed font-normal">
         ${escapeHTML(String(msg.text))}
       </div>
     `;
@@ -356,8 +366,8 @@ function appendMessageToUI(msg) {
 
     if (msg.mediaType === "audio") {
       contentHTML = `
-        <div class="${isSelf ? "bg-blue-600" : "bg-white border border-slate-200"} rounded-2xl p-2 shadow-sm">
-          <audio controls preload="metadata" class="max-w-[260px]">
+        <div class="${isSelf ? "bg-blue-600" : "bg-white border border-slate-200/80"} rounded-2xl p-2.5 shadow-xs">
+          <audio controls preload="metadata" class="max-w-[240px] h-10 accent-blue-600">
             <source src="${escapeAttribute(mediaUrl)}" type="audio/webm" />
             Your browser does not support audio playback.
           </audio>
@@ -365,14 +375,14 @@ function appendMessageToUI(msg) {
       `;
     } else if (msg.mediaType === "video") {
       contentHTML = `
-        <video controls preload="metadata" class="max-w-[240px] rounded-xl border border-slate-200 shadow-sm">
+        <video controls preload="metadata" class="max-w-[260px] rounded-xl border border-slate-200 shadow-sm">
           <source src="${escapeAttribute(mediaUrl)}" />
           Your browser does not support video playback.
         </video>
       `;
     } else {
       contentHTML = `
-        <img src="${escapeAttribute(mediaUrl)}" class="max-w-[200px] rounded-xl border border-slate-200 shadow-sm" onerror="this.style.display='none';" />
+        <img src="${escapeAttribute(mediaUrl)}" class="max-w-[220px] rounded-xl border border-slate-200 shadow-sm object-cover" onerror="this.style.display='none';" />
       `;
     }
   }
@@ -380,8 +390,8 @@ function appendMessageToUI(msg) {
   const timeStr = new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   msgDiv.innerHTML = `
-    <span class="text-[10px] text-slate-400 px-1 mb-1">${timeStr}</span>
     ${contentHTML}
+    <span class="text-[10px] text-slate-400 px-1 mt-1 font-medium">${timeStr}</span>
   `;
 
   messagesDiv.appendChild(msgDiv);
@@ -564,7 +574,6 @@ if (mediaInput) {
       return;
     }
 
-    // Warn or prevent payloads larger than 2MB over web sockets
     if (file.size > 2 * 1024 * 1024) {
       alert("File size exceeds 2MB limit for socket transmission.");
       e.target.value = "";
@@ -655,7 +664,7 @@ async function toggleRecording() {
 
       mediaRecorder.start();
       isRecording = true;
-      if (micBtn) micBtn.classList.add("bg-red-100", "text-red-500", "animate-pulse");
+      if (micBtn) micBtn.classList.add("bg-rose-50", "text-rose-600", "animate-pulse");
     } catch (err) {
       alert("Could not access microphone.");
     }
@@ -669,7 +678,7 @@ async function toggleRecording() {
   } catch (err) {}
 
   isRecording = false;
-  if (micBtn) micBtn.classList.remove("bg-red-100", "text-red-500", "animate-pulse");
+  if (micBtn) micBtn.classList.remove("bg-rose-50", "text-rose-600", "animate-pulse");
 }
 
 // ======================================================
