@@ -91,60 +91,60 @@
   </style>
 </head>
 
-<body class="bg-slate-50 pt-20 pb-12">
+<body class="bg-slate-50 pt-20 pb-12 antialiased text-slate-800">
 
   <!-- NAVIGATION BAR -->
-  <nav class="bg-white/95 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
-    <div class="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-1.5">
+  <nav class="bg-white/95 backdrop-blur-md shadow-xs fixed top-0 left-0 w-full z-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5">
       
       <!-- LOGO -->
-      <div class="flex items-center gap-2 bg-slate-100/80 px-2.5 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer" onclick="go('home.html')">
-        <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md shadow-blue-200">
+      <div class="flex items-center gap-2.5 bg-slate-100/80 px-3 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer shadow-inner" onclick="go('home.html')">
+        <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 p-1.5 rounded-xl shadow-md shadow-blue-500/20">
           <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
         </div>
-        <span class="font-black text-slate-800 text-base tracking-tight hidden md:inline">
-          Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">+</span>
+        <span class="font-black text-slate-900 text-base tracking-tight hidden md:inline">
+          Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">+</span>
         </span>
       </div>
 
       <!-- NAV ITEMS -->
-      <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
-        <button onclick="go('home.html')" class="text-blue-600 font-bold flex flex-col items-center text-[11px] shrink-0 hover:opacity-80 transition">
+      <div class="flex items-center gap-2 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
+        <button onclick="go('home.html')" class="text-blue-600 font-bold flex flex-col items-center text-[11px] shrink-0 hover:opacity-80 transition cursor-pointer">
           <span class="text-lg leading-none mb-0.5">🏠</span>
           <span>Home</span>
         </button>
-        <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+        <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
           <span class="text-lg leading-none mb-0.5">👤</span>
           <span>Profile</span>
         </button>
-        <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+        <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
           <span class="text-lg leading-none mb-0.5">💬</span>
           <span>Chat</span>
         </button>
-        <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+        <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
           <span class="text-lg leading-none mb-0.5">👥</span>
           <span>Friends</span>
         </button>
-        <button onclick="go('group.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+        <button onclick="go('group.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
           <span class="text-lg leading-none mb-0.5">🌍</span>
           <span>Groups</span>
         </button>
-        <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+        <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
           <span class="text-lg leading-none mb-0.5">🔔</span>
           <span>Alerts</span>
         </button>
-        <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+        <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
           <span class="text-lg leading-none mb-0.5">🔴</span>
           <span>LIVE</span>
         </button>
-        <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition">
+        <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
           <span class="text-lg leading-none mb-0.5">⚙️</span>
           <span>Settings</span>
         </button>
       </div>
 
       <!-- LOGOUT BUTTON -->
-      <button onclick="logout()" class="text-red-500 hover:text-red-700 font-semibold flex flex-col items-center text-[11px] shrink-0 transition ml-2">
+      <button onclick="logout()" class="text-rose-500 hover:text-rose-700 font-semibold flex flex-col items-center text-[11px] shrink-0 transition ml-2 cursor-pointer">
         <span class="text-lg leading-none mb-0.5">🚪</span>
         <span>Logout</span>
       </button>
@@ -152,48 +152,48 @@
     </div>
   </nav>
 
-  <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-6 mt-4">
+  <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-6 mt-6">
 
     <!-- MAIN FEED COLUMN -->
     <div class="lg:col-span-8 space-y-6">
 
       <!-- CREATE POST BOX WITH THEME CONTROLS -->
-      <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200">
-        <div class="flex items-center justify-between mb-3">
+      <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-slate-200">
+        <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
-            <div id="createPostUserAvatar" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-inner text-sm overflow-hidden">
+            <div id="createPostUserAvatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-100 to-indigo-50 text-blue-600 font-bold flex items-center justify-center border border-blue-200 shadow-inner text-sm overflow-hidden">
               You
             </div>
-            <h2 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">Share an update</h2>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">Share an update</h2>
           </div>
         </div>
 
         <!-- POST THEME COLOR SELECTOR BAR -->
-        <div class="flex flex-wrap items-center gap-2 mb-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 text-xs">
-          <span class="font-bold text-slate-600 mr-1">Post Style:</span>
+        <div class="flex flex-wrap items-center gap-2 mb-3 bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs">
+          <span class="font-bold text-slate-700 mr-1">Post Style:</span>
           
-          <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-xl border border-slate-200 font-semibold text-slate-700 shadow-sm">
+          <label class="flex items-center gap-1.5 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-slate-200 font-semibold text-slate-700 shadow-2xs">
             <span>Text Color</span>
             <input type="color" id="postTextColor" value="#1e293b" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" onchange="updatePostPreviewTheme()">
           </label>
 
-          <label class="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-xl border border-slate-200 font-semibold text-slate-700 shadow-sm">
+          <label class="flex items-center gap-1.5 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-slate-200 font-semibold text-slate-700 shadow-2xs">
             <span>Background</span>
             <input type="color" id="postBgColor" value="#ffffff" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent" onchange="updatePostPreviewTheme()">
           </label>
 
           <!-- PRESETS -->
           <div class="flex items-center gap-1.5 ml-auto">
-            <button type="button" onclick="applyPostPreset('#ffffff', '#1e293b')" class="w-5 h-5 rounded-full border border-slate-300 bg-white shadow-sm" title="White Light"></button>
-            <button type="button" onclick="applyPostPreset('#0f172a', '#ffffff')" class="w-5 h-5 rounded-full border border-slate-600 bg-slate-900 shadow-sm" title="Dark Mode"></button>
-            <button type="button" onclick="applyPostPreset('#1d4ed8', '#ffffff')" class="w-5 h-5 rounded-full border border-blue-600 bg-blue-700 shadow-sm" title="Vryza Blue"></button>
-            <button type="button" onclick="applyPostPreset('#be123c', '#ffffff')" class="w-5 h-5 rounded-full border border-rose-600 bg-rose-700 shadow-sm" title="Crimson"></button>
-            <button type="button" onclick="applyPostPreset('#15803d', '#ffffff')" class="w-5 h-5 rounded-full border border-emerald-600 bg-emerald-700 shadow-sm" title="Emerald"></button>
+            <button type="button" onclick="applyPostPreset('#ffffff', '#1e293b')" class="w-5 h-5 rounded-full border border-slate-300 bg-white shadow-2xs cursor-pointer" title="White Light"></button>
+            <button type="button" onclick="applyPostPreset('#0f172a', '#ffffff')" class="w-5 h-5 rounded-full border border-slate-600 bg-slate-900 shadow-2xs cursor-pointer" title="Dark Mode"></button>
+            <button type="button" onclick="applyPostPreset('#1d4ed8', '#ffffff')" class="w-5 h-5 rounded-full border border-blue-600 bg-blue-700 shadow-2xs cursor-pointer" title="Vryza Blue"></button>
+            <button type="button" onclick="applyPostPreset('#be123c', '#ffffff')" class="w-5 h-5 rounded-full border border-rose-600 bg-rose-700 shadow-2xs cursor-pointer" title="Crimson"></button>
+            <button type="button" onclick="applyPostPreset('#15803d', '#ffffff')" class="w-5 h-5 rounded-full border border-emerald-600 bg-emerald-700 shadow-2xs cursor-pointer" title="Emerald"></button>
           </div>
         </div>
 
         <!-- MEDIA FILE INPUT -->
-        <div class="relative group border-2 border-dashed border-slate-200 rounded-2xl p-3 sm:p-4 transition hover:border-blue-300 mb-3 bg-slate-50/50 text-center">
+        <div class="relative group border-2 border-dashed border-slate-200 rounded-2xl p-4 transition hover:border-blue-400 mb-3 bg-slate-50/50 text-center cursor-pointer">
           <input type="file" id="imageFile" accept="image/*,video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="previewUploadFile(this)">
           <div id="uploadPlaceholderText" class="text-slate-500 text-xs sm:text-sm py-1 pointer-events-none">
             <span class="text-blue-600 font-semibold">Tap to upload media</span> (Image / Video)
@@ -202,18 +202,18 @@
         </div>
 
         <!-- TEXTAREA CAPTION WITH LIVE STYLING PREVIEW -->
-        <textarea id="caption" placeholder="What's happening?" class="w-full p-3 sm:p-4 border border-slate-200 rounded-2xl mb-3 focus:ring-2 focus:ring-blue-400 outline-none text-sm resize-none transition-all" rows="3" style="background-color: #ffffff; color: #1e293b;"></textarea>
+        <textarea id="caption" placeholder="What's happening?" class="w-full p-4 border border-slate-200 rounded-2xl mb-4 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm resize-none transition shadow-2xs" rows="3" style="background-color: #ffffff; color: #1e293b;"></textarea>
 
-        <button id="submitPostBtn" onclick="createPost()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98] text-sm sm:text-base flex items-center justify-center gap-2">
+        <button id="submitPostBtn" onclick="createPost()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-md shadow-blue-500/20 transition active:scale-[0.98] text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer">
           Post to Feed
         </button>
       </div>
 
       <!-- MY GROUPS PREVIEW -->
-      <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+      <div class="bg-white p-5 rounded-3xl shadow-xs border border-slate-200">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-slate-800 text-base">🌍 Your Groups</h3>
-          <button onclick="go('group.html')" class="text-xs text-blue-600 font-semibold hover:underline">View All</button>
+          <h3 class="font-bold text-slate-900 text-base">🌍 Your Groups</h3>
+          <button onclick="go('group.html')" class="text-xs text-blue-600 font-semibold hover:underline cursor-pointer">View All</button>
         </div>
         <div id="homeMyGroups" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <p class="text-xs text-slate-400">Loading your groups...</p>
@@ -221,8 +221,8 @@
       </div>
 
       <!-- AI / INSIGHTS DASHBOARD -->
-      <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
-        <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center justify-between">
+      <div class="bg-white p-5 rounded-3xl shadow-xs border border-slate-200">
+        <h3 class="font-bold text-slate-900 text-base mb-3 flex items-center justify-between">
           <span>📊 Support Insights</span>
           <span class="text-xs text-slate-400 font-normal">Top Questions</span>
         </h3>
@@ -237,19 +237,19 @@
 
     <!-- RIGHT SIDEBAR -->
     <div class="lg:col-span-4 space-y-6">
-      <div class="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-200 lg:sticky lg:top-24 space-y-5">
+      <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-slate-200 lg:sticky lg:top-24 space-y-5">
         
         <!-- SEARCH & RECOMMENDED USERS SECTION -->
         <div>
-          <h3 class="font-bold text-slate-800 mb-3 text-sm sm:text-base flex items-center justify-between">
+          <h3 class="font-bold text-slate-900 mb-3 text-sm sm:text-base flex items-center justify-between">
             <span>🔍 Find & Connect</span>
-            <button onclick="loadRecommendedUsers()" class="text-xs text-blue-600 font-semibold hover:underline">Refresh</button>
+            <button onclick="loadRecommendedUsers()" class="text-xs text-blue-600 font-semibold hover:underline cursor-pointer">Refresh</button>
           </h3>
 
           <!-- Search Users Input & Button -->
           <div class="flex gap-2 mb-3">
-            <input id="userSearchInput" type="text" placeholder="Search users by name..." class="flex-1 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs outline-none focus:border-blue-500 transition text-slate-800" onkeydown="if(event.key==='Enter') searchUsers()">
-            <button onclick="searchUsers()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm shrink-0">
+            <input id="userSearchInput" type="text" placeholder="Search friends by name..." class="flex-1 bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl text-xs outline-none focus:border-blue-500 transition text-slate-800 shadow-2xs" onkeydown="if(event.key==='Enter') searchUsers()">
+            <button onclick="searchUsers()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm shrink-0 cursor-pointer">
               Search
             </button>
           </div>
@@ -259,7 +259,7 @@
 
           <!-- Recommended Users Box -->
           <div class="mt-3">
-            <h4 class="font-bold text-slate-500 text-[11px] uppercase tracking-wider mb-2">Recommended Users</h4>
+            <h4 class="font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-2">Recommended Users</h4>
             <div id="recommendedUsers" class="space-y-2 max-h-48 overflow-y-auto pr-1">
               <p class="text-xs text-slate-400">Loading recommendations...</p>
             </div>
@@ -270,7 +270,7 @@
 
         <!-- ACTIVE NOW -->
         <div>
-          <h3 class="font-bold text-slate-800 mb-3 flex items-center justify-between text-sm sm:text-base">
+          <h3 class="font-bold text-slate-900 mb-3 flex items-center justify-between text-sm sm:text-base">
             <span>Active Now</span>
             <span class="relative flex h-2 w-2">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -284,16 +284,16 @@
 
         <!-- QUICK CHAT -->
         <div>
-          <h3 class="font-bold text-slate-800 mb-3 text-sm sm:text-base">💬 Quick Chat</h3>
-          <div class="bg-slate-50 rounded-2xl p-2.5 mb-2.5 border border-slate-100 shadow-inner">
-            <input id="receiverId" placeholder="Select an active user..." class="w-full bg-transparent text-xs text-slate-600 font-bold outline-none border-none placeholder-slate-400" readonly>
+          <h3 class="font-bold text-slate-900 mb-3 text-sm sm:text-base">💬 Quick Chat</h3>
+          <div class="bg-slate-50 rounded-2xl p-3 mb-2.5 border border-slate-200/80 shadow-inner">
+            <input id="receiverId" placeholder="Select an active user..." class="w-full bg-transparent text-xs text-slate-700 font-bold outline-none border-none placeholder-slate-400" readonly>
           </div>
           
-          <div id="messages" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-100 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
+          <div id="messages" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-200/80 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
           
-          <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-blue-400 transition shadow-sm">
-            <input id="message" placeholder="Say hi..." class="flex-1 px-2.5 py-1.5 text-xs sm:text-sm outline-none bg-transparent">
-            <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-md transition shrink-0">
+          <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-blue-500 transition shadow-2xs">
+            <input id="message" placeholder="Say hi..." class="flex-1 px-3 py-1.5 text-xs sm:text-sm outline-none bg-transparent">
+            <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-sm transition shrink-0 cursor-pointer">
               ➤
             </button>
           </div>
@@ -303,12 +303,12 @@
 
         <!-- COMMUNITY GROUP CHAT -->
         <div>
-          <h3 class="font-bold text-slate-800 mb-3 text-sm sm:text-base">🌍 Community Group Chat</h3>
-          <div id="groupMessages" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-100 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
+          <h3 class="font-bold text-slate-900 mb-3 text-sm sm:text-base">🌍 Community Group Chat</h3>
+          <div id="groupMessages" class="h-48 overflow-y-auto rounded-2xl mb-3 bg-slate-50 border border-slate-200/80 p-3 space-y-2.5 text-xs sm:text-sm flex flex-col"></div>
           
-          <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-indigo-400 transition shadow-sm">
-            <input id="groupMessage" placeholder="Message everyone..." class="flex-1 px-2.5 py-1.5 text-xs sm:text-sm outline-none bg-transparent">
-            <button onclick="sendGroupMessage()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-md transition shrink-0">
+          <div class="flex gap-2 bg-white border border-slate-200 p-1.5 rounded-2xl focus-within:border-indigo-500 transition shadow-2xs">
+            <input id="groupMessage" placeholder="Message everyone..." class="flex-1 px-3 py-1.5 text-xs sm:text-sm outline-none bg-transparent">
+            <button onclick="sendGroupMessage()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-sm transition shrink-0 cursor-pointer">
               ➤
             </button>
           </div>
@@ -327,26 +327,26 @@
           <h2 id="chatGroupName" class="font-bold text-lg sm:text-xl"></h2>
           <p id="chatGroupMembers" class="text-xs sm:text-sm opacity-90"></p>
         </div>
-        <button onclick="closeGroupChat()" class="text-2xl font-bold px-3 py-1 hover:bg-blue-700 rounded-xl transition">✕</button>
+        <button onclick="closeGroupChat()" class="text-2xl font-bold px-3 py-1 hover:bg-blue-700 rounded-xl transition cursor-pointer">✕</button>
       </div>
 
       <div id="groupChatMessagesContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 space-y-3"></div>
 
-      <div class="p-3 sm:p-4 bg-white border-t border-slate-200 flex gap-2 max-w-4xl mx-auto w-full">
+      <div class="p-4 bg-white border-t border-slate-200 flex gap-3 max-w-4xl mx-auto w-full">
         <input id="modalMessageInput" type="text" placeholder="Type a message..." class="flex-1 border border-slate-200 p-3 rounded-xl outline-none focus:border-blue-500 text-sm transition text-slate-800 bg-white" onkeydown="handleModalMessageKey(event)">
-        <button onclick="sendModalGroupMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-6 rounded-xl font-semibold text-sm shadow-md transition">Send</button>
+        <button onclick="sendModalGroupMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-xl font-semibold text-sm shadow-sm transition cursor-pointer">Send</button>
       </div>
     </div>
   </section>
 
   <!-- FULL IMAGE LIGHTBOX MODAL -->
   <div id="imageLightbox" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer" onclick="closeFullImage()">
-    <button onclick="closeFullImage()" class="absolute top-4 right-4 text-white text-2xl font-bold bg-white/20 hover:bg-white/40 w-10 h-10 rounded-full flex items-center justify-center transition">&times;</button>
+    <button onclick="closeFullImage()" class="absolute top-4 right-4 text-white text-2xl font-bold bg-white/20 hover:bg-white/40 w-10 h-10 rounded-full flex items-center justify-center transition cursor-pointer">&times;</button>
     <img id="lightboxImage" src="" class="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" onclick="event.stopPropagation()">
   </div>
 
   <!-- SCRIPTS -->
-  <script src="script_3.js"></script>
+  <script src="script.js"></script>
 
   <script>
     const API_URL = "https://vryza-connect-backend-1.onrender.com";
@@ -467,18 +467,18 @@
           const avatarUrl = resolveMediaUrl(user.profilePic || user.avatar) || 'images/vryza connect.png';
 
           resultsContainer.innerHTML += `
-            <div class="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100 shadow-sm">
+            <div class="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100 shadow-2xs">
               <div class="flex items-center gap-2 overflow-hidden">
                 <img src="${escapeAttribute(avatarUrl)}" class="w-7 h-7 rounded-full object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
                 <div class="truncate">
-                  <p class="font-bold text-xs text-slate-800 truncate">
+                  <p class="font-bold text-xs text-slate-900 truncate">
                     ${escapeHTML(user.username || user.name)}
-                    ${isAdmin ? '<span class="text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded ml-1 font-semibold">Admin</span>' : ''}
+                    ${isAdmin ? '<span class="text-[9px] bg-rose-100 text-rose-600 px-1 py-0.5 rounded ml-1 font-semibold">Admin</span>' : ''}
                   </p>
                 </div>
               </div>
               ${!isMe ? `
-                <button onclick="selectUserForChat('${uId}', '${escapeAttribute(user.username || user.name)}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-2 py-1 rounded-lg text-[11px] font-semibold transition shrink-0">
+                <button onclick="selectUserForChat('${uId}', '${escapeAttribute(user.username || user.name)}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-2.5 py-1 rounded-lg text-[11px] font-semibold transition shrink-0 cursor-pointer">
                   Chat
                 </button>
               ` : '<span class="text-[10px] text-slate-400">You</span>'}
@@ -486,7 +486,7 @@
           `;
         });
       } catch (err) {
-        resultsContainer.innerHTML = `<p class="text-xs text-red-400 p-2">Error: ${escapeHTML(err.message)}</p>`;
+        resultsContainer.innerHTML = `<p class="text-xs text-rose-400 p-2">Error: ${escapeHTML(err.message)}</p>`;
       }
     }
 
@@ -528,15 +528,15 @@
           const avatarUrl = resolveMediaUrl(user.profilePic || user.avatar) || 'images/vryza connect.png';
 
           container.innerHTML += `
-            <div class="flex items-center justify-between p-2 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-100 transition shadow-sm">
-              <div class="flex items-center gap-2 overflow-hidden">
+            <div class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 transition shadow-2xs">
+              <div class="flex items-center gap-2.5 overflow-hidden">
                 <img src="${escapeAttribute(avatarUrl)}" class="w-8 h-8 rounded-full object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
                 <div class="truncate">
-                  <p class="font-bold text-xs text-slate-800 truncate">${escapeHTML(user.username || user.name)}</p>
+                  <p class="font-bold text-xs text-slate-900 truncate">${escapeHTML(user.username || user.name)}</p>
                   <p class="text-[10px] text-slate-400 truncate">${user.bio ? escapeHTML(user.bio) : 'Suggested user'}</p>
                 </div>
               </div>
-              <button onclick="selectUserForChat('${uId}', '${escapeAttribute(user.username || user.name)}')" class="bg-blue-600 text-white hover:bg-blue-700 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 shadow-sm">
+              <button onclick="selectUserForChat('${uId}', '${escapeAttribute(user.username || user.name)}')" class="bg-blue-600 text-white hover:bg-blue-700 px-3 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 shadow-sm cursor-pointer">
                 Connect
               </button>
             </div>
@@ -571,7 +571,7 @@
 
         data.topQuestions.forEach((item, index) => {
           const li = document.createElement('li');
-          li.className = "flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-100";
+          li.className = "flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100";
           li.innerHTML = `
             <strong>#${index + 1}</strong> "${escapeHTML(item._id)}" 
             <span class="ask-count bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg text-[10px] font-bold">Asked ${item.count} times</span>
@@ -606,15 +606,15 @@
           const groupImg = resolveMediaUrl(avatarPath) || 'images/vryza connect.png';
 
           container.innerHTML += `
-            <div class="bg-slate-50 border border-slate-100 p-3 rounded-2xl flex items-center justify-between gap-2 shadow-sm">
+            <div class="bg-slate-50 border border-slate-100 p-3 rounded-2xl flex items-center justify-between gap-2 shadow-2xs">
               <div class="flex items-center gap-2.5 overflow-hidden">
                 <img src="${escapeAttribute(groupImg)}" class="w-9 h-9 rounded-xl object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
                 <div class="truncate">
-                  <h4 class="font-bold text-xs text-slate-800 truncate">${escapeHTML(group.name)}</h4>
+                  <h4 class="font-bold text-xs text-slate-900 truncate">${escapeHTML(group.name)}</h4>
                   <p class="text-[10px] text-slate-500">${group.members ? group.members.length : 0} members</p>
                 </div>
               </div>
-              <button onclick="openGroupByIdHome('${gId}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0">Open</button>
+              <button onclick="openGroupByIdHome('${gId}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 cursor-pointer">Open</button>
             </div>
           `;
         });
@@ -665,7 +665,7 @@
       const div = document.createElement("div");
       div.className = `mb-3 flex ${isMine ? "justify-end" : "justify-start"}`;
       div.innerHTML = `
-        <div class="${isMine ? "bg-blue-600 text-white" : "bg-white border border-slate-200 text-slate-800"} p-3 rounded-2xl max-w-xs sm:max-w-md shadow-sm text-xs sm:text-sm">
+        <div class="${isMine ? "bg-blue-600 text-white rounded-2xl rounded-tr-xs" : "bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-xs"} p-3.5 max-w-xs sm:max-w-md shadow-2xs text-xs sm:text-sm">
           <p class="font-semibold opacity-75 mb-0.5 text-[10px]">${escapeHTML(message.sender?.username || "User")}</p>
           <p>${escapeHTML(message.text || message.message || "")}</p>
         </div>
