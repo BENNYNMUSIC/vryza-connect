@@ -23,6 +23,12 @@ function getToken() {
   return token.startsWith("Bearer ") ? token : `Bearer ${token}`;
 }
 
+function getCleanToken() {
+  const token = localStorage.getItem("token");
+  if (!token) return "";
+  return token.replace(/^Bearer\s+/i, "").trim();
+}
+
 // ================= SAFE IMAGE URL BUILDER =================
 function buildImage(src) {
   if (!src || src === "undefined" || src === "null") return DEFAULT_AVATAR;
@@ -45,6 +51,7 @@ async function viewProfile(userId) {
     const storedUser = getStoredUser();
     const myId = String(storedUser._id || storedUser.id || "");
     const isOwnProfile = currentProfileId === myId;
+    const isLoggedAdmin = storedUser.role === "admin" || storedUser.isAdmin === true;
 
     // Toggle edit sidebar visibility based on profile ownership
     const editSidebar = document.getElementById("editSidebar");
@@ -99,9 +106,30 @@ async function viewProfile(userId) {
       }
     }
 
-    // Render User Info Header
+    // Render User Info Header & Admin Badge
     const username = document.getElementById("username");
     if (username) username.innerText = user.username || "Unknown User";
+
+    const adminBadgeContainer = document.getElementById("adminBadgeContainer");
+    if (adminBadgeContainer) {
+      const isTargetAdmin = user.role === "admin" || user.isAdmin === true;
+      if (isTargetAdmin) {
+        adminBadgeContainer.innerHTML = `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 shadow-2xs">👑 ADMIN</span>`;
+      } else {
+        adminBadgeContainer.innerHTML = "";
+      }
+    }
+
+    // Configure Admin Moderation Panel if logged-in user is admin viewing someone else
+    const adminModerationCard = document.getElementById("adminModerationCard");
+    if (adminModerationCard) {
+      if (isLoggedAdmin && !isOwnProfile) {
+        adminModerationCard.classList.remove("hidden");
+        setupAdminModerationPanel(user);
+      } else {
+        adminModerationCard.classList.add("hidden");
+      }
+    }
 
     const bioText = document.getElementById("bioText");
     if (bioText) bioText.innerText = user.bio || "No status bio available.";
@@ -160,6 +188,135 @@ async function viewProfile(userId) {
 
   } catch (err) {
     console.error("❌ PROFILE LOADING ERROR:", err);
+  }
+}
+
+// ================= ADMIN MODERATION SETUP =================
+function setupAdminModerationPanel(user) {
+  const statusBadge = document.getElementById("userBanStatusBadge");
+  const banContainer = document.getElementById("banActionContainer");
+  const unbanContainer = document.getElementById("unbanActionContainer");
+  const makeAdminBtn = document.getElementById("adminMakeAdminBtn");
+
+  const isBanned = Boolean(user.isBanned);
+  const isTargetAdmin = user.role === "admin" || user.isAdmin === true;
+
+  if (statusBadge) {
+    if (isBanned) {
+      statusBadge.innerText = "🚫 Banned";
+      statusBadge.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-rose-100 text-rose-700";
+    } else {
+      statusBadge.innerText = "✓ Active Status";
+      statusBadge.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-emerald-100 text-emerald-700";
+    }
+  }
+
+  if (banContainer && unbanContainer) {
+    if (isBanned) {
+      banContainer.classList.add("hidden");
+      unbanContainer.classList.remove("hidden");
+    } else {
+      banContainer.classList.remove("hidden");
+      unbanContainer.classList.add("hidden");
+    }
+  }
+
+  if (makeAdminBtn) {
+    if (isTargetAdmin) {
+      makeAdminBtn.innerText = "✓ User is Already Administrator";
+      makeAdminBtn.disabled = true;
+      makeAdminBtn.className = "w-full bg-purple-100 text-purple-700 py-3 rounded-xl text-xs font-bold cursor-not-allowed";
+    } else {
+      makeAdminBtn.innerText = "👑 Grant Admin Permissions";
+      makeAdminBtn.disabled = false;
+      makeAdminBtn.className = "w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer";
+    }
+  }
+}
+
+async function adminBanTargetUser() {
+  if (!currentProfileId) return;
+  const input = document.getElementById("adminBanMinutesInput");
+  const minutes = Number(input?.value?.trim());
+
+  if (!minutes || minutes <= 0 || !Number.isInteger(minutes)) {
+    alert("Please enter a valid whole number of minutes greater than 0.");
+    return;
+  }
+
+  if (!confirm(`Are you sure you want to ban this user for ${minutes} minute(s)?`)) return;
+
+  try {
+    const res = await fetch(`${API}/api/admin/ban-user`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${getCleanToken()}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId: currentProfileId, durationMinutes: minutes })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || "Failed to ban user.");
+      return;
+    }
+    alert(data.message || "User successfully banned.");
+    viewProfile(currentProfileId);
+  } catch (err) {
+    console.error("❌ BAN ERROR:", err);
+    alert("Server request failed.");
+  }
+}
+
+async function adminUnbanTargetUser() {
+  if (!currentProfileId) return;
+  if (!confirm("Are you sure you want to lift this user's ban?")) return;
+
+  try {
+    const res = await fetch(`${API}/api/admin/unban-user`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${getCleanToken()}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId: currentProfileId })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || "Failed to unban user.");
+      return;
+    }
+    alert(data.message || "User ban lifted successfully.");
+    viewProfile(currentProfileId);
+  } catch (err) {
+    console.error("❌ UNBAN ERROR:", err);
+    alert("Server request failed.");
+  }
+}
+
+async function adminMakeTargetUserAdmin() {
+  if (!currentProfileId) return;
+  if (!confirm("Are you sure you want to promote this user to administrator?")) return;
+
+  try {
+    const res = await fetch(`${API}/api/admin/make-admin`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${getCleanToken()}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId: currentProfileId })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || "Failed to promote user.");
+      return;
+    }
+    alert(data.message || "User promoted to administrator.");
+    viewProfile(currentProfileId);
+  } catch (err) {
+    console.error("❌ MAKE ADMIN ERROR:", err);
+    alert("Server request failed.");
   }
 }
 
@@ -409,6 +566,9 @@ window.commentPost = commentPost;
 window.likePost = likePost;
 window.messageUser = messageUser;
 window.startCall = startCall;
+window.adminBanTargetUser = adminBanTargetUser;
+window.adminUnbanTargetUser = adminUnbanTargetUser;
+window.adminMakeTargetUserAdmin = adminMakeTargetUserAdmin;
 
 // ================= INITIALIZATION =================
 document.addEventListener("DOMContentLoaded", () => {
