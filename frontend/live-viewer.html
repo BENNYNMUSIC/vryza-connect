@@ -1,0 +1,20 @@
+<!-- Live Chat & Tip Overlay Controls -->
+<div id="monetizationPanel" class="card">
+  <h3>Send Support</h3>
+  
+  <!-- Direct Tip -->
+  <button onclick="sendTip(50)">Tip 50 Coins</button>
+  
+  <!-- Send Virtual Gift -->
+  <button onclick="sendGift('Crown', 500)">👑 Send Crown (500 Coins)</button>
+  
+  <!-- Super Chat Form -->
+  <div class="superchat-box">
+    <input type="text" id="superchatMsg" placeholder="Send a Super Chat message...">
+    <input type="number" id="superchatAmount" placeholder="Amount (min 100)" min="100">
+    <button onclick="sendSuperChat()">Send Super Chat</button>
+  </div>
+</div>
+
+<!-- Alert Overlay Area on top of the Video Player -->
+<div id="giftAnimationOverlay" style="position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none;"></div>
