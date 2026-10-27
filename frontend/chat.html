@@ -1,25 +1,4 @@
 <!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=deviceHere is the completely redesigned, production-ready `chat.html` file. 
-
-### Key Improvements Made:
-1. **Full Mobile Responsiveness**: 
-   - Uses viewports calculated via flexbox (`h-[100dvh]`) to fix mobile browser toolbar cutoff issues on iOS and Android.
-   - Restored missing mobile back functionality (tapping `← Back to Chats` smoothly toggles between contact lists and message history).
-2. **Unified Navigation & Header**:
-   - Integrated the exact top navigation bar from `home.html` including the logo icon (`images/vryza connect.png`), dark mode support, quick link buttons, and logout handlers.
-3. **No Backend Changes Required**:
-   - Retained every single element ID (`onlineUsers`, `messages`, `message`, `chatWith`, `searchUser`, `contactsAside`, `chatSection`, `emptyChat`, `typing`, `startCall`, `endCall`, `videoArea`, `localVideo`, `remoteVideo`, `mediaInput`, `attachBtn`, `micBtn`, `emojiBtn`, `emojiPickerContainer`) expected by your existing `chat.js`.
-
----
-
-### Production Code (`chat.html`)
-
-```html
-<!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
@@ -36,13 +15,13 @@
   <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
 
   <!-- Tailwind CSS CDN -->
-  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <!-- Socket.IO Client -->
-  <script src="[https://cdn.socket.io/4.7.2/socket.io.min.js](https://cdn.socket.io/4.7.2/socket.io.min.js)"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <!-- Emoji Picker Element CDN Module -->
-  <script type="module" src="[https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js](https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js)"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
   
-  <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap)" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
   <script>
     // Theme Loader & Early Helpers
@@ -139,7 +118,10 @@
           <span>Profile</span>
         </button>
         <button onclick="go('chat.html')" class="text-blue-600 font-bold flex flex-col items-center text-[11px] shrink-0 hover:opacity-80 transition cursor-pointer">
-          <span class="text-lg leading-none mb-0.5">💬</span>
+          <span class="text-lg leading-none mb-0.5 relative">
+            💬
+            <span id="chatUnreadBadge" class="hidden absolute -top-1.5 -right-3 bg-rose-600 text-white font-black text-[9px] px-1.5 py-0.2 rounded-full shadow-sm animate-pulse">0</span>
+          </span>
           <span>Chat</span>
         </button>
         <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
@@ -284,6 +266,7 @@
   </div>
 
   <!-- CHAT JAVASCRIPT LOGIC -->
+  <script src="chatBadge.js"></script>
   <script src="chat.js"></script>
 </body>
 </html>

@@ -160,6 +160,7 @@ async function loadConversations() {
       const username = contact.username || "User";
       const avatar = contact.profilePic || contact.avatar || DEFAULT_AVATAR;
       const isOnline = onlineUserIdsSet.has(contactId);
+      const unreadCount = Number(conv.unreadCount || 0);
 
       let lastMsg = conv.lastMessage || "Started a conversation";
       if (!conv.lastMessage && conv.media) {
@@ -185,6 +186,7 @@ async function loadConversations() {
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between mb-0.5">
             <h3 class="font-bold text-slate-900 text-xs tracking-tight truncate">${escapeHTML(username)}</h3>
+            ${unreadCount > 0 ? `<span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-2xs">${unreadCount}</span>` : ""}
           </div>
           <p class="text-slate-500 text-xs truncate font-medium">${escapeHTML(lastMsg)}</p>
         </div>
@@ -301,7 +303,7 @@ async function selectChatTarget(userId, username) {
   } catch (err) {}
 
   loadConversations();
-  if (typeof loadUnreadMessageCount === "function") loadUnreadMessageCount();
+  if (typeof fetchUnreadChatCount === "function") fetchUnreadChatCount();
 }
 
 async function loadChatHistory(userId) {
@@ -511,7 +513,7 @@ socket.on("receiveMessage", (message) => {
   }
 
   loadConversations();
-  if (typeof loadUnreadMessageCount === "function") loadUnreadMessageCount();
+  if (typeof fetchUnreadChatCount === "function") fetchUnreadChatCount();
 });
 
 socket.on("voiceSaved", () => {
