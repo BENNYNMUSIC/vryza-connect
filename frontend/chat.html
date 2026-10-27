@@ -1,133 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vryza Connect - Chat</title>
+  <meta name="viewport" content="width=deviceHere is the completely redesigned, production-ready `chat.html` file. 
+
+### Key Improvements Made:
+1. **Full Mobile Responsiveness**: 
+   - Uses viewports calculated via flexbox (`h-[100dvh]`) to fix mobile browser toolbar cutoff issues on iOS and Android.
+   - Restored missing mobile back functionality (tapping `← Back to Chats` smoothly toggles between contact lists and message history).
+2. **Unified Navigation & Header**:
+   - Integrated the exact top navigation bar from `home.html` including the logo icon (`images/vryza connect.png`), dark mode support, quick link buttons, and logout handlers.
+3. **No Backend Changes Required**:
+   - Retained every single element ID (`onlineUsers`, `messages`, `message`, `chatWith`, `searchUser`, `contactsAside`, `chatSection`, `emptyChat`, `typing`, `startCall`, `endCall`, `videoArea`, `localVideo`, `remoteVideo`, `mediaInput`, `attachBtn`, `micBtn`, `emojiBtn`, `emojiPickerContainer`) expected by your existing `chat.js`.
+
+---
+
+### Production Code (`chat.html`)
+
+```html
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vryza Connect | Chat</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Vryza+" />
+  <link rel="apple-touch-icon" href="images/icon-192.png" />
+  <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
+
   <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
   <!-- Socket.IO Client -->
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="[https://cdn.socket.io/4.7.2/socket.io.min.js](https://cdn.socket.io/4.7.2/socket.io.min.js)"></script>
   <!-- Emoji Picker Element CDN Module -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
+  <script type="module" src="[https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js](https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js)"></script>
+  
+  <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap)" rel="stylesheet">
+
+  <script>
+    // Theme Loader & Early Helpers
+    (function() {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    })();
+
+    function go(page) { window.location.href = page; }
+    function logout() {
+      localStorage.clear();
+      window.location.href = "auth.html";
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Dark Mode Overrides */
+    html.dark body {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+    }
+    html.dark .bg-white {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    html.dark .bg-slate-50 {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    html.dark .text-slate-900, html.dark .text-slate-800, html.dark .text-slate-700 {
+      color: #f1f5f9 !important;
+    }
+    html.dark .border-slate-200, html.dark .border-slate-100 {
+      border-color: #334155 !important;
+    }
+    html.dark nav {
+      background-color: rgba(15, 23, 42, 0.95) !important;
+      border-color: #334155 !important;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 h-screen flex flex-col font-sans overflow-hidden antialiased text-slate-800">
 
-  <!-- Header -->
-  <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3.5 flex items-center justify-between shrink-0 z-20 shadow-xs">
-    <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold shadow-sm shadow-blue-500/30">
-        V
-      </div>
-      <div>
-        <h1 class="text-base font-bold text-slate-900 tracking-tight">Vryza Connect</h1>
-        <p class="text-[11px] text-slate-400 font-medium leading-none">Secure Real-time Messaging</p>
-      </div>
-    </div>
-    <div class="flex items-center gap-2">
-      <button id="startCall" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer">
-        <span>🎥</span> Start Call
-      </button>
-      <button id="endCall" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition shadow-sm shadow-rose-600/20 hidden flex items-center gap-1.5 cursor-pointer">
-        <span>🛑</span> End Call
-      </button>
-    </div>
-  </header>
+<body class="bg-slate-50 h-[100dvh] flex flex-col antialiased text-slate-800 overflow-hidden">
 
-  <!-- WebRTC Video Call Area -->
-  <div id="videoArea" class="hidden relative bg-slate-950 w-full h-72 shrink-0 p-3 gap-3 flex border-b border-slate-800 shadow-inner">
-    <div class="relative w-1/2 h-full rounded-2xl overflow-hidden border border-slate-800 bg-black">
-      <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover"></video>
-      <span class="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-white text-[11px] px-2.5 py-1 rounded-lg font-medium">Remote Participant</span>
-    </div>
-    <div class="relative w-1/2 h-full rounded-2xl overflow-hidden border border-slate-800 bg-black">
-      <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
-      <span class="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-white text-[11px] px-2.5 py-1 rounded-lg font-medium">You</span>
-    </div>
-  </div>
-
-  <!-- Main Grid Layout -->
-  <div class="flex-1 flex overflow-hidden">
-
-    <!-- Contacts Sidebar -->
-    <aside id="contactsAside" class="w-full md:w-88 bg-white border-r border-slate-200 flex flex-col shrink-0">
-      <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-        <div class="relative">
-          <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">🔍</span>
-          <input id="searchUser" type="text" placeholder="Search conversations or users..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition shadow-2xs" />
+  <!-- TOP NAVIGATION BAR (Matching home.html) -->
+  <nav class="bg-white/95 backdrop-blur-md shadow-xs fixed top-0 left-0 w-full z-50 border-b border-slate-200 shrink-0">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5">
+      
+      <!-- LOGO -->
+      <div class="flex items-center gap-2.5 bg-slate-100/80 px-3 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer shadow-inner" onclick="go('home.html')">
+        <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 p-1.5 rounded-xl shadow-md shadow-blue-500/20">
+          <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
         </div>
-      </div>
-      <div id="onlineUsers" class="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin">
-        <!-- Dynamically Populated Conversations -->
-      </div>
-    </aside>
-
-    <!-- Chat Area -->
-    <main id="chatSection" class="hidden md:flex flex-1 flex-col bg-slate-100/60 relative">
-
-      <!-- Empty State -->
-      <div id="emptyChat" class="flex-1 flex flex-col items-center justify-center text-slate-400 text-sm p-6 text-center">
-        <div class="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-2xl mb-3">💬</div>
-        <p class="font-semibold text-slate-700">No chat selected</p>
-        <p class="text-xs text-slate-400 mt-1 max-w-xs">Select a conversation from the sidebar or search for a user to start messaging.</p>
+        <span class="font-black text-slate-900 text-base tracking-tight hidden md:inline">
+          Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">+</span>
+        </span>
       </div>
 
-      <!-- Active Chat Window -->
-      <div class="flex-1 flex flex-col h-full min-h-0">
+      <!-- NAV ITEMS -->
+      <div class="flex items-center gap-2 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
+        <button onclick="go('home.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">🏠</span>
+          <span>Home</span>
+        </button>
+        <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">👤</span>
+          <span>Profile</span>
+        </button>
+        <button onclick="go('chat.html')" class="text-blue-600 font-bold flex flex-col items-center text-[11px] shrink-0 hover:opacity-80 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">💬</span>
+          <span>Chat</span>
+        </button>
+        <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">👥</span>
+          <span>Friends</span>
+        </button>
+        <button onclick="go('group.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">🌍</span>
+          <span>Groups</span>
+        </button>
+        <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">🔔</span>
+          <span>Alerts</span>
+        </button>
+        <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">🔴</span>
+          <span>LIVE</span>
+        </button>
+        <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">⚙️</span>
+          <span>Settings</span>
+        </button>
+      </div>
+
+      <!-- LOGOUT BUTTON -->
+      <button onclick="logout()" class="text-rose-500 hover:text-rose-700 font-semibold flex flex-col items-center text-[11px] shrink-0 transition ml-2 cursor-pointer">
+        <span class="text-lg leading-none mb-0.5">🚪</span>
+        <span>Logout</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- MAIN WRAPPER WITH TOP PADDING FOR NAVBAR -->
+  <div class="pt-16 flex-1 flex flex-col overflow-hidden">
+
+    <!-- WebRTC Video Call Area -->
+    <div id="videoArea" class="hidden relative bg-slate-950 w-full h-48 sm:h-64 shrink-0 p-2 sm:p-3 gap-2 sm:gap-3 flex border-b border-slate-800 shadow-inner z-10">
+      <div class="relative w-1/2 h-full rounded-2xl overflow-hidden border border-slate-800 bg-black">
+        <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+        <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-[11px] px-2 py-0.5 rounded-lg font-medium">Remote</span>
+      </div>
+      <div class="relative w-1/2 h-full rounded-2xl overflow-hidden border border-slate-800 bg-black">
+        <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+        <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-[11px] px-2 py-0.5 rounded-lg font-medium">You</span>
+      </div>
+    </div>
+
+    <!-- MAIN CHAT APP GRID -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+      <!-- CONTACTS SIDEBAR -->
+      <aside id="contactsAside" class="w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 flex flex-col shrink-0 h-full">
+        <div class="p-3.5 border-b border-slate-100 bg-slate-50/50">
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">🔍</span>
+            <input id="searchUser" type="text" placeholder="Search conversations..." class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition shadow-2xs text-slate-800" />
+          </div>
+        </div>
         
-        <!-- Active Chat Header -->
-        <div class="px-6 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-2xs">
-          <div class="flex items-center gap-3">
-            <div>
-              <h2 id="chatWith" class="font-bold text-slate-900 text-sm tracking-tight">Select target user</h2>
-              <span id="typing" class="text-[11px] text-blue-600 font-medium italic h-4 block"></span>
+        <div id="onlineUsers" class="flex-1 overflow-y-auto p-2.5 space-y-1 scrollbar-thin">
+          <!-- Dynamically Populated Conversations -->
+        </div>
+      </aside>
+
+      <!-- CHAT MAIN PANEL -->
+      <main id="chatSection" class="hidden md:flex flex-1 flex-col bg-slate-100/60 relative h-full min-w-0">
+
+        <!-- EMPTY CHAT STATE -->
+        <div id="emptyChat" class="flex-1 flex flex-col items-center justify-center text-slate-400 text-sm p-6 text-center">
+          <div class="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-2xl mb-3">💬</div>
+          <p class="font-bold text-slate-700">No conversation selected</p>
+          <p class="text-xs text-slate-400 mt-1 max-w-xs">Select a user from the list on the left to start messaging.</p>
+        </div>
+
+        <!-- ACTIVE CHAT INTERFACE -->
+        <div class="flex-1 flex flex-col h-full min-h-0">
+          
+          <!-- CHAT HEADER -->
+          <div class="px-4 sm:px-6 py-3 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-2xs z-10">
+            <div class="flex items-center gap-2.5 truncate mr-2">
+              <button onclick="showContactsView()" class="md:hidden text-lg p-1.5 -ml-1 text-slate-600 hover:text-blue-600 transition rounded-lg hover:bg-slate-100">
+                ⬅️
+              </button>
+              <div class="truncate">
+                <h2 id="chatWith" class="font-bold text-slate-900 text-sm tracking-tight truncate">Select target user</h2>
+                <span id="typing" class="text-[11px] text-blue-600 font-medium italic h-4 block truncate"></span>
+              </div>
+            </div>
+
+            <!-- CALL CONTROLS -->
+            <div class="flex items-center gap-2 shrink-0">
+              <button id="startCall" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer">
+                <span>🎥</span> <span class="hidden sm:inline">Call</span>
+              </button>
+              <button id="endCall" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm shadow-rose-600/20 hidden flex items-center gap-1.5 cursor-pointer">
+                <span>🛑</span> <span class="hidden sm:inline">End</span>
+              </button>
             </div>
           </div>
-          <button onclick="showContactsView()" class="md:hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg transition">
-            ← Back to Chats
-          </button>
+
+          <!-- MESSAGES CONTAINER -->
+          <div id="messages" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 scrollbar-thin">
+            <!-- Messages will render here dynamically -->
+          </div>
+
+          <!-- INPUT CONTAINER & CONTROLS -->
+          <div class="relative bg-white border-t border-slate-200 p-2 sm:p-3 flex items-center gap-1.5 sm:gap-2 shrink-0 shadow-sm z-10">
+            
+            <!-- EMOJI PICKER MODAL CONTAINER -->
+            <div id="emojiPickerContainer" class="hidden absolute bottom-16 left-2 sm:left-4 z-50 shadow-xl border border-slate-200 rounded-2xl bg-white p-1 max-w-[90vw]"></div>
+
+            <!-- EMOJI TOGGLE -->
+            <button id="emojiBtn" type="button" title="Insert Emoji" class="p-2 text-slate-500 hover:text-blue-600 transition rounded-xl hover:bg-slate-100 text-base sm:text-lg cursor-pointer shrink-0">
+              😀
+            </button>
+
+            <!-- ATTACHMENT BUTTON -->
+            <button id="attachBtn" type="button" title="Attach Media" class="p-2 text-slate-500 hover:text-blue-600 transition rounded-xl hover:bg-slate-100 text-base sm:text-lg cursor-pointer shrink-0">
+              📎
+            </button>
+            <input id="mediaInput" type="file" accept="image/*,video/*" class="hidden" />
+
+            <!-- TEXT INPUT -->
+            <input id="message" type="text" placeholder="Type a message..." class="flex-1 min-w-0 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition text-slate-800" />
+
+            <!-- VOICE NOTE RECORD BUTTON -->
+            <button id="micBtn" type="button" onclick="toggleRecording()" title="Record Voice Note" class="p-2 text-slate-500 hover:text-rose-600 transition rounded-xl hover:bg-slate-100 cursor-pointer text-base sm:text-lg shrink-0">
+              🎙️
+            </button>
+
+            <!-- SEND BUTTON -->
+            <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white w-9 sm:w-10 h-9 sm:h-10 rounded-xl transition shrink-0 flex items-center justify-center shadow-md shadow-blue-600/20 cursor-pointer">
+              <svg class="w-4 h-4 translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+
         </div>
+      </main>
 
-        <!-- Messages History Window -->
-        <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
-          <!-- Messages will render here -->
-        </div>
-
-        <!-- Chat Controls & Input Bar -->
-        <div class="relative bg-white border-t border-slate-200 p-3.5 flex items-center gap-2 shrink-0 shadow-sm">
-          
-          <!-- Emoji Picker Popover Modal -->
-          <div id="emojiPickerContainer" class="hidden absolute bottom-20 left-4 z-50 shadow-xl border border-slate-200 rounded-2xl bg-white p-1"></div>
-
-          <!-- Emoji Picker Toggle Button -->
-          <button id="emojiBtn" type="button" title="Insert Emoji" class="p-2.5 text-slate-500 hover:text-blue-600 transition rounded-xl hover:bg-slate-100 text-lg cursor-pointer">
-            😀
-          </button>
-
-          <!-- Attachment Button -->
-          <button id="attachBtn" type="button" title="Attach Media" class="p-2.5 text-slate-500 hover:text-blue-600 transition rounded-xl hover:bg-slate-100 text-lg cursor-pointer">
-            📎
-          </button>
-          <input id="mediaInput" type="file" accept="image/*,video/*" class="hidden" />
-
-          <!-- Text Input -->
-          <input id="message" type="text" placeholder="Type your message..." class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs md:text-sm outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition" />
-
-          <!-- Voice Recording Button -->
-          <button id="micBtn" type="button" onclick="toggleRecording()" title="Record Voice Note" class="p-2.5 text-slate-500 hover:text-rose-600 transition rounded-xl hover:bg-slate-100 cursor-pointer text-base">
-            🎙️
-          </button>
-
-          <!-- Send Text Message Button -->
-          <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 rounded-xl transition shrink-0 flex items-center justify-center shadow-md shadow-blue-600/20 cursor-pointer">
-            <svg class="w-4 h-4 translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-
-      </div>
-    </main>
+    </div>
   </div>
 
+  <!-- CHAT JAVASCRIPT LOGIC -->
   <script src="chat.js"></script>
 </body>
 </html>
