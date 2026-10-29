@@ -1,5 +1,5 @@
 // ================= CACHE VERSION =================
-const CACHE_NAME = "vryza-cache-v4";
+const CACHE_NAME = "vryza-cache-v5";
 const API_ORIGIN = "https://vryza-connect-backend-1.onrender.com";
 
 // ================= FILES TO CACHE =================
@@ -14,9 +14,7 @@ const urlsToCache = [
   "settings.html",
   "user.html",
   "admin.html",
-
   "style.css",
-
   "script.js",
   "admin.js",
   "chat.js",
@@ -25,10 +23,10 @@ const urlsToCache = [
   "auth.js",
   "loggin.js",
   "settings.js",
-
+  "sw-register.js",
   "images/icon-192.png",
   "images/icon-512.png",
-  "images/vryza connect.png"
+  "images/vryza-connect.png"
 ];
 
 // ================= INSTALLATION =================
@@ -105,7 +103,7 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => {
           if (event.request.destination === "document") {
-            return caches.match("home.html") || caches.match("./");
+            return caches.match("home.html") || caches.match("./") || caches.match("index.html");
           }
         });
     })

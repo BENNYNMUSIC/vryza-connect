@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Vryza Connect | Home & Dashboard</title>
 
+  <!-- PWA & Mobile Configuration -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0f172a" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -14,8 +15,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Vryza+" />
   <link rel="apple-touch-icon" href="images/icon-192.png" />
-
-  <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
+  <link rel="shortcut icon" href="images/vryza-connect.png" type="image/x-icon" />
 
   <script>
     // Early Navigation & Theme Loader
@@ -100,7 +100,7 @@
       <!-- LOGO -->
       <div class="flex items-center gap-2.5 bg-slate-100/80 px-3 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer shadow-inner" onclick="go('home.html')">
         <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 p-1.5 rounded-xl shadow-md shadow-blue-500/20">
-          <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo">
+          <img src="images/vryza-connect.png" class="w-5 h-5 invert brightness-200" alt="logo" onerror="this.src='images/vryza-connect.png'">
         </div>
         <span class="font-black text-slate-900 text-base tracking-tight hidden md:inline">
           Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">+</span>
@@ -347,6 +347,7 @@
 
   <!-- SCRIPTS -->
   <script src="script.js"></script>
+  <script src="sw-register.js"></script>
 
   <script>
     const API_URL = "https://vryza-connect-backend-1.onrender.com";
@@ -464,12 +465,12 @@
           const uId = String(user._id || user.id || "");
           const isMe = uId === currentUserId;
           const isAdmin = user.role === 'admin' || user.role === 'Admin' || user.isAdmin === true;
-          const avatarUrl = resolveMediaUrl(user.profilePic || user.avatar) || 'images/vryza connect.png';
+          const avatarUrl = resolveMediaUrl(user.profilePic || user.avatar) || 'images/vryza-connect.png';
 
           resultsContainer.innerHTML += `
             <div class="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100 shadow-2xs">
               <div class="flex items-center gap-2 overflow-hidden">
-                <img src="${escapeAttribute(avatarUrl)}" class="w-7 h-7 rounded-full object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
+                <img src="${escapeAttribute(avatarUrl)}" class="w-7 h-7 rounded-full object-cover shrink-0" onerror="this.src='images/vryza-connect.png'">
                 <div class="truncate">
                   <p class="font-bold text-xs text-slate-900 truncate">
                     ${escapeHTML(user.username || user.name)}
@@ -525,12 +526,12 @@
         container.innerHTML = "";
         recommended.slice(0, 5).forEach(user => {
           const uId = String(user._id || user.id || "");
-          const avatarUrl = resolveMediaUrl(user.profilePic || user.avatar) || 'images/vryza connect.png';
+          const avatarUrl = resolveMediaUrl(user.profilePic || user.avatar) || 'images/vryza-connect.png';
 
           container.innerHTML += `
             <div class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 transition shadow-2xs">
               <div class="flex items-center gap-2.5 overflow-hidden">
-                <img src="${escapeAttribute(avatarUrl)}" class="w-8 h-8 rounded-full object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
+                <img src="${escapeAttribute(avatarUrl)}" class="w-8 h-8 rounded-full object-cover shrink-0" onerror="this.src='images/vryza-connect.png'">
                 <div class="truncate">
                   <p class="font-bold text-xs text-slate-900 truncate">${escapeHTML(user.username || user.name)}</p>
                   <p class="text-[10px] text-slate-400 truncate">${user.bio ? escapeHTML(user.bio) : 'Suggested user'}</p>
@@ -603,12 +604,12 @@
           if (gId) homeGroupsMap[gId] = group;
 
           const avatarPath = group.avatar || group.image || group.icon || group.logo;
-          const groupImg = resolveMediaUrl(avatarPath) || 'images/vryza connect.png';
+          const groupImg = resolveMediaUrl(avatarPath) || 'images/vryza-connect.png';
 
           container.innerHTML += `
             <div class="bg-slate-50 border border-slate-100 p-3 rounded-2xl flex items-center justify-between gap-2 shadow-2xs">
               <div class="flex items-center gap-2.5 overflow-hidden">
-                <img src="${escapeAttribute(groupImg)}" class="w-9 h-9 rounded-xl object-cover shrink-0" onerror="this.src='images/vryza connect.png'">
+                <img src="${escapeAttribute(groupImg)}" class="w-9 h-9 rounded-xl object-cover shrink-0" onerror="this.src='images/vryza-connect.png'">
                 <div class="truncate">
                   <h4 class="font-bold text-xs text-slate-900 truncate">${escapeHTML(group.name)}</h4>
                   <p class="text-[10px] text-slate-500">${group.members ? group.members.length : 0} members</p>
@@ -738,7 +739,7 @@
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         if (storedUser.profilePic) {
           const picUrl = resolveMediaUrl(storedUser.profilePic);
-          avatarContainer.innerHTML = `<img src="${escapeAttribute(picUrl)}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/vryza connect.png'"/>`;
+          avatarContainer.innerHTML = `<img src="${escapeAttribute(picUrl)}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/vryza-connect.png'"/>`;
         } else if (storedUser.username) {
           avatarContainer.innerText = storedUser.username.charAt(0).toUpperCase();
         }
