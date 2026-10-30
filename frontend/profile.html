@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[cite: 1]<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -100,17 +100,25 @@
           <div class="p-6 sm:p-8 pt-0">
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-10 sm:-mt-12 mb-6">
               
-              <!-- Profile Avatar Header Info -->
+              <!-- Profile Avatar Header Info (Clickable for Likes/Comments) -->
               <div class="flex items-end gap-4">
-                <div class="relative group">
-                  <img id="avatar" class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover border-4 border-white shadow-md bg-white" onerror="this.src=DEFAULT_AVATAR" />
+                <div class="relative group cursor-pointer" onclick="openProfilePicModal()" title="Click to view, like & comment profile picture">
+                  <img id="avatar" class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover border-4 border-white shadow-md bg-white transition group-hover:scale-105" onerror="this.src=DEFAULT_AVATAR" />
+                  <div class="absolute inset-0 bg-black/30 rounded-3xl opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold">
+                    💬 View
+                  </div>
                 </div>
                 <div class="bg-white/90 backdrop-blur-md pb-1">
                   <div class="flex items-center gap-2 flex-wrap">
                     <h1 id="username" class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight break-words">Loading Profile...</h1>
                     <span id="adminBadgeContainer"></span>
                   </div>
-                  <p id="bioText" class="text-slate-500 text-xs sm:text-sm mt-0.5 font-medium italic break-words"></p>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span id="relationshipStatusBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 hidden">
+                      ❤️ <span id="relationshipStatusText">Single</span>
+                    </span>
+                  </div>
+                  <p id="bioText" class="text-slate-500 text-xs sm:text-sm mt-1 font-medium italic break-words"></p>
                 </div>
               </div>
 
@@ -142,6 +150,25 @@
                 📹 Video Call
               </button>
             </div>
+          </div>
+        </div>
+
+        <!-- PHOTO GALLERY SECTION -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+              <span>🖼️</span> Photo Gallery
+            </h2>
+            <div id="galleryUploadWrapper">
+              <label class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-xl cursor-pointer font-bold text-xs transition flex items-center gap-1.5">
+                ➕ <span>Add Photo</span>
+                <input type="file" id="galleryFileInput" accept="image/*" class="hidden" onchange="uploadGalleryPhoto(event)" />
+              </label>
+            </div>
+          </div>
+
+          <div id="galleryGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            <!-- Dynamically populated photo gallery items -->
           </div>
         </div>
 
@@ -221,6 +248,21 @@
             </div>
 
             <div>
+              <label class="text-[10px] uppercase font-black text-slate-400 ml-1 tracking-wider block mb-1.5">Relationship Status</label>
+              <select id="relationshipStatus" class="w-full p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm transition h-[46px] shadow-2xs cursor-pointer">
+                <option value="">Unspecified</option>
+                <option value="Single">Single</option>
+                <option value="In a Relationship">In a Relationship</option>
+                <option value="Engaged">Engaged</option>
+                <option value="Married">Married</option>
+                <option value="It's Complicated">It's Complicated</option>
+                <option value="Separated">Separated</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Widowed">Widowed</option>
+              </select>
+            </div>
+
+            <div>
               <label class="text-[10px] uppercase font-black text-slate-400 ml-1 tracking-wider block mb-1.5">Geographical Location</label>
               <input id="location" type="text" placeholder="City, Country" class="w-full p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm transition shadow-2xs" />
             </div>
@@ -239,6 +281,42 @@
 
     </div>
   </main>
+
+  <!-- PROFILE PICTURE MODAL (Likes & Comments) -->
+  <div id="profilePicModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+      <div class="flex justify-between items-center px-5 py-3 border-b border-slate-100">
+        <h3 class="font-bold text-slate-900 text-sm">Profile Picture</h3>
+        <button onclick="closeProfilePicModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
+      </div>
+      <div class="bg-slate-900 flex items-center justify-center max-h-80 overflow-hidden">
+        <img id="modalProfilePic" class="max-h-80 object-contain w-full" />
+      </div>
+      <div class="p-5 space-y-3 flex-1 overflow-y-auto">
+        <div class="flex items-center gap-2">
+          <button id="likeProfilePicBtn" onclick="likeProfilePicture()" class="px-4 py-2 rounded-xl bg-pink-50 text-pink-600 hover:bg-pink-100 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer">
+            ❤️ <span id="profilePicLikesCount">0</span> Likes
+          </button>
+        </div>
+        <div class="border-t border-slate-100 pt-3">
+          <p class="text-xs font-bold text-slate-700 mb-2">Comments</p>
+          <div id="profilePicCommentsList" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+      <div class="p-3 border-t border-slate-100 bg-slate-50 flex gap-2">
+        <input id="profilePicCommentInput" type="text" placeholder="Add a comment..." class="flex-1 bg-white border border-slate-200 px-3 py-2 text-xs rounded-xl outline-none focus:border-blue-500" />
+        <button onclick="commentProfilePicture()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GALLERY LIGHTBOX MODAL -->
+  <div id="galleryModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="relative max-w-3xl w-full flex items-center justify-center">
+      <button onclick="closeGalleryModal()" class="absolute -top-10 right-0 text-white font-bold text-xl cursor-pointer">✕ Close</button>
+      <img id="galleryModalImg" class="max-h-[85vh] rounded-2xl object-contain shadow-2xl" />
+    </div>
+  </div>
 
   <script src="profile.js"></script>
   <script>
