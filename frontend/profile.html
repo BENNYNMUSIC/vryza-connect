@@ -1,12 +1,12 @@
-[cite: 1]<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vryza+ | Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vryza+ | Profile & Dashboard</title>
 
-  <!-- PWA Web App Meta Tags -->
+  <!-- PWA & Mobile Configuration -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0f172a" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -16,81 +16,158 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Vryza+" />
   <link rel="apple-touch-icon" href="images/icon-192.png" />
+  <link rel="shortcut icon" href="images/vryza-connect.png" type="image/x-icon" />
 
-  <!-- PWA Registration Script -->
-  <script src="sw-register.js" defer></script>
+  <!-- Early Navigation & Theme Loader -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.style.background = "#0f172a";
+        document.documentElement.style.color = "#fff";
+      }
+    })();
 
-  <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
+    function go(page) { window.location.href = page; }
+    function logout() {
+      localStorage.clear();
+      window.location.href = "auth.html";
+    }
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <script src="sw-register.js" defer></script>
 
   <style>
     body {
-      font-family: "Inter", sans-serif;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
     ::-webkit-scrollbar {
-      width: 6px;
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
     }
     ::-webkit-scrollbar-thumb {
       background: #cbd5e1;
-      border-radius: 20px;
+      border-radius: 10px;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Dark Mode Theme Overrides matching Home */
+    html.dark body {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+    }
+    html.dark .bg-white {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    html.dark .bg-slate-50 {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    html.dark .text-slate-800, html.dark .text-slate-700, html.dark .text-slate-600 {
+      color: #f1f5f9 !important;
+    }
+    html.dark .border-slate-200, html.dark .border-slate-100 {
+      border-color: #334155 !important;
+    }
+    html.dark nav {
+      background-color: rgba(15, 23, 42, 0.95) !important;
+      border-color: #334155 !important;
     }
   </style>
 </head>
 
-<body class="bg-slate-100/70 min-h-screen pt-16 sm:pt-20 antialiased text-slate-800">
+<body class="bg-slate-50 pt-20 pb-12 antialiased text-slate-800">
 
   <!-- TOP NAVIGATION BAR -->
-  <nav class="bg-white/80 backdrop-blur-md shadow-xs fixed top-0 left-0 w-full z-50 border-b border-slate-200/80">
-    <div class="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 py-3">
-
-      <!-- Logo -->
-      <div class="flex items-center gap-2.5 bg-slate-100/80 px-3 py-1.5 rounded-2xl border border-slate-200/60 shadow-inner cursor-pointer hover:bg-slate-200/60 transition" onclick="go('home.html')">
+  <nav class="bg-white/95 backdrop-blur-md shadow-xs fixed top-0 left-0 w-full z-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5">
+      
+      <!-- LOGO -->
+      <div class="flex items-center gap-2.5 bg-slate-100/80 px-3 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer shadow-inner" onclick="go('home.html')">
         <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 p-1.5 rounded-xl shadow-md shadow-blue-500/20">
-          <img src="images/vryza connect.png" class="w-5 h-5 sm:w-5.5 sm:h-5.5 invert brightness-200" alt="logo" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'white\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M13 10V3L4 14h7v7l9-11h-7z\'/></svg>'" />
+          <img src="images/vryza-connect.png" class="w-5 h-5 invert brightness-200" alt="logo" onerror="this.src='images/vryza-connect.png'">
         </div>
-        <span class="font-black text-slate-900 text-base tracking-tight">
+        <span class="font-black text-slate-900 text-base tracking-tight hidden md:inline">
           Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">+</span>
         </span>
       </div>
 
-      <!-- Navigation Links -->
-      <div class="flex items-center gap-1 sm:gap-2">
-        <button onclick="go('home.html')" class="px-3 py-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition font-semibold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer">
-          <span>🏠</span> <span class="hidden sm:inline">Home</span>
+      <!-- NAV ITEMS -->
+      <div class="flex items-center gap-2 sm:gap-6 overflow-x-auto hide-scrollbar py-1">
+        <button onclick="go('home.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">🏠</span>
+          <span>Home</span>
         </button>
-        <button onclick="go('profile.html')" class="relative px-3 py-2 rounded-xl text-blue-600 font-bold text-xs sm:text-sm flex items-center gap-1.5 bg-blue-50/80 shadow-2xs">
-          <span>👤</span> <span class="hidden sm:inline">Profile</span>
-          <div class="hidden sm:block absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-full"></div>
+        <button onclick="go('profile.html')" class="text-blue-600 font-bold flex flex-col items-center text-[11px] shrink-0 hover:opacity-80 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">👤</span>
+          <span>Profile</span>
         </button>
-        <button onclick="go('chat.html')" class="relative px-3 py-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition font-semibold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer">
-          <span>💬</span> <span class="hidden sm:inline">Chat</span>
-          <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
-            0
-          </span>
+        <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">💬</span>
+          <span>Chat</span>
+          <span id="chatUnreadBadge" class="hidden absolute -top-1 -right-2 bg-blue-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full min-w-[16px] text-center shadow-xs">0</span>
         </button>
-        <button onclick="go('settings.html')" class="px-3 py-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-slate-100 transition font-semibold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer">
-          <span>⚙️</span> <span class="hidden sm:inline">Settings</span>
+        <button onclick="go('friends.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">👥</span>
+          <span>Friends</span>
+        </button>
+        <button onclick="go('group.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">🌍</span>
+          <span>Groups</span>
+        </button>
+        <button onclick="go('notifications.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">🔔</span>
+          <span>Alerts</span>
+        </button>
+        <button onclick="go('live-studio.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">🔴</span>
+          <span>LIVE</span>
+        </button>
+        <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 font-semibold flex flex-col items-center text-[11px] shrink-0 transition cursor-pointer">
+          <span class="text-lg leading-none mb-0.5">⚙️</span>
+          <span>Settings</span>
         </button>
       </div>
+
+      <!-- LOGOUT BUTTON -->
+      <button onclick="logout()" class="text-rose-500 hover:text-rose-700 font-semibold flex flex-col items-center text-[11px] shrink-0 transition ml-2 cursor-pointer">
+        <span class="text-lg leading-none mb-0.5">🚪</span>
+        <span>Logout</span>
+      </button>
 
     </div>
   </nav>
 
-  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 mt-6">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
       <!-- MAIN PROFILE & CONTENT SECTION -->
       <section class="lg:col-span-8 order-1 lg:order-2 space-y-6">
 
-        <!-- Cover & User Header -->
-        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <!-- Cover & User Header Card -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
           
-          <div class="relative h-44 sm:h-60 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+          <div class="relative h-48 sm:h-64 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
             <img id="coverPreview" class="w-full h-full object-cover hidden" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
             <div class="absolute bottom-4 right-4 z-10" id="coverUploadBtnWrapper">
-              <label class="bg-white/20 backdrop-blur-md text-white border border-white/30 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-white/30 transition text-[11px] font-bold tracking-wide shadow-sm uppercase flex items-center gap-1.5">
+              <label class="bg-white/20 backdrop-blur-md text-white border border-white/30 px-3.5 py-2 rounded-2xl cursor-pointer hover:bg-white/30 transition text-xs font-bold shadow-sm flex items-center gap-1.5">
                 📸 <span>Swap Cover</span>
                 <input type="file" id="coverImage" accept="image/*" class="hidden" />
               </label>
@@ -98,13 +175,13 @@
           </div>
 
           <div class="p-6 sm:p-8 pt-0">
-            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-10 sm:-mt-12 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 mb-6">
               
               <!-- Profile Avatar Header Info (Clickable for Likes/Comments) -->
               <div class="flex items-end gap-4">
                 <div class="relative group cursor-pointer" onclick="openProfilePicModal()" title="Click to view, like & comment profile picture">
-                  <img id="avatar" class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover border-4 border-white shadow-md bg-white transition group-hover:scale-105" onerror="this.src=DEFAULT_AVATAR" />
-                  <div class="absolute inset-0 bg-black/30 rounded-3xl opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold">
+                  <img id="avatar" class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover border-4 border-white shadow-lg bg-white transition group-hover:scale-105" onerror="this.src='images/vryza-connect.png'" />
+                  <div class="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold backdrop-blur-2xs">
                     💬 View
                   </div>
                 </div>
@@ -114,21 +191,21 @@
                     <span id="adminBadgeContainer"></span>
                   </div>
                   <div class="flex items-center gap-2 mt-1">
-                    <span id="relationshipStatusBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 hidden">
+                    <span id="relationshipStatusBadge" class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-bold bg-pink-100 text-pink-700 hidden shadow-2xs">
                       ❤️ <span id="relationshipStatusText">Single</span>
                     </span>
                   </div>
-                  <p id="bioText" class="text-slate-500 text-xs sm:text-sm mt-1 font-medium italic break-words"></p>
+                  <p id="bioText" class="text-slate-500 text-xs sm:text-sm mt-1.5 font-medium italic break-words"></p>
                 </div>
               </div>
 
               <!-- Followers / Following Stats -->
               <div class="flex gap-3 w-full sm:w-auto">
-                <div class="flex-1 sm:flex-none bg-blue-50/80 border border-blue-100/80 px-4 py-2.5 rounded-2xl text-center min-w-[85px] shadow-2xs">
+                <div class="flex-1 sm:flex-none bg-blue-50/80 border border-blue-100 px-4 py-3 rounded-2xl text-center min-w-[90px] shadow-2xs">
                   <p class="text-[9px] uppercase tracking-widest text-blue-500 font-black mb-0.5">Followers</p>
                   <p id="followersCount" class="text-lg font-black text-blue-600">0</p>
                 </div>
-                <div class="flex-1 sm:flex-none bg-slate-50 border border-slate-200/60 px-4 py-2.5 rounded-2xl text-center min-w-[85px] shadow-2xs">
+                <div class="flex-1 sm:flex-none bg-slate-50 border border-slate-200/80 px-4 py-3 rounded-2xl text-center min-w-[90px] shadow-2xs">
                   <p class="text-[9px] uppercase tracking-widest text-slate-400 font-black mb-0.5">Following</p>
                   <p id="followingCount" class="text-lg font-black text-slate-700">0</p>
                 </div>
@@ -140,64 +217,64 @@
 
             <!-- ACTION BUTTONS: DIRECT MESSAGE, VOICE CALL, VIDEO CALL -->
             <div id="actionButtons" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <button onclick="messageUser()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold shadow-sm shadow-blue-500/20 transition active:scale-[0.99] flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer">
+              <button onclick="messageUser()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl font-bold shadow-sm shadow-blue-500/20 transition active:scale-[0.99] flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer">
                 💬 Direct Message
               </button>
-              <button onclick="startCall('audio')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-2xl font-bold shadow-sm shadow-emerald-500/20 transition active:scale-[0.99] flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer">
+              <button onclick="startCall('audio')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-2xl font-bold shadow-sm shadow-emerald-500/20 transition active:scale-[0.99] flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer">
                 📞 Voice Call
               </button>
-              <button onclick="startCall('video')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl font-bold shadow-sm shadow-indigo-500/20 transition active:scale-[0.99] flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer">
+              <button onclick="startCall('video')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-bold shadow-sm shadow-indigo-500/20 transition active:scale-[0.99] flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer">
                 📹 Video Call
               </button>
             </div>
           </div>
         </div>
 
-        <!-- PHOTO GALLERY SECTION -->
-        <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-              <span>🖼️</span> Photo Gallery
+        <!-- PHOTO GALLERY SECTION (Redesigned & Polished) -->
+        <div class="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3.5">
+            <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2.5">
+              <span class="p-1.5 bg-blue-50 text-blue-600 rounded-xl">🖼️</span> Photo Gallery
             </h2>
             <div id="galleryUploadWrapper">
-              <label class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-xl cursor-pointer font-bold text-xs transition flex items-center gap-1.5">
+              <label class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200/80 px-3.5 py-2 rounded-xl cursor-pointer font-bold text-xs transition flex items-center gap-1.5 shadow-2xs">
                 ➕ <span>Add Photo</span>
                 <input type="file" id="galleryFileInput" accept="image/*" class="hidden" onchange="uploadGalleryPhoto(event)" />
               </label>
             </div>
           </div>
 
-          <div id="galleryGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+          <div id="galleryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
             <!-- Dynamically populated photo gallery items -->
           </div>
         </div>
 
-        <!-- ADMIN MODERATION PANEL (Appears if logged-in user is admin and viewing another profile) -->
-        <div id="adminModerationCard" class="hidden bg-white p-6 rounded-3xl border border-rose-200 shadow-xs space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 class="font-black text-rose-600 text-base flex items-center gap-2">
-              <span>🛡️</span> Administrator Control Console
+        <!-- ADMIN MODERATION PANEL -->
+        <div id="adminModerationCard" class="hidden bg-white p-6 sm:p-7 rounded-3xl border border-rose-200 shadow-xs space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3.5">
+            <h3 class="font-black text-rose-600 text-base flex items-center gap-2.5">
+              <span class="p-1.5 bg-rose-50 text-rose-600 rounded-xl">🛡️</span> Administrator Control Console
             </h3>
-            <span id="userBanStatusBadge" class="text-xs px-2.5 py-1 rounded-full font-bold">Checking status...</span>
+            <span id="userBanStatusBadge" class="text-xs px-3 py-1 rounded-full font-bold shadow-2xs">Checking status...</span>
           </div>
 
           <div id="banActionContainer" class="space-y-3">
             <div class="flex flex-col sm:flex-row gap-2.5">
-              <input type="number" id="adminBanMinutesInput" min="1" placeholder="Ban duration (minutes)" class="flex-1 bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs outline-none focus:border-rose-500" />
-              <button onclick="adminBanTargetUser()" class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-3 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer">
+              <input type="number" id="adminBanMinutesInput" min="1" placeholder="Ban duration (minutes)" class="flex-1 bg-slate-50 border border-slate-200 p-3.5 rounded-2xl text-xs outline-none focus:border-rose-500 shadow-2xs" />
+              <button onclick="adminBanTargetUser()" class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-3.5 rounded-2xl text-xs font-bold transition shadow-sm cursor-pointer">
                 🚫 Ban User
               </button>
             </div>
           </div>
 
           <div id="unbanActionContainer" class="hidden">
-            <button onclick="adminUnbanTargetUser()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer">
+            <button onclick="adminUnbanTargetUser()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-2xl text-xs font-bold transition shadow-sm cursor-pointer">
               ✓ Lift User Ban (Unban)
             </button>
           </div>
 
           <div class="pt-2 border-t border-slate-100">
-            <button id="adminMakeAdminBtn" onclick="adminMakeTargetUserAdmin()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer">
+            <button id="adminMakeAdminBtn" onclick="adminMakeTargetUserAdmin()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-2xl text-xs font-bold transition shadow-sm cursor-pointer">
               👑 Grant Admin Permissions
             </button>
           </div>
@@ -205,40 +282,40 @@
 
         <!-- Feed Stream -->
         <div>
-          <h2 class="text-base sm:text-lg font-black text-slate-900 mb-3 px-1 flex items-center gap-2">
-            <span>📦</span> Broadcasted Entries
+          <h2 class="text-base sm:text-lg font-black text-slate-900 mb-3 px-1 flex items-center gap-2.5">
+            <span class="p-1.5 bg-blue-50 text-blue-600 rounded-xl">📦</span> Broadcasted Entries
           </h2>
-          <div id="postsContainer" class="space-y-4"></div>
+          <div id="postsContainer" class="space-y-5"></div>
         </div>
 
       </section>
 
       <!-- SIDEBAR EDIT FORM -->
       <aside id="editSidebar" class="lg:col-span-4 order-2 lg:order-1 space-y-6">
-        <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs lg:sticky lg:top-24">
-          <h2 class="text-base font-bold text-slate-900 mb-5 flex items-center gap-2">
-            <span>⚙️</span> Customize Profile
+        <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs lg:sticky lg:top-24 space-y-5">
+          <h2 class="text-base font-bold text-slate-900 flex items-center gap-2.5">
+            <span class="p-1.5 bg-slate-100 text-slate-700 rounded-xl">⚙️</span> Customize Profile
           </h2>
 
           <div class="space-y-4">
             <div>
               <label class="text-[10px] uppercase font-black text-slate-400 ml-1 tracking-wider block mb-1.5">Upload New Avatar</label>
-              <input type="file" id="profilePic" accept="image/*" class="w-full text-xs text-slate-500 bg-slate-50 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 rounded-2xl p-2 border border-slate-200/80 shadow-2xs cursor-pointer transition" />
+              <input type="file" id="profilePic" accept="image/*" class="w-full text-xs text-slate-500 bg-slate-50 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 rounded-2xl p-2 border border-slate-200 shadow-2xs cursor-pointer transition" />
             </div>
 
             <div>
               <label class="text-[10px] uppercase font-black text-slate-400 ml-1 tracking-wider block mb-1.5">Headline Bio</label>
-              <textarea id="bio" placeholder="Your status headline..." rows="2" class="w-full p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm resize-none transition shadow-2xs"></textarea>
+              <textarea id="bio" placeholder="Your status headline..." rows="2" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm resize-none transition shadow-2xs"></textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="text-[10px] uppercase font-black text-slate-400 ml-1 tracking-wider block mb-1.5">Age Metric</label>
-                <input id="age" type="number" placeholder="Age" class="w-full p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm transition shadow-2xs" />
+                <input id="age" type="number" placeholder="Age" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm transition shadow-2xs" />
               </div>
               <div>
                 <label class="text-[10px] uppercase font-black text-slate-400 ml-1 tracking-wider block mb-1.5">Gender</label>
-                <select id="gender" class="w-full p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm transition h-[46px] shadow-2xs cursor-pointer">
+                <select id="gender" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm transition h-[46px] shadow-2xs cursor-pointer">
                   <option value="">Unspecified</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
@@ -249,7 +326,7 @@
 
             <div>
               <label class="text-[10px] uppercase font-black text-slate-400 ml-1 tracking-wider block mb-1.5">Relationship Status</label>
-              <select id="relationshipStatus" class="w-full p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm transition h-[46px] shadow-2xs cursor-pointer">
+              <select id="relationshipStatus" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm transition h-[46px] shadow-2xs cursor-pointer">
                 <option value="">Unspecified</option>
                 <option value="Single">Single</option>
                 <option value="In a Relationship">In a Relationship</option>
@@ -264,12 +341,12 @@
 
             <div>
               <label class="text-[10px] uppercase font-black text-slate-400 ml-1 tracking-wider block mb-1.5">Geographical Location</label>
-              <input id="location" type="text" placeholder="City, Country" class="w-full p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm transition shadow-2xs" />
+              <input id="location" type="text" placeholder="City, Country" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm transition shadow-2xs" />
             </div>
 
             <div>
               <label class="text-[10px] uppercase font-black text-slate-400 ml-1 tracking-wider block mb-1.5">About Me Story</label>
-              <textarea id="about" rows="3" placeholder="Tell the community about yourself..." class="w-full p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm resize-none transition shadow-2xs"></textarea>
+              <textarea id="about" rows="3" placeholder="Tell the community about yourself..." class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 focus:bg-white text-slate-800 text-xs sm:text-sm resize-none transition shadow-2xs"></textarea>
             </div>
 
             <button id="saveBtn" onclick="updateProfile()" class="w-full bg-slate-900 hover:bg-blue-600 text-white py-3.5 rounded-2xl font-bold transition shadow-md active:scale-[0.99] mt-2 text-xs sm:text-sm cursor-pointer">
@@ -285,16 +362,16 @@
   <!-- PROFILE PICTURE MODAL (Likes & Comments) -->
   <div id="profilePicModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
-      <div class="flex justify-between items-center px-5 py-3 border-b border-slate-100">
+      <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100">
         <h3 class="font-bold text-slate-900 text-sm">Profile Picture</h3>
         <button onclick="closeProfilePicModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
       </div>
       <div class="bg-slate-900 flex items-center justify-center max-h-80 overflow-hidden">
         <img id="modalProfilePic" class="max-h-80 object-contain w-full" />
       </div>
-      <div class="p-5 space-y-3 flex-1 overflow-y-auto">
+      <div class="p-6 space-y-4 flex-1 overflow-y-auto">
         <div class="flex items-center gap-2">
-          <button id="likeProfilePicBtn" onclick="likeProfilePicture()" class="px-4 py-2 rounded-xl bg-pink-50 text-pink-600 hover:bg-pink-100 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer">
+          <button id="likeProfilePicBtn" onclick="likeProfilePicture()" class="px-4 py-2 rounded-xl bg-pink-50 text-pink-600 hover:bg-pink-100 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-2xs">
             ❤️ <span id="profilePicLikesCount">0</span> Likes
           </button>
         </div>
@@ -303,27 +380,22 @@
           <div id="profilePicCommentsList" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
         </div>
       </div>
-      <div class="p-3 border-t border-slate-100 bg-slate-50 flex gap-2">
-        <input id="profilePicCommentInput" type="text" placeholder="Add a comment..." class="flex-1 bg-white border border-slate-200 px-3 py-2 text-xs rounded-xl outline-none focus:border-blue-500" />
-        <button onclick="commentProfilePicture()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer">Send</button>
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex gap-2">
+        <input id="profilePicCommentInput" type="text" placeholder="Add a comment..." class="flex-1 bg-white border border-slate-200 px-3.5 py-2.5 text-xs rounded-xl outline-none focus:border-blue-500 shadow-2xs" />
+        <button onclick="commentProfilePicture()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer shadow-sm">Send</button>
       </div>
     </div>
   </div>
 
   <!-- GALLERY LIGHTBOX MODAL -->
-  <div id="galleryModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="relative max-w-3xl w-full flex items-center justify-center">
-      <button onclick="closeGalleryModal()" class="absolute -top-10 right-0 text-white font-bold text-xl cursor-pointer">✕ Close</button>
+  <div id="galleryModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="relative max-w-4xl w-full flex items-center justify-center">
+      <button onclick="closeGalleryModal()" class="absolute -top-12 right-0 text-white font-bold text-sm bg-white/20 hover:bg-white/40 px-4 py-2 rounded-full transition cursor-pointer">&times; Close</button>
       <img id="galleryModalImg" class="max-h-[85vh] rounded-2xl object-contain shadow-2xl" />
     </div>
   </div>
 
+  <!-- SCRIPTS -->
   <script src="profile.js"></script>
-  <script>
-    function go(page) {
-      window.location.href = page;
-    }
-  </script>
-
 </body>
 </html>
