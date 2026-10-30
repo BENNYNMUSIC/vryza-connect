@@ -26,6 +26,32 @@ if (!user || !token || !currentUserId || currentUserId === "undefined") {
   throw new Error("Authentication failed: Halting script execution.");
 }
 
+// ================= GLOBAL STATE FOR FOLLOW TRACKING =================
+let currentUserFollowingSet = new Set();
+
+async function syncCurrentUserFollowing() {
+  try {
+    const res = await fetch(`${API}/api/user/${currentUserId}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const userObj = data.user || data;
+      const followingList = userObj.following || [];
+      currentUserFollowingSet = new Set(followingList.map(item => String(typeof item === "object" ? (item._id || item.id) : item)));
+    }
+  } catch (err) {
+    console.warn("⚠️ Unable to sync currentUser handle following status:", err);
+  }
+}
+
+function isUserFollowed(targetUserId) {
+  return currentUserFollowingSet.has(String(targetUserId));
+}
+
+// Initialize following set on boot
+syncCurrentUserFollowing();
+
 // ================= MEDIA & TIME HELPERS =================
 function getMediaUrl(filePath) {
   if (!filePath) return "";
@@ -296,6 +322,8 @@ async function loadPosts() {
   if (!feedDiv) return;
 
   try {
+    await syncCurrentUserFollowing();
+
     const res = await fetch(`${API}/api/posts`, {
       headers: { "Authorization": `Bearer ${token}` }
     });
@@ -317,6 +345,8 @@ async function loadPosts() {
       const targetAuthorId = String(userData._id || userData.id || post.userId || "");
       const authorName = userData.username || "Anonymous User";
       const isOwner = targetAuthorId === currentUserId;
+
+      const isFollowing = isUserFollowed(targetAuthorId);
 
       const postBg = post.bgColor || "#ffffff";
       const postText = post.textColor || "#1e293b";
@@ -354,6 +384,10 @@ async function loadPosts() {
         ? `<img src="${getMediaUrl(profilePic)}" class="w-full h-full object-cover rounded-full" onerror="this.src='images/default-avatar.png'"/>`
         : escapeHTML(authorName.charAt(0).toUpperCase());
 
+      const followBtnClass = isFollowing
+        ? "bg-slate-200 text-slate-700 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-default opacity-80"
+        : "bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer";
+
       const div = document.createElement("div");
       div.className = "rounded-3xl border border-slate-200 overflow-hidden shadow-sm my-4 transition-all";
       div.style.backgroundColor = postBg;
@@ -374,8 +408,8 @@ async function loadPosts() {
 
             <div class="flex items-center gap-2">
               ${!isOwner ? `
-                <button onclick="followUser('${targetAuthorId}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-sm transition">
-                  Follow
+                <button onclick="followUser('${targetAuthorId}', this)" class="${followBtnClass}">
+                  ${isFollowing ? 'Following' : 'Follow'}
                 </button>
               ` : `
                 <button onclick="deletePost('${postId}')" class="bg-rose-500/10 hover:bg-rose-600 text-rose-500 hover:text-white border border-rose-500/20 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
@@ -594,11 +628,15 @@ async function deletePost(postId) {
 }
 
 // ================= SOCIAL GRAPH RELATIONSHIPS =================
-async function followUser(targetUserId) {
+async function followUser(targetUserId, btnElement = null) {
   if (!targetUserId || targetUserId === "undefined") return;
 
+  if (isUserFollowed(targetUserId)) {
+    return; // Already following
+  }
+
   try {
-    const res = await fetch(`${API}/api/user/follow/${targetUserId}`, {
+    let res = await fetch(`${API}/api/user/follow/${targetUserId}`, {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -606,11 +644,38 @@ async function followUser(targetUserId) {
       }
     });
 
+    if (!res.ok) {
+      res = await fetch(`${API}/api/users/follow/${targetUserId}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+    }
+
     const data = await res.json();
     if (res.ok) {
-      alert(data.message || "Relationship status updated successfully!");
+      currentUserFollowingSet.add(String(targetUserId));
+
+      if (btnElement) {
+        btnElement.innerText = "Following";
+        btnElement.className = btnElement.className
+          .replace("bg-blue-600", "bg-slate-200")
+          .replace("hover:bg-blue-700", "")
+          .replace("text-white", "text-slate-700") + " cursor-default opacity-80";
+        btnElement.onclick = null;
+      }
+
+      // Sync across all visible UI components
+      const targetBtns = document.querySelectorAll(`[id*="-follow-btn-${targetUserId}"]`);
+      targetBtns.forEach(btn => {
+        btn.innerText = "Following";
+        btn.className = "bg-slate-200 text-slate-700 px-3 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 cursor-default opacity-80";
+        btn.onclick = null;
+      });
     } else {
-      alert(data.message || "Unable to adjust follow tracking targets.");
+      alert(data.message || "Unable to update follow state.");
     }
   } catch (err) {
     console.error("❌ RELATIONSHIP TRANSIT FAULT:", err);
@@ -762,6 +827,8 @@ window.closeFullImage = closeFullImage;
 window.loadPosts = loadPosts;
 window.updatePostPreviewTheme = updatePostPreviewTheme;
 window.applyPostPreset = applyPostPreset;
+window.syncCurrentUserFollowing = syncCurrentUserFollowing;
+window.isUserFollowed = isUserFollowed;
 
 // Initial execution
 loadPosts();

@@ -100,7 +100,7 @@
       <!-- LOGO -->
       <div class="flex items-center gap-2.5 bg-slate-100/80 px-3 py-1.5 rounded-2xl border border-slate-200/60 shrink-0 cursor-pointer shadow-inner" onclick="go('home.html')">
         <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 p-1.5 rounded-xl shadow-md shadow-blue-500/20">
-          <img src="images/vryza-connect.png" class="w-5 h-5 invert brightness-200" alt="logo" onerror="this.src='images/vryza-connect.png'">
+          <img src="images/vryza-connect" class="w-5 h-5 invert brightness-200" alt="logo" onerror="this.src='images/vryza-connect.png'">
         </div>
         <span class="font-black text-slate-900 text-base tracking-tight hidden md:inline">
           Vryza<span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">+</span>
@@ -380,69 +380,7 @@
       options.headers = {
         "Content-Type": "application/json",
         ...(options.headers || {}),
-        Authorization: `Bearer ${cleanToken}`
-      };
-      const response = await fetch(API_URL + url, options);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Something went wrong");
-      return data;
-    }
-
-    /* THEME FUNCTIONS */
-    function updatePostPreviewTheme() {
-      const caption = document.getElementById("caption");
-      const bgInput = document.getElementById("postBgColor");
-      const textInput = document.getElementById("postTextColor");
-      if (!caption || !bgInput || !textInput) return;
-
-      caption.style.backgroundColor = bgInput.value;
-      caption.style.color = textInput.value;
-    }
-
-    function applyPostPreset(bgColor, textColor) {
-      const bgInput = document.getElementById("postBgColor");
-      const textInput = document.getElementById("postTextColor");
-      if (bgInput) bgInput.value = bgColor;
-      if (textInput) textInput.value = textColor;
-      updatePostPreviewTheme();
-    }
-
-    /* LIGHTBOX FUNCTIONS */
-    function openFullImage(src) {
-      const lightbox = document.getElementById("imageLightbox");
-      const img = document.getElementById("lightboxImage");
-      if (lightbox && img) {
-        img.src = src;
-        lightbox.classList.remove("hidden");
-      }
-    }
-
-    function closeFullImage() {
-      const lightbox = document.getElementById("imageLightbox");
-      if (lightbox) {
-        lightbox.classList.add("hidden");
-      }
-    }
-
-    /* SEARCH USERS FUNCTIONALITY */
-    async function searchUsers() {
-      const queryInput = document.getElementById("userSearchInput");
-      const resultsContainer = document.getElementById("searchResults");
-      if (!queryInput || !resultsContainer) return;
-
-      const query = queryInput.value.trim();
-      if (!query) {
-        resultsContainer.classList.add("hidden");
-        return;
-      }
-
-      resultsContainer.classList.remove("hidden");
-      resultsContainer.innerHTML = '<p class="text-xs text-slate-400 p-2">Searching users...</p>';
-
-      try {
-        let users = [];
-        try {
-          const res = await apiRequestHome(`/api/users/search?q=${encodeURIComponent(query)}`);
+        Authorization: `Bearer ${cleanToken}` }; const response = await fetch(API_URL + url, options); const data = await response.json(); if (!response.ok) throw new Error(data.message \vert{}\vert{} "Something went wrong"); return data; }  /* THEME FUNCTIONS */ function updatePostPreviewTheme() { const caption = document.getElementById("caption"); const bgInput = document.getElementById("postBgColor"); const textInput = document.getElementById("postTextColor"); if (!caption \vert{}\vert{} !bgInput \vert{}\vert{} !textInput) return;  caption.style.backgroundColor = bgInput.value; caption.style.color = textInput.value; }  function applyPostPreset(bgColor, textColor) { const bgInput = document.getElementById("postBgColor"); const textInput = document.getElementById("postTextColor"); if (bgInput) bgInput.value = bgColor; if (textInput) textInput.value = textColor; updatePostPreviewTheme(); }  /* LIGHTBOX FUNCTIONS */ function openFullImage(src) { const lightbox = document.getElementById("imageLightbox"); const img = document.getElementById("lightboxImage"); if (lightbox && img) { img.src = src; lightbox.classList.remove("hidden"); } }  function closeFullImage() { const lightbox = document.getElementById("imageLightbox"); if (lightbox) { lightbox.classList.add("hidden"); } }  /* SEARCH USERS FUNCTIONALITY */ async function searchUsers() { const queryInput = document.getElementById("userSearchInput"); const resultsContainer = document.getElementById("searchResults"); if (!queryInput \vert{}\vert{} !resultsContainer) return;  const query = queryInput.value.trim(); if (!query) { resultsContainer.classList.add("hidden"); return; }  resultsContainer.classList.remove("hidden"); resultsContainer.innerHTML = '<p class="text-xs text-slate-400 p-2">Searching users...</p>';  try { let users = []; try { const res = await apiRequestHome(`/api/users/search?q=${encodeURIComponent(query)}`);
           users = res.users || (Array.isArray(res) ? res : []);
         } catch (e) {
           const res = await apiRequestHome(`/api/users`);
@@ -461,28 +399,42 @@
         const currentUserId = getCurrentUserId();
         resultsContainer.innerHTML = "";
 
+        // Sync local set before rendering
+        if (typeof syncCurrentUserFollowing === "function") {
+          await syncCurrentUserFollowing();
+        }
+
         users.forEach(user => {
           const uId = String(user._id || user.id || "");
           const isMe = uId === currentUserId;
           const isAdmin = user.role === 'admin' || user.role === 'Admin' || user.isAdmin === true;
           const avatarUrl = resolveMediaUrl(user.profilePic || user.avatar) || 'images/vryza-connect.png';
 
+          const isFollowing = typeof isUserFollowed === "function" ? isUserFollowed(uId) : false;
+          const followBtnClass = isFollowing 
+            ? "bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition shrink-0 cursor-default opacity-80"
+            : "bg-blue-600 text-white hover:bg-blue-700 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition shrink-0 cursor-pointer shadow-xs";
+
           resultsContainer.innerHTML += `
-            <div class="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100 shadow-2xs">
-              <div class="flex items-center gap-2 overflow-hidden">
+            <div class="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100 shadow-2xs gap-2">
+              <div class="flex items-center gap-2 overflow-hidden cursor-pointer" onclick="openProfile('${uId}')">
                 <img src="${escapeAttribute(avatarUrl)}" class="w-7 h-7 rounded-full object-cover shrink-0" onerror="this.src='images/vryza-connect.png'">
                 <div class="truncate">
                   <p class="font-bold text-xs text-slate-900 truncate">
-                    ${escapeHTML(user.username || user.name)}
-                    ${isAdmin ? '<span class="text-[9px] bg-rose-100 text-rose-600 px-1 py-0.5 rounded ml-1 font-semibold">Admin</span>' : ''}
+                    ${escapeHTML(user.username \vert{}\vert{} user.name)}${isAdmin ? '<span class="text-[9px] bg-rose-100 text-rose-600 px-1 py-0.5 rounded ml-1 font-semibold">Admin</span>' : ''}
                   </p>
                 </div>
               </div>
-              ${!isMe ? `
-                <button onclick="selectUserForChat('${uId}', '${escapeAttribute(user.username || user.name)}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-2.5 py-1 rounded-lg text-[11px] font-semibold transition shrink-0 cursor-pointer">
-                  Chat
-                </button>
-              ` : '<span class="text-[10px] text-slate-400">You</span>'}
+              <div class="flex items-center gap-1.5 shrink-0">
+                ${!isMe ? `
+                  <button id="search-follow-btn-${uId}" onclick="followUser('${uId}', this)" class="${followBtnClass}">
+                    ${isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                  <button onclick="selectUserForChat('${uId}', '${escapeAttribute(user.username || user.name)}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-2.5 py-1 rounded-lg text-[11px] font-semibold transition shrink-0 cursor-pointer">
+                    Chat
+                  </button>
+                ` : '<span class="text-[10px] text-slate-400">You</span>'}
+              </div>
             </div>
           `;
         });
@@ -499,13 +451,21 @@
       container.innerHTML = '<p class="text-xs text-slate-400 p-2">Finding suggested users...</p>';
 
       try {
+        if (typeof syncCurrentUserFollowing === "function") {
+          await syncCurrentUserFollowing();
+        }
+
         let users = [];
         try {
           const res = await apiRequestHome('/api/users/recommended');
           users = res.users || (Array.isArray(res) ? res : []);
         } catch (e) {
-          const res = await apiRequestHome('/api/users');
-          users = res.users || (Array.isArray(res) ? res : []);
+          try {
+            const res = await apiRequestHome('/api/users');
+            users = res.users || (Array.isArray(res) ? res : []);
+          } catch (err2) {
+            users = [];
+          }
         }
 
         const currentUserId = getCurrentUserId();
@@ -527,18 +487,23 @@
         recommended.slice(0, 5).forEach(user => {
           const uId = String(user._id || user.id || "");
           const avatarUrl = resolveMediaUrl(user.profilePic || user.avatar) || 'images/vryza-connect.png';
+          const isFollowing = typeof isUserFollowed === "function" ? isUserFollowed(uId) : false;
+
+          const followBtnClass = isFollowing 
+            ? "bg-slate-200 text-slate-700 px-3 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 cursor-default opacity-80"
+            : "bg-blue-600 text-white hover:bg-blue-700 px-3 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 shadow-sm cursor-pointer";
 
           container.innerHTML += `
-            <div class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 transition shadow-2xs">
-              <div class="flex items-center gap-2.5 overflow-hidden">
+            <div class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 transition shadow-2xs gap-2">
+              <div class="flex items-center gap-2.5 overflow-hidden cursor-pointer" onclick="openProfile('${uId}')">
                 <img src="${escapeAttribute(avatarUrl)}" class="w-8 h-8 rounded-full object-cover shrink-0" onerror="this.src='images/vryza-connect.png'">
                 <div class="truncate">
                   <p class="font-bold text-xs text-slate-900 truncate">${escapeHTML(user.username || user.name)}</p>
                   <p class="text-[10px] text-slate-400 truncate">${user.bio ? escapeHTML(user.bio) : 'Suggested user'}</p>
                 </div>
               </div>
-              <button onclick="selectUserForChat('${uId}', '${escapeAttribute(user.username || user.name)}')" class="bg-blue-600 text-white hover:bg-blue-700 px-3 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 shadow-sm cursor-pointer">
-                Connect
+              <button id="rec-follow-btn-${uId}" onclick="followUser('${uId}', this)" class="${followBtnClass}">
+                ${isFollowing ? 'Following' : 'Follow'}
               </button>
             </div>
           `;
@@ -644,27 +609,7 @@
 
     async function loadModalGroupMessages(groupId) {
       try {
-        const response = await apiRequestHome(`/api/groups/${groupId}/messages`);
-        const messages = response.messages || (Array.isArray(response) ? response : []);
-        const container = document.getElementById("groupChatMessagesContainer");
-        container.innerHTML = "";
-        messages.forEach(msg => appendModalMessage(msg));
-        container.scrollTop = container.scrollHeight;
-      } catch (err) {
-        console.error("Load modal messages error:", err);
-      }
-    }
-
-    function appendModalMessage(message) {
-      const container = document.getElementById("groupChatMessagesContainer");
-      if (!container || !message) return;
-
-      const currentUser = getCurrentUserId();
-      const senderId = String(message.sender?._id || message.sender?.id || message.sender || "");
-      const isMine = senderId === currentUser;
-
-      const div = document.createElement("div");
-      div.className = `mb-3 flex ${isMine ? "justify-end" : "justify-start"}`;
+        const response = await apiRequestHome(`/api/groups/${groupId}/messages`); const messages = response.messages \vert{}\vert{} (Array.isArray(response) ? response : []); const container = document.getElementById("groupChatMessagesContainer"); container.innerHTML = ""; messages.forEach(msg => appendModalMessage(msg)); container.scrollTop = container.scrollHeight; } catch (err) { console.error("Load modal messages error:", err); } }  function appendModalMessage(message) { const container = document.getElementById("groupChatMessagesContainer"); if (!container \vert{}\vert{} !message) return;  const currentUser = getCurrentUserId(); const senderId = String(message.sender?._id \vert{}\vert{} message.sender?.id \vert{}\vert{} message.sender \vert{}\vert{} ""); const isMine = senderId === currentUser;  const div = document.createElement("div"); div.className = `mb-3 flex ${isMine ? "justify-end" : "justify-start"}`;
       div.innerHTML = `
         <div class="${isMine ? "bg-blue-600 text-white rounded-2xl rounded-tr-xs" : "bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-xs"} p-3.5 max-w-xs sm:max-w-md shadow-2xs text-xs sm:text-sm">
           <p class="font-semibold opacity-75 mb-0.5 text-[10px]">${escapeHTML(message.sender?.username || "User")}</p>
@@ -682,44 +627,7 @@
       if (!text) return;
 
       try {
-        const response = await apiRequestHome(`/api/groups/${groupId}/messages`, {
-          method: "POST",
-          body: JSON.stringify({ text })
-        });
-        const newMessage = response.message || response;
-        appendModalMessage(newMessage);
-        input.value = "";
-        const container = document.getElementById("groupChatMessagesContainer");
-        container.scrollTop = container.scrollHeight;
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-
-    function handleModalMessageKey(event) {
-      if (event.key === "Enter") sendModalGroupMessage();
-    }
-
-    function getCurrentUserId() {
-      try {
-        const user = JSON.parse(localStorage.getItem("user"));
-        if (user && (user._id || user.id)) return String(user._id || user.id);
-        const cleanToken = getCleanTokenHome();
-        if (cleanToken) {
-          const payload = JSON.parse(atob(cleanToken.split('.')[1]));
-          return String(payload.id || payload._id || payload.userId || "");
-        }
-      } catch { return null; }
-    }
-
-    function previewUploadFile(input) {
-      const targetBox = document.getElementById("mediaDisplayPreview");
-      const labelText = document.getElementById("uploadPlaceholderText");
-      if (!input.files || !input.files[0] || !targetBox) return;
-
-      const file = input.files[0];
-      const reader = new FileReader();
-      labelText.innerText = `Selected: ${file.name}`;
+        const response = await apiRequestHome(`/api/groups/${groupId}/messages`, { method: "POST", body: JSON.stringify({ text }) }); const newMessage = response.message \vert{}\vert{} response; appendModalMessage(newMessage); input.value = ""; const container = document.getElementById("groupChatMessagesContainer"); container.scrollTop = container.scrollHeight; } catch (err) { alert(err.message); } }  function handleModalMessageKey(event) { if (event.key === "Enter") sendModalGroupMessage(); }  function getCurrentUserId() { try { const user = JSON.parse(localStorage.getItem("user")); if (user && (user._id \vert{}\vert{} user.id)) return String(user._id \vert{}\vert{} user.id); const cleanToken = getCleanTokenHome(); if (cleanToken) { const payload = JSON.parse(atob(cleanToken.split('.')[1])); return String(payload.id \vert{}\vert{} payload._id \vert{}\vert{} payload.userId \vert{}\vert{} ""); } } catch { return null; } }  function previewUploadFile(input) { const targetBox = document.getElementById("mediaDisplayPreview"); const labelText = document.getElementById("uploadPlaceholderText"); if (!input.files \vert{}\vert{} !input.files[0] \vert{}\vert{} !targetBox) return;  const file = input.files[0]; const reader = new FileReader(); labelText.innerText = `Selected: ${file.name}`;
 
       reader.onload = function(e) {
         targetBox.classList.remove("hidden");
