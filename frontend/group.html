@@ -3,21 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     <title>Groups - Vryza Connect</title>
 
     <link rel="shortcut icon" href="images/vryza connect.png" type="image/x-icon" />
 
-    <script>
-      (function() {
-        const savedTheme = localStorage.getItem("theme");
-        if (savedTheme === "dark") {
-          document.documentElement.style.background = "#0f172a";
-          document.documentElement.style.color = "#fff";
-        }
-      })();
-    </script>
+    <script src="theme.js"></script>
 
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#0f172a" />
@@ -52,6 +44,36 @@
             animation: recordingPulse 1s infinite;
         }
 
+
+        /* ---- dark mode for the gray palette this page uses ---- */
+        html.dark body[data-vz-dark] { background: #0b1220 !important; }
+        html.dark body[data-vz-dark] .bg-gray-50, html.dark body[data-vz-dark] .bg-gray-100 { background: #101a2c !important; color: #f1f5f9 !important; }
+        html.dark body[data-vz-dark] .bg-gray-200 { background: #26354d !important; }
+        html.dark body[data-vz-dark] .text-gray-800, html.dark body[data-vz-dark] .text-gray-700 { color: #f1f5f9 !important; }
+        html.dark body[data-vz-dark] .text-gray-600, html.dark body[data-vz-dark] .text-gray-500, html.dark body[data-vz-dark] .text-gray-400 { color: #94a3b8 !important; }
+        html.dark body[data-vz-dark] .border, html.dark body[data-vz-dark] .border-t, html.dark body[data-vz-dark] .border-gray-100 { border-color: #2a3a52 !important; }
+        html.dark body[data-vz-dark] .bg-red-50 { background: #3b1d24 !important; }
+        html.dark body[data-vz-dark] .border-red-100 { border-color: #7f1d1d !important; }
+        html.dark body[data-vz-dark] .text-red-700 { color: #fca5a5 !important; }
+        html.dark body[data-vz-dark] .text-red-600 { color: #fca5a5 !important; }
+        html.dark body[data-vz-dark] #groupMessages .bg-white { background: #1e293b !important; color: #f1f5f9 !important; }
+        html.dark body[data-vz-dark] .bg-blue-100 { background: #1e3a8a !important; }
+
+        /* ---- phones ---- */
+        body > nav { padding-top: env(safe-area-inset-top, 0px); }
+        body { padding-top: calc(5rem + env(safe-area-inset-top, 0px)) !important; }
+        body.vz-lock { overflow: hidden; }
+        #groupChat { height: 100vh; height: 100dvh; }
+        #groupChat > div > div:first-child { flex-wrap: wrap; gap: 8px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
+        #groupChat > div > div:last-child { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+        #messageInput { font-size: 16px; }   /* stops iPhones zooming in */
+        #groupMessages img, #groupMessages video { max-width: min(280px, 100%); }
+        @media (max-width: 640px) {
+            #groupChat button.text-xs { padding: 7px 9px; }
+            #chatGroupName { font-size: 1.05rem; }
+            #groupChat .max-w-xs { max-width: 85%; }
+        }
+
         @keyframes recordingPulse {
             0% { opacity: 1; }
             50% { opacity: 0.45; }
@@ -60,7 +82,7 @@
     </style>
 </head>
 
-<body class="pt-20">
+<body class="pt-20" data-vz-dark>
 
     <nav class="bg-white/95 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
         <div class="max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-1.5">
@@ -324,6 +346,7 @@ async function apiRequest(url, options = {}) {
     const response = await fetch(API_URL + url, options);
     let data;
     try { data = await response.json(); } catch { data = {}; }
+    if (response.status === 401) { localStorage.removeItem("token"); window.location.href = "auth.html"; throw new Error("Session expired"); }
     if (!response.ok) throw new Error(data.message || "Something went wrong");
     return data;
 }
@@ -513,6 +536,7 @@ async function openGroupById(groupId) {
     socket.emit("joinGroup", targetId);
 
     document.getElementById("groupChat").classList.remove("hidden");
+    document.body.classList.add("vz-lock");
     document.getElementById("chatGroupName").textContent = group.name;
     document.getElementById("chatGroupMembers").textContent = `${group.members ? group.members.length : 0} members`;
 
@@ -564,6 +588,7 @@ function closeGroupChat() {
     clearSelectedMedia();
     currentGroup = null;
     document.getElementById("groupChat").classList.add("hidden");
+    document.body.classList.remove("vz-lock");
 }
 
 async function loadMessages(groupId) {
@@ -578,9 +603,9 @@ async function loadMessages(groupId) {
 }
 
 function resolveMediaUrl(path) {
-    if (!path) return "";
-    if (path.startsWith("http") || path.startsWith("data:")) return path;
-    return `${API_URL}/uploads/${path}`;
+    if (!path || typeof path !== "string") return "";
+    if (/^(https?:|data:|blob:)/.test(path)) return path;
+    return `${API_URL}/uploads/${path.replace(/^\/?(uploads\/)?/, "")}`;
 }
 
 function addMessageToScreen(message) {
@@ -606,7 +631,7 @@ function addMessageToScreen(message) {
     const voiceUrl = resolveMediaUrl(message.voice);
 
     if (imageUrl) {
-        contentHTML += `<div class="mb-2"><img src="${escapeAttribute(imageUrl)}" class="rounded-xl cursor-pointer border border-black/10" onclick="openMediaOverlay('${escapeAttribute(imageUrl)}', 'image')"></div>`;
+        contentHTML += `<div class="mb-2"><img src="${escapeAttribute(imageUrl)}" class="rounded-xl cursor-pointer border border-black/10" data-open-image="${escapeAttribute(imageUrl)}"></div>`;
     }
 
     if (videoUrl) {
@@ -627,7 +652,7 @@ function addMessageToScreen(message) {
         <div class="${bubbleClass} p-3 rounded-2xl max-w-xs sm:max-w-md shadow-sm">
             <div class="flex justify-between items-center mb-1 gap-2">
                 <p class="font-bold text-[10px] ${isMine ? "text-blue-200" : "text-blue-600"}">${escapeHTML(message.sender?.username || "User")}</p>
-                ${!isMine ? `<button onclick="reportUser('${senderId}', '${escapeHTML(message.sender?.username || "User")}')" class="text-[10px] opacity-70 hover:opacity-100 hover:underline">⚠️ Report</button>` : ""}
+                ${!isMine ? `<button data-report-id="${escapeAttribute(senderId)}" data-report-name="${escapeAttribute(message.sender?.username || "User")}" class="text-[10px] opacity-70 hover:opacity-100 hover:underline">⚠️ Report</button>` : ""}
             </div>
             ${contentHTML}
         </div>
@@ -905,6 +930,23 @@ function openMediaOverlay(src, type) {
     document.body.appendChild(overlay);
 }
 
+// One click handler for report buttons and image previews inside the chat (no inline JS with user text).
+document.addEventListener("click", (e) => {
+    const report = e.target.closest("[data-report-id]");
+    if (report) { reportUser(report.dataset.reportId, report.dataset.reportName); return; }
+    const image = e.target.closest("[data-open-image]");
+    if (image) openMediaOverlay(image.dataset.openImage, "image");
+});
+
+document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const overlay = document.querySelector(".fixed.z-\\[100\\]");
+    if (overlay) { overlay.remove(); return; }
+    if (!document.getElementById("membersModal").classList.contains("hidden")) { closeMembersModal(); return; }
+    if (!document.getElementById("reportsModal").classList.contains("hidden")) { closeReportsModal(); return; }
+    if (currentGroup) closeGroupChat();
+});
+
 function handleMessageKey(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendGroupMessage(); } }
 
 function getCurrentUserId() {
@@ -924,9 +966,13 @@ function getCurrentUserId() {
 }
 
 function escapeHTML(str) { const d = document.createElement("div"); d.textContent = str || ""; return d.innerHTML; }
-function escapeAttribute(str) { return String(str || "").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+function escapeAttribute(str) {
+    return String(str == null ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
 
 loadGroups();
 </script>
+  <script src="callmanager.js"></script>
+  <script src="notificationbadge.js" defer></script>
 </body>
 </html>

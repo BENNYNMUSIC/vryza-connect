@@ -2,7 +2,7 @@
 <html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Vryza Connect | Chat</title>
 
   <link rel="manifest" href="manifest.json" />
@@ -158,18 +158,6 @@
   <!-- MAIN WRAPPER WITH TOP PADDING FOR NAVBAR -->
   <div class="pt-16 flex-1 flex flex-col overflow-hidden">
 
-    <!-- WebRTC Video Call Area -->
-    <div id="videoArea" class="hidden relative bg-slate-950 w-full h-48 sm:h-64 shrink-0 p-2 sm:p-3 gap-2 sm:gap-3 flex border-b border-slate-800 shadow-inner z-10">
-      <div class="relative w-1/2 h-full rounded-2xl overflow-hidden border border-slate-800 bg-black">
-        <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover"></video>
-        <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-[11px] px-2 py-0.5 rounded-lg font-medium">Remote</span>
-      </div>
-      <div class="relative w-1/2 h-full rounded-2xl overflow-hidden border border-slate-800 bg-black">
-        <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
-        <span class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-[11px] px-2 py-0.5 rounded-lg font-medium">You</span>
-      </div>
-    </div>
-
     <!-- MAIN CHAT APP GRID -->
     <div class="flex-1 flex overflow-hidden relative">
 
@@ -212,13 +200,13 @@
               </div>
             </div>
 
-            <!-- CALL CONTROLS -->
+            <!-- CALL CONTROLS (the call screen itself is built by callmanager.js) -->
             <div class="flex items-center gap-2 shrink-0">
-              <button id="startCall" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer">
-                <span>🎥</span> <span class="hidden sm:inline">Call</span>
+              <button id="startAudioCall" type="button" aria-label="Voice call" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer min-h-[40px]">
+                <span>📞</span> <span class="hidden sm:inline">Voice</span>
               </button>
-              <button id="endCall" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm shadow-rose-600/20 hidden flex items-center gap-1.5 cursor-pointer">
-                <span>🛑</span> <span class="hidden sm:inline">End</span>
+              <button id="startCall" type="button" aria-label="Video call" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold transition shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer min-h-[40px]">
+                <span>🎥</span> <span class="hidden sm:inline">Video</span>
               </button>
             </div>
           </div>
@@ -267,6 +255,9 @@
 
   <!-- CHAT JAVASCRIPT LOGIC -->
   <script src="chatBadge.js"></script>
+  <script src="callmanager.js"></script>
   <script src="chat.js"></script>
+    <script src="friendbadge.js" defer></script>
+  <script src="notificationbadge.js" defer></script>
 </body>
 </html>

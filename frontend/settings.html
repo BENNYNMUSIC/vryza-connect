@@ -7,7 +7,8 @@
   <title>Settings - Vryza+</title>
 
   <!-- PWA Web App Meta Tags -->
-<link rel="manifest" href="manifest.json" />
+<script src="theme.js"></script>
+  <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#0f172a" />
 <meta name="mobile-web-app-capable" content="yes" />
 
@@ -21,7 +22,7 @@
 <script src="sw-register.js" defer></script>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="shortcut icon" href="images/vryza connect.png" type="image/png" />
 
   <style>
@@ -36,10 +37,20 @@
       background: #cbd5e1;
       border-radius: 20px;
     }
+    .theme-opt[aria-checked="true"] { border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,.2); }
+    textarea, input { font-size: 16px; }
+    @media (max-width: 640px) {
+      main { padding: 14px !important; }
+      nav > div { padding-left: 14px !important; padding-right: 14px !important; gap: 8px; }
+      nav .flex.items-center.gap-4 { gap: 4px; overflow-x: auto; }
+      nav .flex.items-center.gap-4 button { padding: 8px 6px; white-space: nowrap; font-size: 13px; }
+      .p-8 { padding: 18px !important; }
+      .px-8 { padding-left: 18px !important; padding-right: 18px !important; }
+    }
   </style>
 </head>
 
-<body id="body" class="bg-slate-100 text-slate-800 min-h-screen">
+<body id="body" data-vz-dark class="bg-slate-100 text-slate-800 min-h-screen">
 
   <nav class="theme-card bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -73,14 +84,32 @@
       <div class="p-8 space-y-8">
 
         <div>
-          <h2 class="text-lg font-bold text-slate-800 dark-text-target mb-4">🎨 UI Visual Style</h2>
-          <div class="flex gap-3">
-            <button onclick="setDark()" class="bg-slate-950 hover:bg-black text-white px-5 py-3 rounded-2xl font-semibold transition shadow-md active:scale-95">
-              🌙 Dark Theme
-            </button>
-            <button onclick="setLight()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-5 py-3 rounded-2xl font-semibold transition shadow-md active:scale-95">
-              ☀️ Light Theme
-            </button>
+          <h2 class="text-lg font-bold text-slate-800 dark-text-target mb-1">🎨 Appearance</h2>
+          <p class="text-sm text-slate-400 mb-4">Applies to Home, Profile and every other page.</p>
+          <div id="themeChoices" class="grid grid-cols-3 gap-2 sm:gap-3" role="radiogroup" aria-label="Theme">
+            <button type="button" data-theme="light" role="radio" onclick="setLight()" class="theme-opt bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-3.5 rounded-2xl font-semibold transition active:scale-95 border-2 border-transparent">☀️ Light</button>
+            <button type="button" data-theme="dark" role="radio" onclick="setDark()" class="theme-opt bg-slate-950 hover:bg-black text-white px-3 py-3.5 rounded-2xl font-semibold transition active:scale-95 border-2 border-transparent">🌙 Dark</button>
+            <button type="button" data-theme="system" role="radio" onclick="setSystem()" class="theme-opt bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-3.5 rounded-2xl font-semibold transition active:scale-95 border-2 border-transparent">📱 Auto</button>
+          </div>
+        </div>
+
+        <div id="pwaBox">
+          <h2 class="text-lg font-bold text-slate-800 dark-text-target mb-1">📲 Install app</h2>
+          <p class="text-sm text-slate-400 mb-4" id="pwaText">Add Vryza+ to your home screen for a faster, full-screen experience.</p>
+          <button type="button" id="pwaInstallBtn" class="hidden w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3.5 rounded-2xl font-semibold transition active:scale-95">Install Vryza+</button>
+        </div>
+
+        <div id="aiBox">
+          <h2 class="text-lg font-bold text-slate-800 dark-text-target mb-1">🤖 Ask AI Admin</h2>
+          <p class="text-sm text-slate-400 mb-4">Get a quick answer about using Vryza+. For account problems, contact a human admin below.</p>
+          <div class="flex gap-2">
+            <input id="aiQuestion" type="text" maxlength="500" autocomplete="off" enterkeyhint="send" placeholder="e.g. How do I change my profile picture?" class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-200 text-slate-800" />
+            <button id="aiAskBtn" type="button" onclick="askAiAdmin()" class="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl font-semibold transition active:scale-95">Ask</button>
+          </div>
+          <div id="aiAnswerBox" class="hidden mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4" aria-live="polite">
+            <p class="text-xs font-bold text-blue-600 mb-1">🤖 AI ADMIN</p>
+            <p id="aiAnswerText" class="text-sm text-slate-800 whitespace-pre-wrap break-words"></p>
+            <button id="aiEscalateBtn" type="button" onclick="escalateToHuman()" class="mt-3 text-sm font-semibold text-blue-600 hover:underline">Didn't help? Send this to a human admin</button>
           </div>
         </div>
 
@@ -106,5 +135,6 @@
 
   <script src="settings.js"></script>
 
+  <script src="callmanager.js"></script>
 </body>
 </html>

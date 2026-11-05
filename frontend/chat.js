@@ -42,23 +42,10 @@ let typingTimeout = null;
 let sendingMessage = false;
 let sendingVoice = false;
 
-// WebRTC State
-let peerConnection = null;
-let localStream = null;
-let remoteStream = null;
-let isCalling = false;
-
 // Voice Recording State
 let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
-
-const ICE_SERVERS = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" }
-  ]
-};
 
 // ======================================================
 // SOCKET INITIALIZATION & HANDLERS
@@ -108,10 +95,7 @@ const contactsAside = document.getElementById("contactsAside");
 const emptyChatDiv = document.getElementById("emptyChat");
 const typingIndicator = document.getElementById("typing");
 const startCallBtn = document.getElementById("startCall");
-const endCallBtn = document.getElementById("endCall");
-const videoArea = document.getElementById("videoArea");
-const localVideo = document.getElementById("localVideo");
-const remoteVideo = document.getElementById("remoteVideo");
+const startAudioCallBtn = document.getElementById("startAudioCall");
 const mediaInput = document.getElementById("mediaInput");
 const attachBtn = document.getElementById("attachBtn");
 const micBtn = document.getElementById("micBtn");
@@ -684,134 +668,36 @@ async function toggleRecording() {
 }
 
 // ======================================================
-// WEBRTC CALL SIGNALING
+// CALLS - handled by callmanager.js, so calls ring on EVERY page.
+// This page only starts them.
 // ======================================================
-async function startVideoCall() {
+function placeCall(type) {
   if (!activeChatUserId) {
     alert("Please select a contact to call.");
     return;
   }
-
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    if (localVideo) localVideo.srcObject = localStream;
-    if (videoArea) videoArea.classList.remove("hidden");
-    if (startCallBtn) startCallBtn.classList.add("hidden");
-    if (endCallBtn) endCallBtn.classList.remove("hidden");
-
-    peerConnection = new RTCPeerConnection(ICE_SERVERS);
-    localStream.getTracks().forEach((track) => peerConnection.addTrack(track, localStream));
-
-    peerConnection.ontrack = (event) => {
-      remoteStream = event.streams[0];
-      if (remoteVideo) remoteVideo.srcObject = remoteStream;
-    };
-
-    peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("iceCandidate", { to: activeChatUserId, candidate: event.candidate });
-      }
-    };
-
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-
-    socket.emit("callUser", {
-      userToCall: activeChatUserId,
-      signalData: offer,
-      callType: "video"
-    });
-
-    isCalling = true;
-  } catch (err) {
-    alert("Camera or Microphone permission denied.");
-    triggerEndCall();
+  if (!window.VryzaCall) {
+    alert("Calling is still loading. Please try again in a moment.");
+    return;
   }
+  window.VryzaCall.start(activeChatUserId, { name: activeChatUsername, type });
 }
 
-socket.on("incomingCall", async ({ signal, from, callType }) => {
-  activeChatUserId = String(from);
-  if (videoArea) videoArea.classList.remove("hidden");
-  if (startCallBtn) startCallBtn.classList.add("hidden");
-  if (endCallBtn) endCallBtn.classList.remove("hidden");
-
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    if (localVideo) localVideo.srcObject = localStream;
-
-    peerConnection = new RTCPeerConnection(ICE_SERVERS);
-    localStream.getTracks().forEach((track) => peerConnection.addTrack(track, localStream));
-
-    peerConnection.ontrack = (event) => {
-      remoteStream = event.streams[0];
-      if (remoteVideo) remoteVideo.srcObject = remoteStream;
-    };
-
-    peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("iceCandidate", { to: activeChatUserId, candidate: event.candidate });
-      }
-    };
-
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-
-    socket.emit("answerCall", { signal: answer, to: activeChatUserId });
-    isCalling = true;
-  } catch (err) {
-    console.error("❌ INCOMING CALL ERROR:", err);
-  }
-});
-
-socket.on("callAccepted", async ({ signal }) => {
-  try {
-    if (peerConnection && signal) {
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
+function whenCallsReady(callback) {
+  let tries = 0;
+  const timer = setInterval(() => {
+    tries++;
+    if (window.VryzaCall && window.VryzaCall.ready()) {
+      clearInterval(timer);
+      callback();
+    } else if (tries > 30) {
+      clearInterval(timer);
     }
-  } catch (err) {
-    console.error("❌ CALL ACCEPTED ERROR:", err);
-  }
-});
-
-socket.on("iceCandidate", async ({ candidate }) => {
-  try {
-    if (peerConnection && candidate) {
-      await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-    }
-  } catch (err) {}
-});
-
-socket.on("callEnded", () => cleanupCall());
-
-function triggerEndCall() {
-  if (activeChatUserId) socket.emit("endCall", { to: activeChatUserId });
-  cleanupCall();
+  }, 200);
 }
 
-function cleanupCall() {
-  if (localStream) {
-    localStream.getTracks().forEach((track) => track.stop());
-    localStream = null;
-  }
-  if (remoteStream) {
-    remoteStream.getTracks().forEach((track) => track.stop());
-    remoteStream = null;
-  }
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
-  }
-  if (localVideo) localVideo.srcObject = null;
-  if (remoteVideo) remoteVideo.srcObject = null;
-  if (videoArea) videoArea.classList.add("hidden");
-  if (startCallBtn) startCallBtn.classList.remove("hidden");
-  if (endCallBtn) endCallBtn.classList.add("hidden");
-  isCalling = false;
-}
-
-if (startCallBtn) startCallBtn.addEventListener("click", startVideoCall);
-if (endCallBtn) endCallBtn.addEventListener("click", triggerEndCall);
+if (startCallBtn) startCallBtn.addEventListener("click", () => placeCall("video"));
+if (startAudioCallBtn) startAudioCallBtn.addEventListener("click", () => placeCall("audio"));
 
 // ======================================================
 // HELPER FUNCTIONS & INITIALIZATION
@@ -844,10 +730,41 @@ function showContactsView() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+// Opens the chat named in the address (chat.html?userId=...), and starts a call if callType is given.
+async function openChatFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get("userId");
+  if (!userId) return false;
+
+  const callType = params.get("callType");
+  window.history.replaceState(null, "", window.location.pathname); // so a refresh doesn't redial
+
+  let username = userId === activeChatUserId ? activeChatUsername : "";
+  if (!username || username === "Chat") {
+    try {
+      const res = await fetch(`${API}/api/user/${encodeURIComponent(userId)}`, { headers: getAuthHeaders() });
+      const data = await res.json();
+      const u = data.user || data.profile || data;
+      username = (u && u.username) || "Chat";
+    } catch (err) {
+      username = "Chat";
+    }
+  }
+
+  await selectChatTarget(userId, username);
+
+  if (callType === "audio" || callType === "video") {
+    whenCallsReady(() => placeCall(callType));
+  }
+  return true;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   initEmojiPicker();
   loadConversations();
-  if (activeChatUserId) {
+
+  const openedFromUrl = await openChatFromUrl();
+  if (!openedFromUrl && activeChatUserId) {
     selectChatTarget(activeChatUserId, activeChatUsername);
   }
 });

@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Vryza+ | Profile & Dashboard</title>
 
   <!-- PWA & Mobile Configuration -->
@@ -18,6 +18,7 @@
   <link rel="apple-touch-icon" href="images/icon-192.png" />
   <link rel="shortcut icon" href="images/vryza-connect.png" type="image/x-icon" />
 
+  <script src="theme.js"></script>
   <!-- Early Navigation & Theme Loader -->
   <script>
     (function() {
@@ -90,6 +91,325 @@
       border-color: #334155 !important;
     }
   </style>
+
+  <style id="vryza-profile-refresh">
+    :root {
+      --vryza-bg: #f4f7fc;
+      --vryza-card: #ffffff;
+      --vryza-ink: #172033;
+      --vryza-muted: #718096;
+      --vryza-line: #e7ecf4;
+      --vryza-blue: #3867f5;
+      --vryza-violet: #7655e8;
+      --vryza-shadow: 0 12px 35px rgba(25, 42, 85, .07);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background:
+        radial-gradient(ellipse at 12% 0%, rgba(79, 113, 255, .08), transparent 34rem),
+        var(--vryza-bg) !important;
+      color: var(--vryza-ink);
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    body > nav {
+      background: rgba(255,255,255,.88) !important;
+      border-color: rgba(226,232,240,.85) !important;
+      box-shadow: 0 5px 24px rgba(25,42,85,.06) !important;
+      backdrop-filter: blur(18px);
+    }
+    body > nav > div { min-height: 68px; }
+    body > nav button { transition: color .2s ease, transform .2s ease; }
+    body > nav button:hover { transform: translateY(-2px); }
+    main { padding-bottom: 36px; }
+    main > div { align-items: start; }
+    #editSidebar > div,
+    #adminModerationCard,
+    section > div.bg-white,
+    section > div > div.bg-white,
+    #postsContainer > div {
+      border: 1px solid var(--vryza-line) !important;
+      border-radius: 25px !important;
+      box-shadow: var(--vryza-shadow) !important;
+    }
+    section > div:first-child { overflow: hidden; }
+    #coverPreview { transition: transform .5s ease; }
+    section > div:first-child > div:first-child {
+      min-height: 190px;
+      background-image: linear-gradient(120deg, #315cf4, #6553d9 55%, #a45be8) !important;
+    }
+    #avatar {
+      border: 5px solid white !important;
+      border-radius: 25px !important;
+      box-shadow: 0 12px 30px rgba(18,35,75,.2) !important;
+      background: white;
+    }
+    #username { letter-spacing: -.045em; }
+    #bioText { max-width: 560px; line-height: 1.6; }
+    #followersCount, #followingCount { font-variant-numeric: tabular-nums; }
+    #profile > div {
+      background: #f7f9fd !important;
+      border: 1px solid #edf1f7 !important;
+      border-radius: 17px !important;
+      box-shadow: none !important;
+      padding: 16px !important;
+      transition: border-color .2s ease, transform .2s ease;
+    }
+    #profile > div:hover { border-color: #cbd7ff !important; transform: translateY(-2px); }
+    #actionButtons button, #saveBtn, #adminModerationCard button {
+      border-radius: 15px !important;
+      min-height: 46px;
+      letter-spacing: -.01em;
+      transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+    }
+    #actionButtons button:hover, #saveBtn:hover, #adminModerationCard button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 9px 20px rgba(35,65,145,.14);
+    }
+    #galleryGrid { gap: 12px !important; }
+    #galleryGrid > div {
+      border-radius: 18px !important;
+      border: 1px solid var(--vryza-line) !important;
+      box-shadow: 0 5px 16px rgba(20,35,70,.06);
+      background: #edf1f8;
+    }
+    #galleryGrid img { transition: transform .35s ease, filter .35s ease; }
+    #galleryGrid > div:hover img { transform: scale(1.055); filter: saturate(1.08); }
+    #galleryUploadWrapper label, #coverUploadBtnWrapper label {
+      border-radius: 13px !important;
+      transition: transform .2s ease, background .2s ease;
+    }
+    #galleryUploadWrapper label:hover, #coverUploadBtnWrapper label:hover { transform: translateY(-1px); }
+    #editSidebar { scroll-margin-top: 90px; }
+    #editSidebar > div { padding: 23px !important; }
+    #editSidebar label {
+      color: #64748b !important;
+      letter-spacing: .09em;
+    }
+    #editSidebar input:not([type=file]), #editSidebar select, #editSidebar textarea,
+    #adminModerationCard input, #profilePicCommentInput, #postsContainer input {
+      border-radius: 13px !important;
+      border-color: #e2e8f0 !important;
+      background-color: #f8faff !important;
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    #editSidebar input:focus, #editSidebar select:focus, #editSidebar textarea:focus,
+    #adminModerationCard input:focus, #profilePicCommentInput:focus, #postsContainer input:focus {
+      outline: none;
+      border-color: #7c9aff !important;
+      box-shadow: 0 0 0 4px rgba(56,103,245,.10);
+      background: white !important;
+    }
+    #editSidebar input[type=file] {
+      border-radius: 13px !important;
+      background: #f8faff !important;
+      padding: 10px !important;
+    }
+    #adminModerationCard { background: var(--vryza-card) !important; }
+    #postsContainer { display: grid; gap: 18px; }
+    #postsContainer > div { margin: 0 !important; overflow: hidden; }
+    #postsContainer > div > div:last-child { padding: 22px !important; }
+    #postsContainer img { max-height: 520px; }
+    #postsContainer button, #profilePicModal button { transition: transform .18s ease, filter .18s ease; }
+    #postsContainer button:hover, #profilePicModal button:hover { filter: brightness(.97); }
+    #postsContainer input { min-width: 0; }
+    #profilePicModal, #galleryModal {
+      padding: 18px;
+      backdrop-filter: blur(9px);
+    }
+    #profilePicModal > div {
+      border-radius: 24px !important;
+      box-shadow: 0 25px 80px rgba(0,0,0,.28);
+    }
+    #galleryModal img { box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+    button, label, a { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, label:focus-within, input:focus-visible {
+      outline: 3px solid rgba(56,103,245,.28);
+      outline-offset: 2px;
+    }
+    .hide-scrollbar { scrollbar-width: none; }
+    ::selection { background: rgba(56,103,245,.18); }
+    html.dark body {
+      background: #0b1220 !important;
+      color: #e7edf8 !important;
+    }
+    html.dark body > nav {
+      background: rgba(15,23,42,.9) !important;
+      border-color: #26344b !important;
+    }
+    html.dark body > nav span, html.dark body > nav button { color: #cbd5e1; }
+    html.dark #username, html.dark #profile > div p:last-child { color: #f1f5f9 !important; }
+    html.dark #editSidebar > div,
+    html.dark section > div:first-child,
+    html.dark section > div:nth-child(2),
+    html.dark #adminModerationCard,
+    html.dark #postsContainer > div,
+    html.dark #profilePicModal > div {
+      background: #131f33 !important;
+      border-color: #293950 !important;
+      color: #e5edf8 !important;
+    }
+    html.dark #profile > div,
+    html.dark #postsContainer .bg-slate-50,
+    html.dark #profilePicCommentsList > div {
+      background: #1a2940 !important;
+      border-color: #2b3c55 !important;
+    }
+    html.dark #profile > div p, html.dark #postsContainer p,
+    html.dark #postsContainer span, html.dark #profilePicModal p,
+    html.dark #profilePicModal span { color: #dbe5f3; }
+    html.dark #editSidebar input:not([type=file]),
+    html.dark #editSidebar select, html.dark #editSidebar textarea,
+    html.dark #adminModerationCard input,
+    html.dark #profilePicCommentInput, html.dark #postsContainer input {
+      background: #0e192b !important;
+      border-color: #33445e !important;
+      color: #f1f5f9 !important;
+    }
+    html.dark #profilePicModal > div > div,
+    html.dark #profilePicModal > div > div:last-child { border-color: #293950 !important; }
+    html.dark #profilePicModal > div > div:last-child { background: #101b2d !important; }
+    html.dark #avatar { border-color: #131f33 !important; }
+    @media (min-width: 1024px) {
+      #editSidebar > div { top: 88px !important; }
+    }
+    @media (max-width: 640px) {
+      body { padding-top: 76px !important; }
+      body > nav > div { gap: 8px; padding-left: 10px !important; padding-right: 10px !important; }
+      body > nav button { min-width: 42px; }
+      main { margin-top: 15px !important; padding-left: 12px !important; padding-right: 12px !important; }
+      main > div { gap: 16px !important; }
+      section { gap: 16px !important; }
+      section > div:first-child > div:first-child { height: 175px !important; }
+      section > div:first-child > div:nth-child(2) { padding: 0 16px 19px !important; }
+      #avatar { width: 96px !important; height: 96px !important; border-radius: 22px !important; }
+      #username { font-size: 20px !important; }
+      #profile { gap: 9px !important; }
+      #profile > div { padding: 13px !important; }
+      #actionButtons { grid-template-columns: 1fr !important; }
+      #galleryGrid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 9px !important; }
+      #editSidebar > div, section > div:nth-child(2) { padding: 18px !important; }
+      #postsContainer > div > div:last-child { padding: 16px !important; }
+      #profilePicModal { padding: 10px; }
+      #profilePicModal > div { max-height: 94vh !important; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+
+
+  <style id="vryza-gallery">
+    :root {
+      --vz-surface: #ffffff; --vz-ink: #172033; --vz-muted: #718096;
+      --vz-line: #e7ecf4; --vz-soft: #f4f7fc; --vz-accent: #3867f5; --vz-like: #e11d48;
+    }
+    html.dark {
+      --vz-surface: #131f33; --vz-ink: #e5edf8; --vz-muted: #94a3b8;
+      --vz-line: #293950; --vz-soft: #0e192b;
+    }
+    body.vz-lock { overflow: hidden; touch-action: none; }
+
+    /* ---- Gallery grid tiles ---- */
+    .vz-tile {
+      position: relative; aspect-ratio: 1 / 1; overflow: hidden; cursor: pointer;
+      border-radius: 18px; background: var(--vz-soft); border: 1px solid var(--vz-line);
+      -webkit-tap-highlight-color: transparent; outline-offset: 2px;
+    }
+    .vz-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .vz-tile-meta {
+      position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 12px;
+      padding: 22px 10px 8px; color: #fff; font-size: 12px; font-weight: 700;
+      background: linear-gradient(transparent, rgba(0,0,0,.68)); pointer-events: none;
+    }
+    .vz-liked { color: #fb7185; }
+    .vz-del {
+      position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 999px;
+      border: 0; color: #fff; background: rgba(0,0,0,.55); font-size: 13px; line-height: 1; cursor: pointer;
+    }
+    .vz-del:hover, .vz-del:active { background: #e11d48; }
+
+    /* ---- Photo viewer ---- */
+    .vz-viewer { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; }
+    .vz-viewer.hidden { display: none !important; }
+    .vz-backdrop { position: absolute; inset: 0; background: rgba(2,6,16,.86); backdrop-filter: blur(8px); }
+    .vz-card {
+      position: relative; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+      width: min(1040px, 96vw); height: min(680px, 92dvh); overflow: hidden;
+      border-radius: 24px; background: var(--vz-surface); color: var(--vz-ink);
+      box-shadow: 0 30px 90px rgba(0,0,0,.5); animation: vz-pop .22s ease-out;
+    }
+    @keyframes vz-pop { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+    .vz-close {
+      position: absolute; top: 10px; right: 10px; z-index: 5; width: 38px; height: 38px;
+      border: 0; border-radius: 999px; background: rgba(0,0,0,.55); color: #fff; font-size: 15px; cursor: pointer;
+    }
+    .vz-stage { position: relative; display: flex; align-items: center; justify-content: center; background: #05080f; min-height: 0; }
+    .vz-stage img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+    .vz-nav {
+      position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border: 0;
+      border-radius: 999px; background: rgba(255,255,255,.18); color: #fff; font-size: 26px;
+      align-items: center; justify-content: center; cursor: pointer; display: flex; padding-bottom: 3px;
+    }
+    .vz-nav:hover { background: rgba(255,255,255,.34); }
+    .vz-prev { left: 10px; } .vz-next { right: 10px; }
+    .vz-pos { position: absolute; left: 12px; bottom: 10px; font-size: 12px; font-weight: 700; color: #fff;
+      background: rgba(0,0,0,.5); padding: 3px 9px; border-radius: 999px; }
+    .vz-side { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+    .vz-caption { padding: 18px 18px 0; font-size: 14px; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+    .vz-actions { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--vz-line); margin-top: 8px; }
+    .vz-like {
+      display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--vz-line);
+      background: var(--vz-soft); color: var(--vz-ink); padding: 9px 16px; border-radius: 999px;
+      font-weight: 800; font-size: 14px; cursor: pointer; min-height: 44px; transition: transform .15s ease;
+    }
+    .vz-like:active { transform: scale(.94); }
+    .vz-like:disabled { opacity: .5; cursor: default; }
+    .vz-like-btn, .vz-liked-btn { background: rgba(225,29,72,.1) !important; border-color: rgba(225,29,72,.4) !important; color: var(--vz-like) !important; }
+    .vz-count { color: var(--vz-muted); font-size: 13px; font-weight: 600; }
+    .vz-comments { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 18px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
+    .vz-empty { color: var(--vz-muted); font-size: 13px; font-style: italic; margin: 8px 0; }
+    .vz-comment { display: flex; gap: 10px; align-items: flex-start; }
+    .vz-comment > img { width: 32px; height: 32px; border-radius: 999px; object-fit: cover; flex: none; background: var(--vz-soft); }
+    .vz-comment-body { flex: 1; min-width: 0; background: var(--vz-soft); border-radius: 14px; padding: 8px 12px; font-size: 13px; line-height: 1.45; }
+    .vz-comment-name { font-weight: 800; margin-right: 6px; }
+    .vz-comment-text { overflow-wrap: anywhere; }
+    .vz-comment-del { border: 0; background: transparent; color: var(--vz-muted); width: 30px; height: 30px; font-size: 12px; cursor: pointer; border-radius: 999px; flex: none; }
+    .vz-comment-del:hover { color: var(--vz-like); }
+    .vz-composer { display: flex; gap: 8px; padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--vz-line); background: var(--vz-surface); }
+    .vz-composer input {
+      flex: 1; min-width: 0; min-height: 44px; padding: 0 14px; border-radius: 999px; font-size: 16px; /* 16px stops iOS zoom */
+      border: 1px solid var(--vz-line); background: var(--vz-soft); color: var(--vz-ink); outline: none;
+    }
+    .vz-composer input:focus { border-color: var(--vz-accent); box-shadow: 0 0 0 3px rgba(56,103,245,.15); }
+    .vz-composer button {
+      border: 0; min-height: 44px; padding: 0 18px; border-radius: 999px; background: var(--vz-accent);
+      color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
+    }
+    .vz-composer button:disabled, .vz-composer input:disabled { opacity: .5; }
+
+    /* ---- Toast ---- */
+    .vz-toast {
+      position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px);
+      z-index: 90; background: #0f172a; color: #fff; padding: 11px 18px; border-radius: 999px; font-size: 13px;
+      font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; max-width: 90vw;
+    }
+    .vz-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    /* ---- Phones: full-screen sheet ---- */
+    @media (max-width: 760px) {
+      .vz-card {
+        grid-template-columns: 1fr; grid-template-rows: minmax(0, 46dvh) minmax(0, 1fr);
+        width: 100vw; height: 100dvh; border-radius: 0;
+      }
+      .vz-close { top: calc(10px + env(safe-area-inset-top, 0px)); }
+      .vz-nav { width: 38px; height: 38px; }
+      #galleryGrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+      #galleryGrid .vz-tile { border-radius: 12px; }
+    }
+    @media (max-width: 380px) { #galleryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+    @media (prefers-reduced-motion: reduce) { .vz-card { animation: none; } }
+  </style>
+
 </head>
 
 <body class="bg-slate-50 pt-20 pb-12 antialiased text-slate-800">
@@ -387,15 +707,40 @@
     </div>
   </div>
 
-  <!-- GALLERY LIGHTBOX MODAL -->
-  <div id="galleryModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="relative max-w-4xl w-full flex items-center justify-center">
-      <button onclick="closeGalleryModal()" class="absolute -top-12 right-0 text-white font-bold text-sm bg-white/20 hover:bg-white/40 px-4 py-2 rounded-full transition cursor-pointer">&times; Close</button>
-      <img id="galleryModalImg" class="max-h-[85vh] rounded-2xl object-contain shadow-2xl" />
+  <!-- PHOTO VIEWER (like, comment, swipe) -->
+  <div id="galleryViewer" class="vz-viewer hidden" role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <div class="vz-backdrop" onclick="closeGalleryViewer()"></div>
+    <div class="vz-card">
+      <button type="button" class="vz-close" onclick="closeGalleryViewer()" aria-label="Close viewer">✕</button>
+
+      <div class="vz-stage">
+        <button type="button" class="vz-nav vz-prev" onclick="galleryStep(-1)" aria-label="Previous photo">‹</button>
+        <img id="vzViewerImg" alt="Gallery photo" draggable="false" />
+        <button type="button" class="vz-nav vz-next" onclick="galleryStep(1)" aria-label="Next photo">›</button>
+        <span id="vzPos" class="vz-pos"></span>
+      </div>
+
+      <div class="vz-side">
+        <p id="vzCaption" class="vz-caption"></p>
+        <div class="vz-actions">
+          <button type="button" id="vzLikeBtn" class="vz-like" onclick="likeGalleryPhoto()">
+            <span id="vzLikeIcon">♡</span> <span id="vzLikeCount">0</span>
+          </button>
+          <span id="vzCommentCount" class="vz-count">0 comments</span>
+        </div>
+        <div id="vzComments" class="vz-comments"></div>
+        <div class="vz-composer">
+          <input id="vzCommentInput" type="text" maxlength="500" placeholder="Add a comment…" enterkeyhint="send" autocomplete="off" />
+          <button type="button" id="vzSendBtn" onclick="commentGalleryPhoto()">Send</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- SCRIPTS -->
   <script src="profile.js"></script>
+  <script src="chatBadge.js"></script>
+  <script src="callmanager.js"></script>
+  <script src="notificationbadge.js" defer></script>
 </body>
 </html>

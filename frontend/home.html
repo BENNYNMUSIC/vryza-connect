@@ -380,7 +380,61 @@
       options.headers = {
         "Content-Type": "application/json",
         ...(options.headers || {}),
-        Authorization: `Bearer ${cleanToken}` }; const response = await fetch(API_URL + url, options); const data = await response.json(); if (!response.ok) throw new Error(data.message \vert{}\vert{} "Something went wrong"); return data; }  /* THEME FUNCTIONS */ function updatePostPreviewTheme() { const caption = document.getElementById("caption"); const bgInput = document.getElementById("postBgColor"); const textInput = document.getElementById("postTextColor"); if (!caption \vert{}\vert{} !bgInput \vert{}\vert{} !textInput) return;  caption.style.backgroundColor = bgInput.value; caption.style.color = textInput.value; }  function applyPostPreset(bgColor, textColor) { const bgInput = document.getElementById("postBgColor"); const textInput = document.getElementById("postTextColor"); if (bgInput) bgInput.value = bgColor; if (textInput) textInput.value = textColor; updatePostPreviewTheme(); }  /* LIGHTBOX FUNCTIONS */ function openFullImage(src) { const lightbox = document.getElementById("imageLightbox"); const img = document.getElementById("lightboxImage"); if (lightbox && img) { img.src = src; lightbox.classList.remove("hidden"); } }  function closeFullImage() { const lightbox = document.getElementById("imageLightbox"); if (lightbox) { lightbox.classList.add("hidden"); } }  /* SEARCH USERS FUNCTIONALITY */ async function searchUsers() { const queryInput = document.getElementById("userSearchInput"); const resultsContainer = document.getElementById("searchResults"); if (!queryInput \vert{}\vert{} !resultsContainer) return;  const query = queryInput.value.trim(); if (!query) { resultsContainer.classList.add("hidden"); return; }  resultsContainer.classList.remove("hidden"); resultsContainer.innerHTML = '<p class="text-xs text-slate-400 p-2">Searching users...</p>';  try { let users = []; try { const res = await apiRequestHome(`/api/users/search?q=${encodeURIComponent(query)}`);
+        Authorization: `Bearer ${cleanToken}`
+      };
+      const response = await fetch(API_URL + url, options);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Something went wrong");
+      return data;
+    }
+
+    /* THEME FUNCTIONS */
+    function updatePostPreviewTheme() {
+      const caption = document.getElementById("caption");
+      const bgInput = document.getElementById("postBgColor");
+      const textInput = document.getElementById("postTextColor");
+      if (!caption || !bgInput || !textInput) return;
+      caption.style.backgroundColor = bgInput.value;
+      caption.style.color = textInput.value;
+    }
+    function applyPostPreset(bgColor, textColor) {
+      const bgInput = document.getElementById("postBgColor");
+      const textInput = document.getElementById("postTextColor");
+      if (bgInput) bgInput.value = bgColor;
+      if (textInput) textInput.value = textColor;
+      updatePostPreviewTheme();
+    }
+    /* LIGHTBOX FUNCTIONS */
+    function openFullImage(src) {
+      const lightbox = document.getElementById("imageLightbox");
+      const img = document.getElementById("lightboxImage");
+      if (lightbox && img) {
+        img.src = src;
+        lightbox.classList.remove("hidden");
+      }
+    }
+    function closeFullImage() {
+      const lightbox = document.getElementById("imageLightbox");
+      if (lightbox) {
+        lightbox.classList.add("hidden");
+      }
+    }
+    /* SEARCH USERS FUNCTIONALITY */
+    async function searchUsers() {
+      const queryInput = document.getElementById("userSearchInput");
+      const resultsContainer = document.getElementById("searchResults");
+      if (!queryInput || !resultsContainer) return;
+      const query = queryInput.value.trim();
+      if (!query) {
+        resultsContainer.classList.add("hidden");
+        return;
+      }
+      resultsContainer.classList.remove("hidden");
+      resultsContainer.innerHTML = '<p class="text-xs text-slate-400 p-2">Searching users...</p>';
+      try {
+        let users = [];
+        try {
+          const res = await apiRequestHome(`/api/users/search?q=${encodeURIComponent(query)}`);
           users = res.users || (Array.isArray(res) ? res : []);
         } catch (e) {
           const res = await apiRequestHome(`/api/users`);
@@ -421,13 +475,13 @@
                 <img src="${escapeAttribute(avatarUrl)}" class="w-7 h-7 rounded-full object-cover shrink-0" onerror="this.src='images/vryza-connect.png'">
                 <div class="truncate">
                   <p class="font-bold text-xs text-slate-900 truncate">
-                    ${escapeHTML(user.username \vert{}\vert{} user.name)}${isAdmin ? '<span class="text-[9px] bg-rose-100 text-rose-600 px-1 py-0.5 rounded ml-1 font-semibold">Admin</span>' : ''}
+                    ${escapeHTML(user.username || user.name)}${isAdmin ? '<span class="text-[9px] bg-rose-100 text-rose-600 px-1 py-0.5 rounded ml-1 font-semibold">Admin</span>' : ''}
                   </p>
                 </div>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
                 ${!isMe ? `
-                  <button id="search-follow-btn-${uId}" onclick="followUser('${uId}', this)" class="${followBtnClass}">
+                  <button id="search-follow-btn-${uId}" data-follow-user="${uId}" onclick="followUser('${uId}', this)" class="${followBtnClass}">
                     ${isFollowing ? 'Following' : 'Follow'}
                   </button>
                   <button onclick="selectUserForChat('${uId}', '${escapeAttribute(user.username || user.name)}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-2.5 py-1 rounded-lg text-[11px] font-semibold transition shrink-0 cursor-pointer">
@@ -502,7 +556,7 @@
                   <p class="text-[10px] text-slate-400 truncate">${user.bio ? escapeHTML(user.bio) : 'Suggested user'}</p>
                 </div>
               </div>
-              <button id="rec-follow-btn-${uId}" onclick="followUser('${uId}', this)" class="${followBtnClass}">
+              <button id="rec-follow-btn-${uId}" data-follow-user="${uId}" onclick="followUser('${uId}', this)" class="${followBtnClass}">
                 ${isFollowing ? 'Following' : 'Follow'}
               </button>
             </div>
@@ -609,7 +663,24 @@
 
     async function loadModalGroupMessages(groupId) {
       try {
-        const response = await apiRequestHome(`/api/groups/${groupId}/messages`); const messages = response.messages \vert{}\vert{} (Array.isArray(response) ? response : []); const container = document.getElementById("groupChatMessagesContainer"); container.innerHTML = ""; messages.forEach(msg => appendModalMessage(msg)); container.scrollTop = container.scrollHeight; } catch (err) { console.error("Load modal messages error:", err); } }  function appendModalMessage(message) { const container = document.getElementById("groupChatMessagesContainer"); if (!container \vert{}\vert{} !message) return;  const currentUser = getCurrentUserId(); const senderId = String(message.sender?._id \vert{}\vert{} message.sender?.id \vert{}\vert{} message.sender \vert{}\vert{} ""); const isMine = senderId === currentUser;  const div = document.createElement("div"); div.className = `mb-3 flex ${isMine ? "justify-end" : "justify-start"}`;
+        const response = await apiRequestHome(`/api/groups/${groupId}/messages`);
+        const messages = response.messages || (Array.isArray(response) ? response : []);
+        const container = document.getElementById("groupChatMessagesContainer");
+        container.innerHTML = "";
+        messages.forEach(msg => appendModalMessage(msg));
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        console.error("Load modal messages error:", err);
+      }
+    }
+    function appendModalMessage(message) {
+      const container = document.getElementById("groupChatMessagesContainer");
+      if (!container || !message) return;
+      const currentUser = getCurrentUserId();
+      const senderId = String(message.sender?._id || message.sender?.id || message.sender || "");
+      const isMine = senderId === currentUser;
+      const div = document.createElement("div");
+      div.className = `mb-3 flex ${isMine ? "justify-end" : "justify-start"}`;
       div.innerHTML = `
         <div class="${isMine ? "bg-blue-600 text-white rounded-2xl rounded-tr-xs" : "bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-xs"} p-3.5 max-w-xs sm:max-w-md shadow-2xs text-xs sm:text-sm">
           <p class="font-semibold opacity-75 mb-0.5 text-[10px]">${escapeHTML(message.sender?.username || "User")}</p>
@@ -627,7 +698,38 @@
       if (!text) return;
 
       try {
-        const response = await apiRequestHome(`/api/groups/${groupId}/messages`, { method: "POST", body: JSON.stringify({ text }) }); const newMessage = response.message \vert{}\vert{} response; appendModalMessage(newMessage); input.value = ""; const container = document.getElementById("groupChatMessagesContainer"); container.scrollTop = container.scrollHeight; } catch (err) { alert(err.message); } }  function handleModalMessageKey(event) { if (event.key === "Enter") sendModalGroupMessage(); }  function getCurrentUserId() { try { const user = JSON.parse(localStorage.getItem("user")); if (user && (user._id \vert{}\vert{} user.id)) return String(user._id \vert{}\vert{} user.id); const cleanToken = getCleanTokenHome(); if (cleanToken) { const payload = JSON.parse(atob(cleanToken.split('.')[1])); return String(payload.id \vert{}\vert{} payload._id \vert{}\vert{} payload.userId \vert{}\vert{} ""); } } catch { return null; } }  function previewUploadFile(input) { const targetBox = document.getElementById("mediaDisplayPreview"); const labelText = document.getElementById("uploadPlaceholderText"); if (!input.files \vert{}\vert{} !input.files[0] \vert{}\vert{} !targetBox) return;  const file = input.files[0]; const reader = new FileReader(); labelText.innerText = `Selected: ${file.name}`;
+        const response = await apiRequestHome(`/api/groups/${groupId}/messages`, { method: "POST", body: JSON.stringify({ text }) });
+        const newMessage = response.message || response;
+        appendModalMessage(newMessage);
+        input.value = "";
+        const container = document.getElementById("groupChatMessagesContainer");
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+    function handleModalMessageKey(event) {
+      if (event.key === "Enter") sendModalGroupMessage();
+    }
+    function getCurrentUserId() {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (user && (user._id || user.id)) return String(user._id || user.id);
+        const cleanToken = getCleanTokenHome();
+        if (cleanToken) {
+          const payload = JSON.parse(atob(cleanToken.split('.')[1]));
+          return String(payload.id || payload._id || payload.userId || "");
+        }
+      } catch { return null;
+      }
+    }
+    function previewUploadFile(input) {
+      const targetBox = document.getElementById("mediaDisplayPreview");
+      const labelText = document.getElementById("uploadPlaceholderText");
+      if (!input.files || !input.files[0] || !targetBox) return;
+      const file = input.files[0];
+      const reader = new FileReader();
+      labelText.innerText = `Selected: ${file.name}`;
 
       reader.onload = function(e) {
         targetBox.classList.remove("hidden");
@@ -660,5 +762,7 @@
     fetchTopQuestions();
     loadRecommendedUsers();
   </script>
+  <script src="callmanager.js"></script>
+  <script src="notificationbadge.js" defer></script>
 </body>
 </html>

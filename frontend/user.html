@@ -2,38 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Vryza+ | View Profile</title>
+
+  <!-- Shared theme engine (dark / light / auto from Settings) -->
+  <script src="theme.js"></script>
+
   <!-- PWA Web App Meta Tags -->
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#0f172a" />
-<meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
 
-<!-- iOS Safari PWA Compatibility -->
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Vryza+" />
-<link rel="apple-touch-icon" href="images/icon-192.png" />
+  <!-- iOS Safari PWA Compatibility -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Vryza+" />
+  <link rel="apple-touch-icon" href="images/icon-192.png" />
 
-<!-- PWA Registration Script -->
-<script src="sw-register.js" defer></script>
+  <!-- PWA Registration Script -->
+  <script src="sw-register.js" defer></script>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
-    body { font-family: "Inter", sans-serif; transition: background-color 0.2s; }
+    body {
+      font-family: "Inter", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      padding-top: calc(5rem + env(safe-area-inset-top, 0px));
+    }
+    body > nav { padding-top: env(safe-area-inset-top, 0px); }
+    .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .stat-btn { min-width: 0; }
+    .thumb { position: relative; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 14px; background: #e2e8f0; display: block; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .thumb-meta {
+      position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; padding: 16px 8px 6px;
+      color: #fff; font-size: 11px; font-weight: 700; background: linear-gradient(transparent, rgba(0,0,0,.65));
+    }
+    html.dark .thumb { background: #334155; }
+    @media (max-width: 640px) {
+      nav .flex.items-center.gap-4 { gap: 10px; }
+      #profileCard { padding: 18px !important; }
+    }
   </style>
 </head>
-<body class="bg-slate-100 min-h-screen pt-20">
+
+<body data-vz-dark class="bg-slate-100 min-h-screen antialiased">
 
   <!-- TOP NAVIGATION BAR -->
   <nav class="bg-white/90 backdrop-blur-md shadow-sm fixed top-0 left-0 w-full z-50 border-b border-slate-200">
     <div class="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5">
       <div class="flex items-center gap-2 sm:gap-3 cursor-pointer" onclick="go('home.html')">
         <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-1.5 rounded-xl shadow-md">
-          <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'white\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M13 10V3L4 14h7v7l9-11h-7z\'/></svg>';">
+          <img src="images/vryza connect.png" class="w-5 h-5 invert brightness-200" alt="logo" onerror="this.onerror=null; this.src='images/vryza-connect.png';">
         </div>
         <span class="font-black text-slate-800 text-base tracking-tight">
           Vryza<span class="text-blue-600">+</span>
@@ -43,29 +67,26 @@
       <div class="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm">
         <button onclick="go('home.html')" class="text-slate-500 hover:text-blue-600 font-semibold transition">Home</button>
         <button onclick="go('profile.html')" class="text-slate-500 hover:text-blue-600 font-semibold transition">Profile</button>
-        
+
         <button onclick="go('chat.html')" class="relative text-slate-500 hover:text-blue-600 font-semibold transition flex items-center gap-1.5">
           <span>💬 Chat</span>
-          <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
-            0
-          </span>
+          <span id="chatUnreadBadge" class="hidden bg-blue-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">0</span>
         </button>
 
+        <button onclick="go('settings.html')" class="text-slate-500 hover:text-blue-600 font-semibold transition" aria-label="Settings">⚙️</button>
         <button onclick="logout()" class="text-red-500 font-semibold hover:text-red-700 transition">Logout</button>
       </div>
     </div>
   </nav>
 
   <main class="max-w-2xl mx-auto px-4 my-6">
-    <div id="profileCard" class="theme-card bg-white rounded-3xl shadow-sm border border-slate-200 p-8 transition-colors duration-200">
-      
+    <div id="profileCard" class="theme-card bg-white rounded-3xl shadow-sm border border-slate-200 p-5 sm:p-8 transition-colors duration-200">
       <div id="profileContainer" class="space-y-6">
         <div class="flex items-center justify-center py-12">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span class="ml-3 text-slate-500 font-medium">Retrieving community identity profile...</span>
+          <span class="ml-3 text-slate-500 font-medium">Loading profile...</span>
         </div>
       </div>
-
     </div>
   </main>
 
@@ -74,11 +95,15 @@
     const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-3.8-.85-5.05-2.2.03-1.66 3.33-2.55 5.05-2.55 1.71 0 5.02.89 5.05 2.55C15.8 19.15 14.03 20 12 20z'/></svg>";
 
     const token = localStorage.getItem("token");
-    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    let currentUser = {};
+    try { currentUser = JSON.parse(localStorage.getItem("user") || "{}") || {}; } catch (e) {}
     const currentUserId = String(currentUser._id || currentUser.id || "");
 
     const urlParams = new URLSearchParams(window.location.search);
     const profileUserId = urlParams.get("id") || localStorage.getItem("profileUserId");
+
+    let followersCount = 0;
+    let isFollowingNow = false;
 
     function go(page) {
       window.location.href = page;
@@ -89,13 +114,14 @@
       window.location.href = "auth.html";
     }
 
-    if (!token || !profileUserId) {
-      alert("Session footprint missing or profile target unset.");
-      window.location.href = "auth.html";
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (ch) => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+      ));
     }
 
     function getHeaders() {
-      const cleanToken = token.replace(/^Bearer\s+/i, "").trim();
+      const cleanToken = (token || "").replace(/^Bearer\s+/i, "").trim();
       return {
         "Authorization": `Bearer ${cleanToken}`,
         "Content-Type": "application/json"
@@ -107,26 +133,59 @@
       if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:")) {
         return src;
       }
-      const cleanPath = src.replace(/^\/?(uploads\/)?/, '');
+      const cleanPath = src.replace(/^\/?(uploads\/)?/, "");
       return `${API}/uploads/${cleanPath}`;
     }
 
     function startDirectChat() {
       localStorage.setItem("chatUserId", profileUserId);
-      window.location.href = `chat.html?userId=${profileUserId}`;
+      window.location.href = `chat.html?userId=${encodeURIComponent(profileUserId)}`;
+    }
+
+    function idsOf(list) {
+      return (Array.isArray(list) ? list : []).map((f) => String(f && typeof f === "object" ? (f._id || f.id) : f));
+    }
+
+    function galleryThumbs(gallery, ownerId) {
+      const photos = (Array.isArray(gallery) ? gallery : []).slice().reverse().slice(0, 6);
+      if (!photos.length) return "";
+
+      const link = `profile.html?id=${encodeURIComponent(ownerId)}`;
+      const tiles = photos.map((p) => {
+        const file = typeof p === "string" ? p : (p && p.filename) || "";
+        const likes = p && Array.isArray(p.likes) ? p.likes.length : 0;
+        const comments = p && Array.isArray(p.comments) ? p.comments.length : 0;
+        const meta = typeof p === "string" ? "" : `<span class="thumb-meta"><span>♡ ${likes}</span><span>💬 ${comments}</span></span>`;
+        return `<a class="thumb" href="${link}" aria-label="Open photo"><img src="${escapeHTML(buildAvatarUrl(file) || "")}" alt="Gallery photo" loading="lazy" data-fallback />${meta}</a>`;
+      }).join("");
+
+      return `
+        <div class="pt-2">
+          <div class="flex items-center justify-between mb-3">
+            <p class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Photo Gallery</p>
+            <a href="${link}" class="text-xs font-bold text-blue-600 hover:underline">See all &amp; comment →</a>
+          </div>
+          <div class="grid grid-cols-3 gap-2">${tiles}</div>
+        </div>`;
     }
 
     async function loadProfile() {
       const container = document.getElementById("profileContainer");
-      
+
+      if (!token || !profileUserId) {
+        container.innerHTML = `<div class="text-center text-slate-500 font-semibold p-4">Please log in to view this profile.</div>`;
+        setTimeout(() => { window.location.href = "auth.html"; }, 1200);
+        return;
+      }
+
       try {
-        let res = await fetch(`${API}/api/user/${profileUserId}`, {
+        let res = await fetch(`${API}/api/user/${encodeURIComponent(profileUserId)}`, {
           method: "GET",
           headers: getHeaders()
         });
 
         if (res.status === 404) {
-          res = await fetch(`${API}/api/users/${profileUserId}`, {
+          res = await fetch(`${API}/api/users/${encodeURIComponent(profileUserId)}`, {
             method: "GET",
             headers: getHeaders()
           });
@@ -135,42 +194,58 @@
         const data = await res.json();
 
         if (!res.ok) {
-          container.innerHTML = `<div class="text-center text-red-500 font-bold p-4">${data.message || "Failed to parse target account identification."}</div>`;
+          container.innerHTML = `<div class="text-center text-red-500 font-bold p-4">${escapeHTML(data.message || "Could not load this profile.")}</div>`;
           return;
         }
 
         const user = data.user || data.profile || data;
         const avatarUrl = buildAvatarUrl(user.profilePic);
         const userInitial = (user.username || "U").charAt(0).toUpperCase();
+        const ownerId = String(user._id || user.id || profileUserId);
+        const isSelf = ownerId === currentUserId;
 
-        const avatarHTML = avatarUrl 
-          ? `<img src="${avatarUrl}" alt="${user.username}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='${DEFAULT_AVATAR}';" />`
-          : `<span class="text-3xl font-black text-white">${userInitial}</span>`;
+        const followerIds = idsOf(user.followers);
+        followersCount = followerIds.length || Number(user.followersCount) || 0;
+        const followingCount = Array.isArray(user.following) ? user.following.length : (Number(user.followingCount) || 0);
+        isFollowingNow = followerIds.includes(currentUserId);
 
-        const isSelf = String(user._id || user.id) === currentUserId;
+        const avatarHTML = avatarUrl
+          ? `<img src="${escapeHTML(avatarUrl)}" alt="${escapeHTML(user.username || "User")}" class="w-full h-full object-cover" data-fallback />`
+          : `<span class="text-3xl font-black text-white">${escapeHTML(userInitial)}</span>`;
+
+        // Email is private: only the owner sees it on their own profile.
+        const subLine = isSelf && user.email
+          ? escapeHTML(user.email)
+          : (user.location ? "📍 " + escapeHTML(user.location) : "Vryza+ member");
 
         container.innerHTML = `
           <div class="flex flex-col sm:flex-row items-center gap-5 pb-6 border-b border-slate-100">
-            <div class="w-24 h-24 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center text-3xl font-black shadow-md overflow-hidden border-2 border-slate-100">
+            <div class="w-24 h-24 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center text-3xl font-black shadow-md overflow-hidden border-2 border-slate-100 shrink-0">
               ${avatarHTML}
             </div>
-            <div class="text-center sm:text-left">
-              <h1 class="text-3xl font-black text-slate-800 tracking-tight">${user.username || "Anonymous Connection"}</h1>
-              <p class="text-slate-400 text-sm mt-1">${user.email || "Protected Network Address"}</p>
+            <div class="text-center sm:text-left min-w-0">
+              <h1 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight break-words">${escapeHTML(user.username || "Unknown user")}</h1>
+              <p class="text-slate-400 text-sm mt-1 break-words">${subLine}</p>
+              <div class="flex justify-center sm:justify-start gap-6 mt-3 text-sm">
+                <p><span id="followersCount" class="font-black text-slate-800">${followersCount}</span> <span class="text-slate-400">Followers</span></p>
+                <p><span class="font-black text-slate-800">${followingCount}</span> <span class="text-slate-400">Following</span></p>
+              </div>
             </div>
           </div>
 
           <div class="space-y-4 text-sm text-slate-600 pt-2">
             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <p class="font-bold text-slate-400 uppercase text-[10px] tracking-wider mb-1">Personal Biography Statement</p>
-              <p class="text-base text-slate-700 italic">"${user.bio || "No status bio updated by the account owner yet."}"</p>
+              <p class="font-bold text-slate-400 uppercase text-[10px] tracking-wider mb-1">Bio</p>
+              <p class="text-base text-slate-700 italic break-words">"${escapeHTML(user.bio || "No bio yet.")}"</p>
             </div>
-            
+
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="block text-[10px] uppercase font-bold text-slate-400">Location</span><span class="font-semibold text-slate-800">${user.location || "Earth"}</span></div>
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="block text-[10px] uppercase font-bold text-slate-400">Gender</span><span class="font-semibold text-slate-800">${user.gender || "Not disclosed"}</span></div>
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="block text-[10px] uppercase font-bold text-slate-400">Age Metric</span><span class="font-semibold text-slate-800">${user.age || "Hidden"}</span></div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="block text-[10px] uppercase font-bold text-slate-400">Location</span><span class="font-semibold text-slate-800">${escapeHTML(user.location || "Earth")}</span></div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="block text-[10px] uppercase font-bold text-slate-400">Gender</span><span class="font-semibold text-slate-800">${escapeHTML(user.gender || "Not disclosed")}</span></div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="block text-[10px] uppercase font-bold text-slate-400">Age</span><span class="font-semibold text-slate-800">${escapeHTML(user.age || "Hidden")}</span></div>
             </div>
+
+            ${galleryThumbs(user.gallery, ownerId)}
           </div>
 
           <div class="pt-4 flex flex-col sm:flex-row gap-3">
@@ -179,27 +254,29 @@
                 Edit My Profile
               </button>
             ` : `
-              <button id="followBtn" onclick="followUser()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-6 rounded-2xl font-bold transition shadow-md shadow-blue-100 active:scale-[0.99]">
-                Loading Status...
+              <button id="followBtn" onclick="followUser()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-6 rounded-2xl font-bold transition shadow-md active:scale-[0.99]">
+                Loading...
               </button>
               <button onclick="startDirectChat()" class="bg-slate-800 hover:bg-slate-900 text-white py-3.5 px-6 rounded-2xl font-bold transition shadow-md active:scale-[0.99]">
-                Message Profile
+                💬 Message
+              </button>
+              <button onclick="go('profile.html?id=' + encodeURIComponent(profileUserId))" class="bg-slate-200 hover:bg-slate-300 text-slate-700 py-3.5 px-6 rounded-2xl font-bold transition active:scale-[0.99]">
+                Full Profile
               </button>
             `}
           </div>
         `;
 
-        if (!isSelf) {
-          const isFollowing = user.followers && Array.isArray(user.followers) 
-            ? user.followers.some(f => String(f._id || f.id || f) === currentUserId) 
-            : false;
+        // Image fallbacks (attached here because quotes inside inline onerror attributes break).
+        container.querySelectorAll("img[data-fallback]").forEach((img) => {
+          img.addEventListener("error", () => { img.onerror = null; img.src = DEFAULT_AVATAR; }, { once: true });
+        });
 
-          updateFollowButtonUI(isFollowing);
-        }
+        if (!isSelf) updateFollowButtonUI(isFollowingNow);
 
       } catch (err) {
-        console.error("❌ PROFILE SYSTEM LOADING FAULT:", err);
-        container.innerHTML = `<div class="text-center text-red-500 font-bold p-4">Network pipeline dropped link to profiles.</div>`;
+        console.error("❌ PROFILE LOADING FAULT:", err);
+        container.innerHTML = `<div class="text-center text-red-500 font-bold p-4">Network problem. Please check your connection and try again.</div>`;
       }
     }
 
@@ -207,27 +284,35 @@
       const btn = document.getElementById("followBtn");
       if (!btn) return;
 
+      isFollowingNow = isFollowing;
+
       if (isFollowing) {
-        btn.innerText = "🤝 Connected (Unfollow)";
+        btn.innerText = "✓ Following";
+        btn.title = "Tap to unfollow";
         btn.className = "flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3.5 px-6 rounded-2xl font-bold transition active:scale-[0.99]";
       } else {
-        btn.innerText = "➕ Follow Network Node";
-        btn.className = "flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-6 rounded-2xl font-bold transition shadow-md shadow-blue-100 active:scale-[0.99]";
+        btn.innerText = "➕ Follow";
+        btn.title = "";
+        btn.className = "flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 px-6 rounded-2xl font-bold transition shadow-md active:scale-[0.99]";
       }
     }
 
     async function followUser() {
       const btn = document.getElementById("followBtn");
+
+      // The server toggles follow/unfollow, so confirm before unfollowing.
+      if (isFollowingNow && !confirm("Unfollow this user?")) return;
+
       if (btn) btn.disabled = true;
 
       try {
-        let res = await fetch(`${API}/api/user/follow/${profileUserId}`, {
+        let res = await fetch(`${API}/api/user/follow/${encodeURIComponent(profileUserId)}`, {
           method: "PUT",
           headers: getHeaders()
         });
 
         if (res.status === 404) {
-          res = await fetch(`${API}/api/users/follow/${profileUserId}`, {
+          res = await fetch(`${API}/api/users/follow/${encodeURIComponent(profileUserId)}`, {
             method: "PUT",
             headers: getHeaders()
           });
@@ -236,19 +321,25 @@
         const data = await res.json();
 
         if (!res.ok) {
-          alert(data.message || "Mutation execution rejected by remote data engine.");
+          alert(data.message || "Could not update follow status.");
           return;
         }
 
-        const isFollowing = data.following !== undefined 
-          ? data.following 
-          : (data.followers && data.followers.includes(currentUserId));
+        const nowFollowing = typeof data.following === "boolean"
+          ? data.following
+          : /^followed/i.test(String(data.message || ""));
 
-        updateFollowButtonUI(isFollowing);
+        if (nowFollowing !== isFollowingNow) {
+          followersCount = Math.max(0, followersCount + (nowFollowing ? 1 : -1));
+          const counter = document.getElementById("followersCount");
+          if (counter) counter.textContent = followersCount;
+        }
+
+        updateFollowButtonUI(nowFollowing);
 
       } catch (err) {
-        console.error("❌ CRITICAL RELATION ENGINE ABORT:", err);
-        alert("Server failed to commit follow updates.");
+        console.error("❌ FOLLOW ERROR:", err);
+        alert("Network problem. Follow status was not changed.");
       } finally {
         if (btn) btn.disabled = false;
       }
@@ -258,5 +349,6 @@
   </script>
 
   <script src="chatBadge.js"></script>
+  <script src="callmanager.js"></script>
 </body>
 </html>

@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Notifications - Vryza+</title>
+
+<!-- Shared theme engine (dark / light / auto from Settings) -->
+<script src="theme.js"></script>
 
 <!-- PWA Web App Meta Tags -->
 <link rel="manifest" href="manifest.json" />
@@ -20,39 +23,75 @@
 <script src="sw-register.js" defer></script>
 
 <style>
-* {
-    box-sizing: border-box;
+:root {
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --card-hover: #f8fafc;
+    --unread: #eff6ff;
+    --text: #0f172a;
+    --muted: #64748b;
+    --line: #e2e8f0;
+    --accent: #2563eb;
+    --chip: #e2e8f0;
+    --chip-hover: #cbd5e1;
 }
+html.dark {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-hover: #334155;
+    --unread: #16243b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --line: #334155;
+    --accent: #38bdf8;
+    --chip: #334155;
+    --chip-hover: #475569;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: #0f172a;
-    color: #f8fafc;
+    background: var(--bg);
+    color: var(--text);
     margin: 0;
-    padding: 16px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
+    padding: 0 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    transition: background-color .2s ease, color .2s ease;
 }
 
-.header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #1e293b;
-    padding-bottom: 12px;
+.page { max-width: 600px; margin: 0 auto; }
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 0 12px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 14px;
 }
 
-h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 800;
+.topbar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+.back-btn {
+    background: var(--chip);
+    color: var(--text);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 18px;
+    cursor: pointer;
+    flex: none;
 }
+.back-btn:hover { background: var(--chip-hover); }
+
+h2 { margin: 0; font-size: 1.4rem; font-weight: 800; white-space: nowrap; }
 
 .badge-box {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card);
+    border: 1px solid var(--line);
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 13px;
@@ -60,351 +99,430 @@ h2 {
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 }
 
 #notificationBadge {
     background: #ef4444;
-    color: white;
+    color: #fff;
     border-radius: 12px;
     padding: 2px 8px;
     font-size: 11px;
     font-weight: 800;
 }
 
-.actions-bar {
-    margin-bottom: 16px;
-}
+.actions-bar { margin-top: 12px; display: flex; gap: 8px; }
 
 #markAllBtn {
-    background: #334155;
-    color: #f8fafc;
+    background: var(--chip);
+    color: var(--text);
     border: none;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 12px;
+    padding: 10px 16px;
+    min-height: 40px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 13px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background .2s;
 }
-
-#markAllBtn:hover {
-    background: #475569;
-}
+#markAllBtn:hover { background: var(--chip-hover); }
+#markAllBtn:disabled { opacity: .5; cursor: default; }
 
 .notification {
-    background: #1e293b;
-    padding: 14px 16px;
-    border-radius: 14px;
+    background: var(--card);
+    padding: 12px 14px;
+    border-radius: 16px;
     margin-bottom: 10px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.notification:hover {
-    background: #334155;
-}
-
-.notification.unread {
-    border-left: 4px solid #38bdf8;
-    background: #0f172a;
-    border-top: 1px solid #1e293b;
-    border-right: 1px solid #1e293b;
-    border-bottom: 1px solid #1e293b;
-}
-
-.notification.missed-call {
-    border-left: 4px solid #ef4444;
-}
-
-.notification.incoming-call {
-    border-left: 4px solid #22c55e;
-}
-
-.noti-content {
+    transition: background .2s ease, transform .15s ease;
+    border: 1px solid var(--line);
     display: flex;
     align-items: center;
     gap: 12px;
+    min-height: 64px;
+}
+.notification:hover { background: var(--card-hover); }
+.notification:active { transform: scale(.99); }
+
+.notification.unread {
+    border-left: 4px solid var(--accent);
+    background: var(--unread);
+}
+.notification.missed-call { border-left: 4px solid #ef4444; }
+.notification.incoming-call { border-left: 4px solid #22c55e; }
+
+.avatar-wrap { position: relative; flex: none; width: 46px; height: 46px; }
+.avatar {
+    width: 46px; height: 46px; border-radius: 50%; object-fit: cover;
+    background: var(--chip); display: block;
+}
+.type-icon {
+    position: absolute; right: -4px; bottom: -4px; font-size: 14px; line-height: 1;
+    background: var(--card); border-radius: 50%; padding: 2px;
 }
 
-.noti-icon {
-    font-size: 20px;
-}
+.noti-body { min-width: 0; flex: 1; }
+.noti-text { font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+.time { color: var(--muted); font-size: 12px; margin-top: 3px; }
 
-.noti-text {
-    font-size: 14px;
-    line-height: 1.4;
-}
+.dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
 
-.time {
-    color: #94a3b8;
-    font-size: 11px;
-    margin-top: 4px;
+.state-msg { color: var(--muted); text-align: center; margin: 40px 0; font-size: 14px; }
+.load-more {
+    display: block; margin: 8px auto 0; background: var(--chip); color: var(--text); border: 0;
+    padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 13px; cursor: pointer;
 }
 
 .toast {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: calc(100vw - 28px);
     background: #0284c7;
-    color: white;
+    color: #fff;
     padding: 12px 18px;
-    border-radius: 12px;
+    border-radius: 14px;
     z-index: 9999;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
     font-size: 13px;
     display: flex;
     align-items: center;
     gap: 8px;
-    animation: slideIn 0.3s ease;
+    animation: slideIn .3s ease;
 }
-
 @keyframes slideIn {
-    from { transform: translateY(-20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from { transform: translate(-50%, -20px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
 }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
 
-<div class="header-container">
-    <h2>Notifications</h2>
-    <div class="badge-box">
-        🔔 Unread: <span id="notificationBadge">0</span>
+<div class="page">
+    <div class="topbar">
+        <div class="topbar-row">
+            <div class="topbar-left">
+                <button class="back-btn" id="backBtn" aria-label="Back to home">←</button>
+                <h2>Notifications</h2>
+            </div>
+            <div class="badge-box" aria-live="polite">
+                🔔 Unread: <span id="notificationBadge">0</span>
+            </div>
+        </div>
+        <div class="actions-bar">
+            <button id="markAllBtn">Mark All As Read</button>
+        </div>
     </div>
-</div>
 
-<div class="actions-bar">
-    <button id="markAllBtn">Mark All As Read</button>
+    <div id="notifications"></div>
+    <button id="loadMoreBtn" class="load-more" style="display:none">Load more</button>
 </div>
-
-<div id="notifications"></div>
 
 <!-- Absolute Socket.IO Client Script URL -->
 <script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
 
 <script>
 const API_URL = "https://vryza-connect-backend-1.onrender.com";
-const rawToken = localStorage.getItem("token");
+const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-3.8-.85-5.05-2.2.03-1.66 3.33-2.55 5.05-2.55 1.71 0 5.02.89 5.05 2.55C15.8 19.15 14.03 20 12 20z'/></svg>";
 
+const rawToken = localStorage.getItem("token");
 if (!rawToken) {
     window.location.href = "auth.html";
 }
-
 const token = rawToken ? rawToken.replace(/^Bearer\s+/i, "").trim() : "";
 
-let currentUserId = "";
-if (token) {
+function decodeUserId(jwt) {
     try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const payload = JSON.parse(window.atob(base64));
-        currentUserId = payload.id || payload._id; 
+        let b64 = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        while (b64.length % 4) b64 += "=";
+        const payload = JSON.parse(window.atob(b64));
+        return String(payload.id || payload._id || payload.userId || "");
     } catch (e) {
         console.error("Failed to parse token payload", e);
+        return "";
+    }
+}
+const currentUserId = token ? decodeUserId(token) : "";
+
+let page = 1;
+let totalPages = 1;
+let loading = false;
+let reloadQueued = false;
+
+const container = document.getElementById("notifications");
+const loadMoreBtn = document.getElementById("loadMoreBtn");
+
+function authHeaders() {
+    return { Authorization: `Bearer ${token}` };
+}
+
+function handleUnauthorized(res) {
+    if (res.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "auth.html";
+        return true;
+    }
+    return false;
+}
+
+function buildImage(src) {
+    if (!src || src === "undefined" || src === "null") return DEFAULT_AVATAR;
+    if (/^(https?:|data:)/.test(src)) return src;
+    return `${API_URL}/uploads/${String(src).replace(/^\/?(uploads\/)?/, "")}`;
+}
+
+function timeAgo(dateStr) {
+    if (!dateStr) return "Just now";
+    const date = new Date(dateStr);
+    const secs = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (isNaN(secs)) return "";
+    if (secs < 45) return "Just now";
+    if (secs < 3600) return `${Math.max(1, Math.round(secs / 60))}m ago`;
+    if (secs < 86400) return `${Math.round(secs / 3600)}h ago`;
+    if (secs < 604800) return `${Math.round(secs / 86400)}d ago`;
+    return date.toLocaleDateString();
+}
+
+function idOf(value) {
+    if (!value) return "";
+    return String(typeof value === "object" ? (value._id || value.id || "") : value);
+}
+
+// Describes one notification: icon, sentence parts (safe, no HTML), style class.
+function describe(n) {
+    const name = n.from?.username || "Someone";
+    const hasPost = !!idOf(n.postId);
+    switch (n.type) {
+        case "follow":
+            return { icon: "👤", name, rest: " started following you", cls: "" };
+        case "like":
+            return { icon: "❤️", name, rest: hasPost ? " liked your post" : " liked your photo", cls: "" };
+        case "comment":
+            return { icon: "💬", name, rest: hasPost ? " commented on your post" : " commented on your photo", cls: "" };
+        case "message":
+            return { icon: "✉️", name, rest: " sent you a message", cls: "" };
+        case "incoming_call":
+        case "call":
+            return { icon: "📞", before: "Incoming call from ", name, rest: "", cls: "incoming-call" };
+        case "missed_call":
+            return { icon: "📞", before: "Missed call from ", name, rest: "", cls: "missed-call" };
+        default:
+            return { icon: "🔔", before: "New activity from ", name, rest: "", cls: "" };
     }
 }
 
-let page = 1;
-let loading = false;
-let hasMore = true;
+function openNotification(n) {
+    const fromId = idOf(n.from);
+
+    if (n.type === "follow") {
+        if (fromId) {
+            localStorage.setItem("profileUserId", fromId);
+            window.location.href = `user.html?id=${encodeURIComponent(fromId)}`;
+        } else {
+            window.location.href = "profile.html";
+        }
+    } else if (n.type === "like" || n.type === "comment") {
+        // Likes/comments on your posts, profile picture and gallery photos all live on your own profile.
+        window.location.href = "profile.html";
+    } else if (["message", "missed_call", "incoming_call", "call"].includes(n.type)) {
+        if (fromId) {
+            localStorage.setItem("chatUserId", fromId);
+            if (n.from?.username) localStorage.setItem("chatUsername", n.from.username);
+            window.location.href = `chat.html?userId=${encodeURIComponent(fromId)}`;
+        } else {
+            window.location.href = "chat.html";
+        }
+    }
+}
+
+function renderNotification(n) {
+    const d = describe(n);
+
+    const row = document.createElement("div");
+    row.className = `notification ${n.read ? "" : "unread"} ${d.cls}`.replace(/\s+/g, " ").trim();
+    row.setAttribute("role", "button");
+    row.tabIndex = 0;
+
+    const wrap = document.createElement("div");
+    wrap.className = "avatar-wrap";
+    const img = document.createElement("img");
+    img.className = "avatar";
+    img.alt = "";
+    img.loading = "lazy";
+    img.src = buildImage(n.from?.profilePic || n.from?.avatar);
+    img.addEventListener("error", () => { img.onerror = null; img.src = DEFAULT_AVATAR; }, { once: true });
+    const badge = document.createElement("span");
+    badge.className = "type-icon";
+    badge.textContent = d.icon;
+    wrap.append(img, badge);
+
+    const body = document.createElement("div");
+    body.className = "noti-body";
+    const text = document.createElement("div");
+    text.className = "noti-text";
+    if (d.before) text.appendChild(document.createTextNode(d.before));
+    const strong = document.createElement("strong");
+    strong.textContent = d.name;
+    text.appendChild(strong);
+    if (d.rest) text.appendChild(document.createTextNode(d.rest));
+    const time = document.createElement("div");
+    time.className = "time";
+    time.textContent = timeAgo(n.createdAt);
+    if (n.createdAt) time.title = new Date(n.createdAt).toLocaleString();
+    body.append(text, time);
+
+    row.append(wrap, body);
+
+    if (!n.read) {
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.setAttribute("aria-label", "Unread");
+        row.appendChild(dot);
+    }
+
+    const activate = async () => {
+        if (!n.read) {
+            n.read = true;
+            row.classList.remove("unread");
+            row.querySelector(".dot")?.remove();
+            try {
+                await fetch(`${API_URL}/api/notifications/${n._id}/read`, {
+                    method: "PUT",
+                    headers: authHeaders()
+                });
+                loadUnreadCount();
+            } catch (err) {
+                console.error("Error marking notification as read:", err);
+            }
+        }
+        openNotification(n);
+    };
+
+    row.addEventListener("click", activate);
+    row.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); }
+    });
+
+    return row;
+}
 
 // 1. Load Notifications from API
 async function loadNotifications(pageNumber = 1) {
-    if (loading || (!hasMore && pageNumber > 1)) return;
+    if (loading) {
+        if (pageNumber === 1) reloadQueued = true;
+        return;
+    }
+    if (pageNumber > 1 && pageNumber > totalPages) return;
     loading = true;
 
     try {
-        const res = await fetch(`${API_URL}/api/notifications?page=${pageNumber}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        const res = await fetch(`${API_URL}/api/notifications?page=${pageNumber}`, { headers: authHeaders() });
+        if (handleUnauthorized(res)) return;
 
         const data = await res.json();
-        const container = document.getElementById("notifications");
-        
-        if (pageNumber === 1) {
-            container.innerHTML = "";
-            hasMore = true;
+        const list = data.notifications || (Array.isArray(data) ? data : []);
+
+        if (pageNumber === 1) container.innerHTML = "";
+
+        totalPages = Number(data.totalPages) || (list.length ? pageNumber + 1 : pageNumber);
+        page = pageNumber;
+
+        if (!list.length && pageNumber === 1) {
+            container.innerHTML = `<p class="state-msg">No notifications yet.</p>`;
+        } else {
+            list.forEach((n) => container.appendChild(renderNotification(n)));
         }
 
-        const notificationList = data.notifications || (Array.isArray(data) ? data : []);
-
-        if (!notificationList || !notificationList.length) {
-            hasMore = false;
-            if (pageNumber === 1) {
-                container.innerHTML = "<p style='color: #64748b; text-align: center; margin-top: 40px;'>No notifications yet.</p>";
-            }
-            loading = false;
-            return;
-        }
-
-        notificationList.forEach(notification => {
-            let text = "";
-            let icon = "🔔";
-            let extraClass = "";
-            const username = notification.from?.username || "Someone";
-
-            switch(notification.type) {
-                case "follow":
-                    icon = "👤";
-                    text = `<strong>${username}</strong> started following you`;
-                    break;
-                case "like":
-                    icon = "❤️";
-                    text = `<strong>${username}</strong> liked your post`;
-                    break;
-                case "comment":
-                    icon = "💬";
-                    text = `<strong>${username}</strong> commented on your post`;
-                    break;
-                case "message":
-                    icon = "✉️";
-                    text = `<strong>${username}</strong> sent you a message`;
-                    break;
-                case "incoming_call":
-                case "call":
-                    icon = "📞";
-                    extraClass = "incoming-call";
-                    text = `Incoming call from <strong>${username}</strong>`;
-                    break;
-                case "missed_call":
-                    icon = "📞❌";
-                    extraClass = "missed-call";
-                    text = `Missed call from <strong>${username}</strong>`;
-                    break;
-                default:
-                    text = `New activity from <strong>${username}</strong>`;
-            }
-
-            const div = document.createElement("div");
-            div.className = `notification ${notification.read ? "" : "unread"} ${extraClass}`;
-
-            const timeStr = notification.createdAt 
-                ? new Date(notification.createdAt).toLocaleString() 
-                : "Just now";
-
-            div.innerHTML = `
-                <div class="noti-content">
-                    <span class="noti-icon">${icon}</span>
-                    <div>
-                        <div class="noti-text">${text}</div>
-                        <div class="time">${timeStr}</div>
-                    </div>
-                </div>
-            `;
-
-            div.onclick = async () => {
-                if (!notification.read) {
-                    try {
-                        await fetch(`${API_URL}/api/notifications/${notification._id}/read`, {
-                            method: "PUT",
-                            headers: { Authorization: `Bearer ${token}` }
-                        });
-                        div.classList.remove("unread");
-                        loadUnreadCount();
-                    } catch (err) {
-                        console.error("Error marking notification as read:", err);
-                    }
-                }
-
-                // Route actions matching context
-                if (notification.type === "like" || notification.type === "comment") {
-                    window.location.href = `post.html?id=${notification.postId || notification.targetId}`;
-                } else if (notification.type === "follow") {
-                    if (notification.from?._id) {
-                        localStorage.setItem("profileUserId", notification.from._id);
-                    }
-                    window.location.href = "profile.html";
-                } else if (["message", "missed_call", "incoming_call", "call"].includes(notification.type)) {
-                    if (notification.from) {
-                        localStorage.setItem("chatUserId", notification.from._id || notification.from);
-                        if (notification.from.username) {
-                            localStorage.setItem("chatUsername", notification.from.username);
-                        }
-                    }
-                    window.location.href = "chat.html";
-                }
-            };
-
-            container.appendChild(div);
-        });
-
-    } catch(err) {
+        loadMoreBtn.style.display = page < totalPages ? "block" : "none";
+    } catch (err) {
         console.error("Error loading notifications:", err);
+        if (pageNumber === 1 && !container.children.length) {
+            container.innerHTML = `<p class="state-msg">Couldn't load notifications. Pull down or tap to retry.</p>`;
+            container.firstChild.style.cursor = "pointer";
+            container.firstChild.onclick = () => loadNotifications(1);
+        }
     } finally {
         loading = false;
+        if (reloadQueued) {
+            reloadQueued = false;
+            loadNotifications(1);
+        }
     }
 }
 
 // 2. Fetch Unread Count
 async function loadUnreadCount() {
     try {
-        const res = await fetch(`${API_URL}/api/notifications/unread-count`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch(`${API_URL}/api/notifications/unread-count`, { headers: authHeaders() });
+        if (handleUnauthorized(res)) return;
         const data = await res.json();
-        document.getElementById("notificationBadge").innerText = data.count || 0;
+        document.getElementById("notificationBadge").textContent = data.count || 0;
+        if (window.NotificationBadge) window.NotificationBadge.set(data.count || 0);
     } catch (err) {
         console.error("Error fetching unread count:", err);
     }
 }
 
-// 3. UI Toast Function
-function showToast(notification) {
-    const sender = notification.from?.username || "Someone";
-    let icon = "🔔";
-    let message = `New activity from <strong>${sender}</strong>`;
-
-    if (notification.type === "missed_call") {
-        icon = "📞❌";
-        message = `Missed call from <strong>${sender}</strong>`;
-    } else if (["incoming_call", "call"].includes(notification.type)) {
-        icon = "📞";
-        message = `Incoming call from <strong>${sender}</strong>`;
-    } else if (notification.type === "message") {
-        icon = "💬";
-        message = `New message from <strong>${sender}</strong>`;
-    }
-
+// 3. UI Toast Function (plain text, never HTML)
+function showToast(n) {
+    const d = describe(n);
     const toast = document.createElement("div");
     toast.className = "toast";
-    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-    document.body.appendChild(toast);
+    toast.setAttribute("role", "status");
 
-    setTimeout(() => {
-        toast.remove();
-    }, 4000);
+    const icon = document.createElement("span");
+    icon.textContent = d.icon;
+    const msg = document.createElement("span");
+    if (d.before) msg.appendChild(document.createTextNode(d.before));
+    const strong = document.createElement("strong");
+    strong.textContent = d.name;
+    msg.appendChild(strong);
+    if (d.rest) msg.appendChild(document.createTextNode(d.rest));
+
+    toast.append(icon, msg);
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
 }
 
 // --- EVENT LISTENERS ---
+document.getElementById("backBtn").addEventListener("click", () => {
+    if (document.referrer && history.length > 1) history.back();
+    else window.location.href = "home.html";
+});
 
-document.getElementById("markAllBtn").addEventListener("click", async () => {
+document.getElementById("markAllBtn").addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
     try {
-        await fetch(`${API_URL}/api/notifications/read-all`, {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        page = 1;
-        loadNotifications(1);
+        const res = await fetch(`${API_URL}/api/notifications/read-all`, { method: "PUT", headers: authHeaders() });
+        if (handleUnauthorized(res)) return;
+        await loadNotifications(1);
         loadUnreadCount();
-    } catch(err) {
+    } catch (err) {
         console.error("Error marking all as read:", err);
+    } finally {
+        btn.disabled = false;
     }
 });
 
-// Infinite Scroll with pagination bounds check
+loadMoreBtn.addEventListener("click", () => loadNotifications(page + 1));
+
+// Infinite scroll (stops at the last page the server reports)
 window.addEventListener("scroll", () => {
     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
-        if (!loading && hasMore) {
-            page++;
-            loadNotifications(page);
-        }
+        if (!loading && page < totalPages) loadNotifications(page + 1);
     }
+}, { passive: true });
+
+// Refresh when the tab comes back (or is restored from the back button)
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") { loadNotifications(1); loadUnreadCount(); }
+});
+window.addEventListener("pageshow", (e) => {
+    if (e.persisted) { loadNotifications(1); loadUnreadCount(); }
 });
 
 // --- SOCKET INITIALIZATION WITH HANDSHAKE AUTH ---
@@ -414,10 +532,17 @@ if (typeof io !== "undefined" && currentUserId && token) {
         transports: ["websocket", "polling"]
     });
 
-    socket.emit("join", currentUserId);
+    socket.on("connect", () => socket.emit("join", currentUserId));
 
+    // The server emits both event names for the same notification, so ignore repeats.
+    const seenIds = new Set();
     const handleIncomingNotification = (notification) => {
-        page = 1;
+        const id = notification && notification._id;
+        if (id) {
+            if (seenIds.has(id)) return;
+            seenIds.add(id);
+            setTimeout(() => seenIds.delete(id), 10000);
+        }
         loadNotifications(1);
         loadUnreadCount();
         if (notification) showToast(notification);
@@ -433,5 +558,7 @@ loadUnreadCount();
 </script>
 <script src="chatBadge.js"></script>
 
+  <script src="callmanager.js"></script>
+  <script src="notificationbadge.js" defer></script>
 </body>
 </html>

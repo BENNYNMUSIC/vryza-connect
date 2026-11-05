@@ -1,13 +1,17 @@
 {
   "id": "./",
-  "name": "Vryza+ Chat",
+  "name": "Vryza+ Connect",
   "short_name": "Vryza+",
-  "description": "Modern real-time social chat platform with messaging, posts, media sharing, and profiles.",
-  "start_url": "./home.html",
+  "description": "Real-time social platform with messaging, calls, live streaming, posts and profiles.",
+  "start_url": "./home.html?source=pwa",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#0f172a",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#151830",
   "theme_color": "#0f172a",
   "lang": "en",
   "dir": "ltr",
@@ -16,13 +20,25 @@
       "src": "images/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "images/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "images/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "images/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "categories": [
@@ -34,16 +50,54 @@
     {
       "name": "Open Chat",
       "short_name": "Chat",
-      "description": "Jump directly to active messages",
+      "description": "Jump straight to your messages",
       "url": "./chat.html",
-      "icons": [{ "src": "images/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "images/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Live Now",
+      "short_name": "Live",
+      "description": "Watch or start a live stream",
+      "url": "./live.html",
+      "icons": [
+        {
+          "src": "images/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "short_name": "Alerts",
+      "description": "See what's new",
+      "url": "./notifications.html",
+      "icons": [
+        {
+          "src": "images/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "My Profile",
       "short_name": "Profile",
-      "description": "View and edit profile details",
+      "description": "View and edit your profile",
       "url": "./profile.html",
-      "icons": [{ "src": "images/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "images/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

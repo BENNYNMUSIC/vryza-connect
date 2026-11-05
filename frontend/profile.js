@@ -1,4 +1,4 @@
-[cite: 2]// ================= MASTER API CONFIGURATION =================
+// ================= MASTER API CONFIGURATION =================
 const API = "https://vryza-connect-backend-1.onrender.com";
 
 // ================= DEFAULT FALLBACK GRAPHICS =================
@@ -242,8 +242,8 @@ function updateProfilePicModalData() {
     } else {
       commentsList.innerHTML = comments.map(c => `
         <div class="bg-slate-50 p-2 rounded-xl text-xs border border-slate-100">
-          <span class="font-bold text-slate-800">${c.username || 'User'}:</span>
-          <span class="text-slate-700 ml-1">${c.text || ''}</span>
+          <span class="font-bold text-slate-800">${escapeHTML(c.username || 'User')}:</span>
+          <span class="text-slate-700 ml-1">${escapeHTML(c.text || '')}</span>
         </div>
       `).join("");
     }
@@ -299,38 +299,330 @@ async function commentProfilePicture() {
   }
 }
 
-// ================= PHOTO GALLERY LOGIC =================
+// ================= PHOTO GALLERY LOGIC (likes + comments + viewer) =================
+let galleryPhotos = [];
+let viewerIndex = -1;
+let galleryBusy = false;
+let touchStartX = null;
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]
+  ));
+}
+
+function myIdString() {
+  const u = getStoredUser();
+  return String(u._id || u.id || "");
+}
+
+function isOwnProfileView() {
+  return !!currentProfileId && currentProfileId === myIdString();
+}
+
+function showToast(message) {
+  let el = document.getElementById("vzToast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "vzToast";
+    el.className = "vz-toast";
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+// Accepts new photo objects and old plain-filename strings.
+function normalizePhoto(raw, originalIndex) {
+  if (typeof raw === "string") {
+    return { _id: null, filename: raw, caption: "", likes: [], comments: [], originalIndex };
+  }
+  return {
+    _id: raw._id || null,
+    filename: raw.filename || "",
+    caption: raw.caption || "",
+    likes: Array.isArray(raw.likes) ? raw.likes.map(String) : [],
+    comments: Array.isArray(raw.comments) ? raw.comments : [],
+    originalIndex
+  };
+}
+
+function commentAuthor(c) {
+  const u = c.userId && typeof c.userId === "object" ? c.userId : null;
+  return {
+    id: String(u ? u._id : (c.userId || "")),
+    name: (u && u.username) || c.username || "User",
+    pic: u ? u.profilePic : ""
+  };
+}
+
 function renderPhotoGallery(gallery) {
   const grid = document.getElementById("galleryGrid");
   if (!grid) return;
 
-  const storedUser = getStoredUser();
-  const isOwnProfile = currentProfileId === String(storedUser._id || storedUser.id || "");
+  // Newest first
+  galleryPhotos = (gallery || []).map((p, i) => normalizePhoto(p, i)).reverse();
 
-  if (!gallery || !gallery.length) {
-    grid.innerHTML = `<p class="col-span-full text-center text-slate-400 text-xs italic py-4">No gallery photos added yet.</p>`;
+  if (!galleryPhotos.length) {
+    grid.innerHTML = `<p class="col-span-full text-center text-slate-400 text-xs italic py-6">No gallery photos added yet.</p>`;
     return;
   }
 
-  grid.innerHTML = gallery.map((photo, idx) => {
-    const imgUrl = buildImage(photo);
-    return `
-      <div class="relative group aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-        <img src="${imgUrl}" class="w-full h-full object-cover cursor-pointer hover:scale-105 transition" onclick="openGalleryModal('${imgUrl}')" />
-        ${isOwnProfile ? `
-          <button onclick="deleteGalleryPhoto(${idx})" class="absolute top-1.5 right-1.5 bg-black/60 hover:bg-rose-600 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer" title="Delete photo">✕</button>
-        ` : ''}
+  const own = isOwnProfileView();
+  const me = myIdString();
+
+  grid.innerHTML = galleryPhotos.map((photo, idx) => `
+    <div class="vz-tile" role="button" tabindex="0" data-idx="${idx}" aria-label="Open photo ${idx + 1}">
+      <img src="${escapeHTML(buildImage(photo.filename))}" alt="Gallery photo" loading="lazy" decoding="async" />
+      <div class="vz-tile-meta">
+        <span class="${photo.likes.includes(me) ? "vz-liked" : ""}">${photo.likes.includes(me) ? "♥" : "♡"} ${photo.likes.length}</span>
+        <span>💬 ${photo.comments.length}</span>
       </div>
-    `;
-  }).join("");
+      ${own ? `<button type="button" class="vz-del" data-del="${idx}" title="Delete photo" aria-label="Delete photo">✕</button>` : ""}
+    </div>
+  `).join("");
 }
 
+function setupGalleryEvents() {
+  const grid = document.getElementById("galleryGrid");
+  if (grid && !grid.dataset.bound) {
+    grid.dataset.bound = "1";
+    grid.addEventListener("click", (e) => {
+      const del = e.target.closest("[data-del]");
+      if (del) {
+        e.stopPropagation();
+        deleteGalleryPhoto(Number(del.dataset.del));
+        return;
+      }
+      const tile = e.target.closest("[data-idx]");
+      if (tile) openGalleryViewer(Number(tile.dataset.idx));
+    });
+    grid.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const tile = e.target.closest("[data-idx]");
+      if (tile && e.target === tile) {
+        e.preventDefault();
+        openGalleryViewer(Number(tile.dataset.idx));
+      }
+    });
+  }
+
+  const viewer = document.getElementById("galleryViewer");
+  if (viewer && !viewer.dataset.bound) {
+    viewer.dataset.bound = "1";
+    const stage = viewer.querySelector(".vz-stage");
+    stage.addEventListener("touchstart", (e) => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+    stage.addEventListener("touchend", (e) => {
+      if (touchStartX === null) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      touchStartX = null;
+      if (Math.abs(dx) > 50) galleryStep(dx < 0 ? 1 : -1);
+    }, { passive: true });
+
+    const input = document.getElementById("vzCommentInput");
+    if (input) input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); commentGalleryPhoto(); }
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (viewerIndex < 0) return;
+    if (e.key === "Escape") closeGalleryViewer();
+    else if (e.key === "ArrowRight" && document.activeElement?.id !== "vzCommentInput") galleryStep(1);
+    else if (e.key === "ArrowLeft" && document.activeElement?.id !== "vzCommentInput") galleryStep(-1);
+  });
+}
+
+// ---------- Viewer ----------
+function openGalleryViewer(idx) {
+  if (!galleryPhotos[idx]) return;
+  viewerIndex = idx;
+  const viewer = document.getElementById("galleryViewer");
+  if (!viewer) return;
+  viewer.classList.remove("hidden");
+  document.body.classList.add("vz-lock");
+  renderViewer();
+}
+
+function closeGalleryViewer() {
+  const viewer = document.getElementById("galleryViewer");
+  if (viewer) viewer.classList.add("hidden");
+  document.body.classList.remove("vz-lock");
+  viewerIndex = -1;
+}
+
+function galleryStep(delta) {
+  if (viewerIndex < 0 || galleryPhotos.length < 2) return;
+  viewerIndex = (viewerIndex + delta + galleryPhotos.length) % galleryPhotos.length;
+  renderViewer();
+}
+
+function renderViewer() {
+  const photo = galleryPhotos[viewerIndex];
+  if (!photo) return;
+
+  const me = myIdString();
+  const own = isOwnProfileView();
+  const liked = photo.likes.includes(me);
+  const interactive = !!photo._id;
+
+  const img = document.getElementById("vzViewerImg");
+  img.src = buildImage(photo.filename);
+
+  document.getElementById("vzPos").textContent = `${viewerIndex + 1} / ${galleryPhotos.length}`;
+  document.getElementById("vzCaption").textContent = photo.caption || "";
+  document.getElementById("vzCaption").style.display = photo.caption ? "block" : "none";
+
+  const likeBtn = document.getElementById("vzLikeBtn");
+  likeBtn.classList.toggle("vz-liked-btn", liked);
+  likeBtn.disabled = !interactive;
+  document.getElementById("vzLikeIcon").textContent = liked ? "♥" : "♡";
+  document.getElementById("vzLikeCount").textContent = photo.likes.length;
+  document.getElementById("vzCommentCount").textContent =
+    `${photo.comments.length} comment${photo.comments.length === 1 ? "" : "s"}`;
+
+  const list = document.getElementById("vzComments");
+  if (!interactive) {
+    list.innerHTML = `<p class="vz-empty">Likes and comments will be available once this photo is updated.</p>`;
+  } else if (!photo.comments.length) {
+    list.innerHTML = `<p class="vz-empty">No comments yet. Be the first!</p>`;
+  } else {
+    list.innerHTML = photo.comments.map((c) => {
+      const a = commentAuthor(c);
+      const canDelete = c._id && (a.id === me || own);
+      return `
+        <div class="vz-comment">
+          <img src="${escapeHTML(buildImage(a.pic))}" alt="" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR.replace(/'/g, "\\'")}'" />
+          <div class="vz-comment-body">
+            <span class="vz-comment-name">${escapeHTML(a.name)}</span>
+            <span class="vz-comment-text">${escapeHTML(c.text)}</span>
+          </div>
+          ${canDelete ? `<button type="button" class="vz-comment-del" data-cid="${escapeHTML(c._id)}" aria-label="Delete comment">✕</button>` : ""}
+        </div>`;
+    }).join("");
+    list.querySelectorAll("[data-cid]").forEach((btn) =>
+      btn.addEventListener("click", () => deleteGalleryComment(btn.dataset.cid)));
+    list.scrollTop = list.scrollHeight;
+  }
+
+  const input = document.getElementById("vzCommentInput");
+  input.disabled = !interactive;
+  document.getElementById("vzSendBtn").disabled = !interactive;
+
+  const prevNext = document.querySelectorAll("#galleryViewer .vz-nav");
+  prevNext.forEach((b) => (b.style.display = galleryPhotos.length > 1 ? "flex" : "none"));
+}
+
+// ---------- Like / Comment / Delete ----------
+async function likeGalleryPhoto() {
+  const photo = galleryPhotos[viewerIndex];
+  if (!photo || !photo._id || galleryBusy) return;
+  galleryBusy = true;
+
+  try {
+    const res = await fetch(`${API}/api/user/gallery/${currentProfileId}/${photo._id}/like`, {
+      method: "POST",
+      headers: { Authorization: getToken() }
+    });
+    const data = await res.json();
+    if (res.ok) {
+      photo.likes = (data.likes || []).map(String);
+      renderViewer();
+      refreshTileMeta();
+    } else {
+      showToast(data.message || "Could not update like.");
+    }
+  } catch (err) {
+    console.error("❌ LIKE GALLERY PHOTO ERROR:", err);
+    showToast("Network problem. Try again.");
+  } finally {
+    galleryBusy = false;
+  }
+}
+
+async function commentGalleryPhoto() {
+  const photo = galleryPhotos[viewerIndex];
+  const input = document.getElementById("vzCommentInput");
+  const text = input.value.trim();
+  if (!photo || !photo._id || !text || galleryBusy) return;
+  galleryBusy = true;
+
+  try {
+    const res = await fetch(`${API}/api/user/gallery/${currentProfileId}/${photo._id}/comment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: getToken() },
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      photo.comments = data.comments || [];
+      input.value = "";
+      renderViewer();
+      refreshTileMeta();
+    } else {
+      showToast(data.message || "Could not post comment.");
+    }
+  } catch (err) {
+    console.error("❌ COMMENT GALLERY PHOTO ERROR:", err);
+    showToast("Network problem. Try again.");
+  } finally {
+    galleryBusy = false;
+  }
+}
+
+async function deleteGalleryComment(commentId) {
+  const photo = galleryPhotos[viewerIndex];
+  if (!photo || !photo._id || galleryBusy) return;
+  if (!confirm("Delete this comment?")) return;
+  galleryBusy = true;
+
+  try {
+    const res = await fetch(`${API}/api/user/gallery/${currentProfileId}/${photo._id}/comment/${commentId}`, {
+      method: "DELETE",
+      headers: { Authorization: getToken() }
+    });
+    const data = await res.json();
+    if (res.ok) {
+      photo.comments = photo.comments.filter((c) => String(c._id) !== String(commentId));
+      renderViewer();
+      refreshTileMeta();
+    } else {
+      showToast(data.message || "Could not delete comment.");
+    }
+  } catch (err) {
+    console.error("❌ DELETE GALLERY COMMENT ERROR:", err);
+  } finally {
+    galleryBusy = false;
+  }
+}
+
+// Updates the counters on the grid tiles without reloading the whole profile.
+function refreshTileMeta() {
+  const me = myIdString();
+  document.querySelectorAll("#galleryGrid .vz-tile").forEach((tile) => {
+    const photo = galleryPhotos[Number(tile.dataset.idx)];
+    const meta = tile.querySelector(".vz-tile-meta");
+    if (!photo || !meta) return;
+    const liked = photo.likes.includes(me);
+    meta.innerHTML = `<span class="${liked ? "vz-liked" : ""}">${liked ? "♥" : "♡"} ${photo.likes.length}</span><span>💬 ${photo.comments.length}</span>`;
+  });
+}
+
+// ---------- Upload / Delete photo ----------
 async function uploadGalleryPhoto(e) {
-  const file = e.target.files?.[0];
+  const input = e.target;
+  const file = input.files?.[0];
   if (!file) return;
 
   const formData = new FormData();
   formData.append("photo", file);
+
+  const label = input.closest("label")?.querySelector("span");
+  const oldText = label ? label.textContent : "";
+  if (label) label.textContent = "Uploading…";
+  input.disabled = true;
 
   try {
     const res = await fetch(`${API}/api/user/gallery/upload`, {
@@ -341,46 +633,49 @@ async function uploadGalleryPhoto(e) {
 
     const data = await res.json();
     if (res.ok) {
-      alert("✅ Photo added to gallery!");
-      viewProfile(currentProfileId);
+      showToast("Photo added to gallery");
+      await viewProfile(currentProfileId);
     } else {
-      alert(data.message || "Failed to upload photo.");
+      showToast(data.message || "Failed to upload photo.");
     }
   } catch (err) {
     console.error("❌ GALLERY UPLOAD ERROR:", err);
+    showToast("Upload failed. Check your connection.");
+  } finally {
+    input.value = "";
+    input.disabled = false;
+    if (label) label.textContent = oldText || "Add Photo";
   }
 }
 
-async function deleteGalleryPhoto(index) {
+async function deleteGalleryPhoto(idx) {
+  const photo = galleryPhotos[idx];
+  if (!photo) return;
   if (!confirm("Remove this photo from your gallery?")) return;
 
+  const target = photo._id || photo.originalIndex;
+
   try {
-    const res = await fetch(`${API}/api/user/gallery/${index}`, {
+    const res = await fetch(`${API}/api/user/gallery/${target}`, {
       method: "DELETE",
       headers: { Authorization: getToken() }
     });
 
     if (res.ok) {
-      viewProfile(currentProfileId);
+      closeGalleryViewer();
+      await viewProfile(currentProfileId);
     } else {
-      alert("Failed to delete photo.");
+      const data = await res.json().catch(() => ({}));
+      showToast(data.message || "Failed to delete photo.");
     }
   } catch (err) {
     console.error("❌ DELETE GALLERY PHOTO ERROR:", err);
   }
 }
 
-function openGalleryModal(url) {
-  const modal = document.getElementById("galleryModal");
-  const img = document.getElementById("galleryModalImg");
-  if (img) img.src = url;
-  if (modal) modal.classList.remove("hidden");
-}
-
-function closeGalleryModal() {
-  const modal = document.getElementById("galleryModal");
-  if (modal) modal.classList.add("hidden");
-}
+// Kept so older markup that calls these names still works.
+function openGalleryModal() {}
+function closeGalleryModal() { closeGalleryViewer(); }
 
 // ================= ADMIN MODERATION SETUP =================
 function setupAdminModerationPanel(user) {
@@ -766,10 +1061,16 @@ window.uploadGalleryPhoto = uploadGalleryPhoto;
 window.deleteGalleryPhoto = deleteGalleryPhoto;
 window.openGalleryModal = openGalleryModal;
 window.closeGalleryModal = closeGalleryModal;
+window.openGalleryViewer = openGalleryViewer;
+window.closeGalleryViewer = closeGalleryViewer;
+window.galleryStep = galleryStep;
+window.likeGalleryPhoto = likeGalleryPhoto;
+window.commentGalleryPhoto = commentGalleryPhoto;
 
 // ================= INITIALIZATION =================
 document.addEventListener("DOMContentLoaded", () => {
   setupFilePreviews();
+  setupGalleryEvents();
 
   const storedUser = getStoredUser();
   const myId = String(storedUser._id || storedUser.id || "");

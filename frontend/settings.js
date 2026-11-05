@@ -21,38 +21,27 @@ function logout() {
   window.location.href = "auth.html";
 }
 
-// ================= DARK THEME CONVERTER ENGINE =================
-function setDark() {
-  document.body.classList.remove("bg-slate-100", "text-slate-800");
-  document.body.classList.add("bg-slate-900", "text-white");
-
-  localStorage.setItem("theme", "dark");
-  updateThemeUI("dark");
-}
-
-// ================= LIGHT THEME CONVERTER ENGINE =================
-function setLight() {
-  document.body.classList.remove("bg-slate-900", "text-white");
-  document.body.classList.add("bg-slate-100", "text-slate-800");
-
-  localStorage.setItem("theme", "light");
-  updateThemeUI("light");
-}
-
-// ================= DYNAMIC BATCH UPDATE THEME CLASSES =================
-function updateThemeUI(theme) {
-  const cards = document.querySelectorAll(".theme-card");
-
-  cards.forEach((card) => {
-    if (theme === "dark") {
-      card.classList.remove("bg-white", "text-slate-800", "border-slate-200");
-      card.classList.add("bg-slate-800", "text-white", "border-slate-700");
-    } else {
-      card.classList.remove("bg-slate-800", "text-white", "border-slate-700");
-      card.classList.add("bg-white", "text-slate-800", "border-slate-200");
-    }
+// ================= THEME (shared with every page via theme.js) =================
+function refreshThemeButtons() {
+  const mode = window.VryzaTheme ? window.VryzaTheme.get() : (localStorage.getItem("theme") || "light");
+  document.querySelectorAll("#themeChoices [data-theme]").forEach((btn) => {
+    btn.setAttribute("aria-checked", String(btn.dataset.theme === mode));
   });
 }
+
+function applyTheme(mode) {
+  if (window.VryzaTheme) {
+    window.VryzaTheme.set(mode);
+  } else {
+    localStorage.setItem("theme", mode);
+    document.documentElement.classList.toggle("dark", mode === "dark");
+  }
+  refreshThemeButtons();
+}
+
+function setDark() { applyTheme("dark"); }
+function setLight() { applyTheme("light"); }
+function setSystem() { applyTheme("system"); }
 
 // ================= SUPPORT COMMUNICATIONS TRANSLATOR =================
 async function sendSupport() {
@@ -116,13 +105,38 @@ async function sendSupport() {
 }
 
 // ================= INITIALIZATION =================
-document.addEventListener("DOMContentLoaded", () => {
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme === "dark") {
-    setDark();
+// ================= INSTALL APP (PWA) =================
+function refreshInstallUI() {
+  const pwa = window.VryzaPWA;
+  const btn = document.getElementById("pwaInstallBtn");
+  const text = document.getElementById("pwaText");
+  if (!pwa || !btn || !text) return;
+
+  btn.classList.add("hidden");
+  if (pwa.isInstalled()) {
+    text.textContent = "✓ Vryza+ is installed on this device.";
+  } else if (pwa.canInstall()) {
+    text.textContent = "Add Vryza+ to your home screen for a faster, full-screen experience.";
+    btn.classList.remove("hidden");
+  } else if (pwa.needsIosHint()) {
+    text.textContent = "On iPhone/iPad: tap the Share button in Safari, then choose \u201cAdd to Home Screen\u201d.";
   } else {
-    setLight();
+    text.textContent = "To install, open your browser menu and choose \u201cInstall app\u201d or \u201cAdd to Home Screen\u201d.";
   }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const installBtn = document.getElementById("pwaInstallBtn");
+  if (installBtn) installBtn.addEventListener("click", async () => {
+    if (window.VryzaPWA) await window.VryzaPWA.install();
+    refreshInstallUI();
+  });
+  window.addEventListener("vryza:installable", refreshInstallUI);
+  window.addEventListener("vryza:installed", refreshInstallUI);
+  refreshInstallUI();
+
+  refreshThemeButtons();
+  window.addEventListener("vryza:theme", refreshThemeButtons);
 
   const supportInput = document.getElementById("supportMessage");
   if (supportInput) {
@@ -141,4 +155,5 @@ document.addEventListener("DOMContentLoaded", () => {
 window.logout = logout;
 window.setDark = setDark;
 window.setLight = setLight;
+window.setSystem = setSystem;
 window.sendSupport = sendSupport;

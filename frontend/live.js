@@ -1,120 +1,81 @@
-const API_URL = "https://localhost:5500";
+const API_URL = "https://vryza-connect-backend-1.onrender.com";
+const DEFAULT_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' fill='%23334155'/><path fill='%2394a3b8' d='M12 12a4 4 0 100-8 4 4 0 000 8zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5z'/></svg>";
 
-// Helper function to prevent malicious XSS injections from custom stream titles
-function escapeHTML(str) {
-  if (!str) return '';
-  return str.replace(/[&<>'"]/g, 
-    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+const container = document.getElementById("liveStreams");
+const countEl = document.getElementById("count");
+
+function buildImage(src) {
+  if (!src || src === "undefined" || src === "null") return DEFAULT_AVATAR;
+  if (/^(https?:|data:)/.test(src)) return src;
+  return `${API_URL}/uploads/${String(src).replace(/^\/?(uploads\/)?/, "")}`;
+}
+
+function h(tag, props, ...children) {
+  const el = document.createElement(tag);
+  Object.entries(props || {}).forEach(([k, v]) => {
+    if (v == null || v === false) return;
+    if (k === "class") el.className = v;
+    else if (k === "text") el.textContent = v;
+    else el.setAttribute(k, v);
+  });
+  children.flat().forEach((c) => { if (c != null) el.append(c.nodeType ? c : document.createTextNode(c)); });
+  return el;
+}
+
+function createCard(stream) {
+  const avatar = h("img", { src: buildImage(stream.user && stream.user.profilePic), alt: "", loading: "lazy" });
+  avatar.addEventListener("error", () => { avatar.src = DEFAULT_AVATAR; }, { once: true });
+
+  return h("a", { class: "stream", href: `live-viewer.html?id=${encodeURIComponent(stream._id)}` },
+    h("div", { class: "thumb" },
+      avatar,
+      h("span", { class: "pill live", text: "● LIVE" }),
+      h("span", { class: "pill cat", text: stream.category || "Other" })
+    ),
+    h("div", { class: "meta" },
+      h("b", { text: stream.title || "Untitled stream" }),
+      h("span", { class: "muted", text: (stream.user && stream.user.username) || "Anonymous streamer" })
+    )
   );
-}
-
-async function createStream() {
-  const token = localStorage.getItem("token");
-
-  try {
-    const res = await fetch(`${API_URL}/api/live/create`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      console.log(data.stream);
-      return data.stream;
-    }
-  } catch (err) {
-    console.error("Failed to fetch stream credentials:", err);
-  }
-}
-
-async function startStream(title) {
-  const token = localStorage.getItem("token");
-
-  try {
-    const res = await fetch(`${API_URL}/api/live/start`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ title })
-    });
-
-    return await res.json();
-  } catch (err) {
-    console.error("Failed to start livestream:", err);
-  }
 }
 
 async function loadLiveStreams() {
   try {
     const res = await fetch(`${API_URL}/api/live`);
     const data = await res.json();
-    const container = document.getElementById("liveStreams");
+    const streams = Array.isArray(data.streams) ? data.streams : [];
 
-    if (!container) return;
-    container.innerHTML = "";
-
-    // Defensive check: handle cases where data or streams array is missing
-    if (!data.streams || data.streams.length === 0) {
-      container.innerHTML = "<p>No active live streams right now.</p>";
+    if (!streams.length) {
+      countEl.textContent = "";
+      container.replaceChildren(h("div", { class: "state", style: "grid-column:1/-1" },
+        h("div", { class: "big", text: "📡" }),
+        h("b", { text: "Nobody is live right now" }),
+        h("p", { class: "muted", text: "Be the first - tap Go live to start streaming." })));
       return;
     }
 
-    data.streams.forEach(stream => {
-      // Optional chaining prevents undefined model property crashes
-      const safeUsername = escapeHTML(stream.user?.username || "Anonymous Streamer");
-      const safeTitle = escapeHTML(stream.title || "Untitled Stream");
-      const safePic = stream.user?.profilePic || "default-avatar.png"; 
-
-      const cardHTML = `
-        <div class="live-card" style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-          <img src="${safePic}" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%;">
-          <h3>${safeUsername}</h3>
-          <p>${safeTitle}</p>
-          <span>🔴 LIVE</span>
-        </div>
-      `;
-      // insertAdjacentHTML performs drastically better than standard innerHTML updates
-      container.insertAdjacentHTML("beforeend", cardHTML);
-    });
+    countEl.textContent = `${streams.length} live stream${streams.length === 1 ? "" : "s"}`;
+    container.replaceChildren(...streams.map(createCard));
   } catch (err) {
     console.error("Error loading stream items:", err);
+    if (!container.children.length) {
+      container.replaceChildren(h("div", { class: "state", style: "grid-column:1/-1", text: "Couldn't load streams. Check your connection." }));
+    }
   }
 }
 
-// WIRE EVERYTHING TOGETHER ON PAGE LOAD
 document.addEventListener("DOMContentLoaded", () => {
-  const goLiveBtn = document.getElementById("goLiveBtn");
-
-  if (goLiveBtn) {
-    goLiveBtn.addEventListener("click", async () => {
-      const title = prompt("Enter a title for your live stream:");
-      if (!title || !title.trim()) {
-        alert("You must provide a title to go live!");
-        return;
-      }
-
-      // Step 1: Ensure stream credentials / key structure exists
-      const stream = await createStream();
-      if (!stream) {
-        alert("Failed to create stream key. Check auth status.");
-        return;
-      }
-
-      // Step 2: Set title and change stream status to active live
-      const result = await startStream(title.trim());
-      if (result && result.success) {
-        alert(`Stream configured! Connect your broadcast app (like OBS) using your key: ${stream.streamKey}`);
-        loadLiveStreams(); // Refresh the listing layout instantly
-      } else {
-        alert(`Could not start stream: ${result?.message || "Unknown error"}`);
-      }
-    });
+  if (!localStorage.getItem("token")) {
+    // Browsing is public, but going live needs an account.
+    document.getElementById("goLiveBtn").addEventListener("click", () => { window.location.href = "auth.html"; });
+  } else {
+    document.getElementById("goLiveBtn").addEventListener("click", () => { window.location.href = "live-studio.html"; });
   }
+  document.getElementById("backBtn").addEventListener("click", () => {
+    if (document.referrer && history.length > 1) history.back(); else window.location.href = "home.html";
+  });
 
-  // Fetch the active live stream directory immediately when visiting the page
   loadLiveStreams();
+  setInterval(loadLiveStreams, 15000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") loadLiveStreams(); });
 });
