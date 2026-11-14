@@ -2,610 +2,145 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vryza+ Live Studio</title>
-
-<!-- PWA Web App Meta Tags -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Live Studio - Vryza+</title>
+<script src="theme.js"></script>
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#0f172a" />
 <meta name="mobile-web-app-capable" content="yes" />
-
-<!-- iOS Safari PWA Compatibility -->
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Vryza+" />
 <link rel="apple-touch-icon" href="images/icon-192.png" />
-
-<!-- PWA Registration Script -->
 <script src="sw-register.js" defer></script>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Poppins,sans-serif;
-}
-
-body{
-background:#111827;
-color:white;
-}
-
-header{
-height:70px;
-background:#1f2937;
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:0 30px;
-border-bottom:1px solid #333;
-}
-
-header h1{
-font-size:24px;
-}
-
-header span{
-color:#ff3b5c;
-}
-
-.container{
-display:grid;
-grid-template-columns:320px 1fr;
-min-height:calc(100vh - 70px);
-}
-
-/* Sidebar */
-
-.sidebar{
-background:#1b2431;
-padding:20px;
-border-right:1px solid #333;
-}
-
-.profile{
-text-align:center;
-margin-bottom:30px;
-}
-
-.profile img{
-width:100px;
-height:100px;
-border-radius:50%;
-border:3px solid #ff3b5c;
-object-fit:cover;
-}
-
-.profile h2{
-margin-top:10px;
-font-size:20px;
-}
-
-.status{
-margin-top:10px;
-display:inline-block;
-padding:8px 18px;
-border-radius:50px;
-background:#444;
-font-size:14px;
-}
-
-.status.live{
-background:red;
-animation:pulse 1.2s infinite;
-}
-
-@keyframes pulse{
-
-0%{opacity:1;}
-
-50%{opacity:.5;}
-
-100%{opacity:1;}
-
-}
-
-.stats{
-
-display:grid;
-gap:15px;
-
-}
-
-.stat-card{
-
-background:#263445;
-padding:15px;
-border-radius:12px;
-text-align:center;
-
-}
-
-.stat-card h3{
-
-font-size:14px;
-color:#bbb;
-
-}
-
-.stat-card p{
-
-font-size:24px;
-font-weight:bold;
-margin-top:8px;
-
-}
-
-/* Main */
-
-.main{
-
-padding:30px;
-
-}
-
-.card{
-
-background:#1f2937;
-padding:20px;
-border-radius:15px;
-margin-bottom:25px;
-box-shadow:0 0 15px rgba(0,0,0,.2);
-
-}
-
-.card h2{
-
-margin-bottom:20px;
-font-size:22px;
-
-}
-
-.form-group{
-
-margin-bottom:18px;
-
-}
-
-label{
-
-display:block;
-margin-bottom:8px;
-
-}
-
-input,
-textarea,
-select{
-
-width:100%;
-padding:12px;
-border:none;
-border-radius:10px;
-background:#2d3748;
-color:white;
-font-size:15px;
-
-}
-
-textarea{
-
-resize:none;
-height:100px;
-
-}
-
-.row{
-
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-
-}
-
-.copy-group{
-
-display:flex;
-gap:10px;
-
-}
-
-.copy-group input{
-
-flex:1;
-
-}
-
-button{
-
-cursor:pointer;
-border:none;
-border-radius:10px;
-padding:12px 20px;
-font-size:15px;
-transition:.3s;
-
-}
-
-.copy-btn{
-
-background:#2563eb;
-color:white;
-
-}
-
-.copy-btn:hover{
-
-background:#1d4ed8;
-
-}
-
-.show-btn{
-
-background:#4b5563;
-color:white;
-
-}
-
-.show-btn:hover{
-
-background:#374151;
-
-}
-
-.go-live{
-
-background:#ff3b5c;
-color:white;
-width:100%;
-margin-top:10px;
-font-size:18px;
-
-}
-
-.go-live:hover{
-
-background:#d91d44;
-
-}
-
-.stop-live{
-
-background:#444;
-color:white;
-width:100%;
-margin-top:10px;
-
-}
-
-.stop-live:hover{
-
-background:#333;
-
-}
-
-/* Preview */
-
-.preview{
-
-width:100%;
-height:500px;
-background:black;
-border-radius:15px;
-display:flex;
-justify-content:center;
-align-items:center;
-overflow:hidden;
-
-}
-
-.preview video{
-
-width:100%;
-height:100%;
-object-fit:cover;
-
-}
-
-/* Footer */
-
-.footer{
-
-text-align:center;
-padding:20px;
-color:#888;
-
-}
-
-@media(max-width:900px){
-
-.container{
-
-grid-template-columns:1fr;
-
-}
-
-.sidebar{
-
-border-right:none;
-border-bottom:1px solid #333;
-
-}
-
-.row{
-
-grid-template-columns:1fr;
-
-}
-
-}
-
+    :root { --bg:#f1f5f9; --card:#ffffff; --soft:#f8fafc; --text:#0f172a; --muted:#64748b; --line:#e2e8f0; --accent:#2563eb; --live:#ef4444; --chip:#e2e8f0; --ok:#16a34a; }
+    html.dark { --bg:#0b1220; --card:#162033; --soft:#101a2c; --text:#f8fafc; --muted:#94a3b8; --line:#2a3a52; --accent:#60a5fa; --live:#f87171; --chip:#26354d; --ok:#4ade80; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; padding:0 14px calc(28px + env(safe-area-inset-bottom,0px)); transition:background-color .2s,color .2s; }
+    button,input,select,textarea { font:inherit; color:inherit; }
+    button { cursor:pointer; }
+    .wrap { max-width:1100px; margin:0 auto; }
+    .top { position:sticky; top:0; z-index:30; background:var(--bg); padding:calc(10px + env(safe-area-inset-top,0px)) 0 10px; border-bottom:1px solid var(--line); margin-bottom:14px; }
+    .top-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .title { display:flex; align-items:center; gap:10px; min-width:0; }
+    .title h1 { margin:0; font-size:1.2rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .icon-btn { width:40px; height:40px; border:0; border-radius:12px; background:var(--chip); font-size:17px; flex:none; }
+    .btn { min-height:44px; border:0; border-radius:12px; padding:0 18px; font-weight:800; font-size:14px; background:var(--chip); }
+    .btn.live { background:var(--live); color:#fff; } .btn.primary { background:var(--accent); color:#fff; } .btn.ok { background:var(--ok); color:#06210f; }
+    html.dark .btn.primary { color:#0b1220; }
+    .btn:disabled { opacity:.5; cursor:default; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; margin-bottom:14px; }
+    .card h2 { margin:0 0 12px; font-size:15px; font-weight:800; }
+    .pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:800; border-radius:999px; padding:4px 10px; background:var(--chip); }
+    .pill.live { background:var(--live); color:#fff; }
+    .muted { color:var(--muted); font-size:13px; }
+    .toast { position:fixed; left:50%; bottom:calc(22px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:300; background:#0f172a; color:#fff; padding:12px 18px; border-radius:14px; font-size:13px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.4); max-width:calc(100vw - 28px); }
+    .toast.err { background:#b91c1c; }
+    input,select,textarea { width:100%; min-height:46px; padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:var(--soft); font-size:16px; outline:none; }
+    input:focus,select:focus,textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+    textarea { resize:vertical; min-height:84px; }
+    label { display:block; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:0 0 6px; }
+    .field { margin-bottom:14px; }
+    .avatar { width:44px; height:44px; border-radius:50%; object-fit:cover; background:var(--chip); flex:none; }
+    @media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
+
+    .layout { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:14px; align-items:start; }
+    .status { display:inline-flex; align-items:center; gap:8px; font-weight:800; font-size:13px; padding:8px 14px; border-radius:999px; background:var(--chip); }
+    .status.live { background:var(--live); color:#fff; animation:pulse 1.4s infinite; }
+    .status.waiting { background:#f59e0b; color:#1c1200; }
+    @keyframes pulse { 50% { opacity:.65; } }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+    .stat { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px; text-align:center; }
+    .stat b { display:block; font-size:1.3rem; font-variant-numeric:tabular-nums; } .stat span { font-size:11px; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:.04em; }
+    .preview { position:relative; aspect-ratio:16/9; background:#000; border-radius:14px; overflow:hidden; }
+    .preview video { width:100%; height:100%; object-fit:contain; display:block; }
+    .preview .msg { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; color:#fff; font-weight:700; padding:16px; background:rgba(0,0,0,.55); }
+    .preview .msg.hidden { display:none; }
+    .copy { display:flex; gap:8px; } .copy input { flex:1; min-width:0; }
+    .copy .btn { min-height:46px; padding:0 14px; }
+    .actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
+    .controls { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .controls .btn { padding:0 8px; font-size:13px; }
+    .btn.off { background:#fff; color:#0f172a; }
+    .preview video.mirror { transform:scaleX(-1); }
+    .warn { background:rgba(245,158,11,.14); border:1px solid rgba(245,158,11,.5); color:var(--text); border-radius:12px; padding:10px 12px; font-size:13px; margin-bottom:14px; }
+    details { margin-top:12px; } summary { cursor:pointer; font-weight:800; font-size:13px; padding:6px 0; }
+    details ol { margin:8px 0 0; padding-left:20px; font-size:13px; color:var(--muted); line-height:1.7; }
+    .feed { max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+    .item { background:var(--soft); border:1px solid var(--line); border-radius:12px; padding:8px 12px; font-size:13px; overflow-wrap:anywhere; }
+    @media (max-width:860px) { .layout { grid-template-columns:1fr; } .actions { grid-template-columns:1fr; } }
 </style>
 </head>
-
 <body>
+<div class="wrap">
+  <header class="top">
+    <div class="top-row">
+      <div class="title">
+        <button class="icon-btn" id="backBtn" aria-label="Back">←</button>
+        <h1>Live Studio</h1>
+      </div>
+      <span class="status" id="status">⚫ Offline</span>
+    </div>
+  </header>
 
-<header>
+  <div class="stats">
+    <div class="stat"><b id="viewerCount">0</b><span>Viewers</span></div>
+    <div class="stat"><b id="duration">00:00:00</b><span>Duration</span></div>
+    <div class="stat"><b id="coinsCount">0</b><span>Earned today</span></div>
+  </div>
 
-<h1>Vryza<span>+</span> Live Studio</h1>
+  <div class="layout">
+    <div>
+      <div class="card">
+        <h2>Stream info</h2>
+        <div class="field"><label for="streamTitle">Title</label><input id="streamTitle" type="text" maxlength="100" placeholder="What are you streaming?" /></div>
+        <div class="field"><label for="streamDescription">Description</label><textarea id="streamDescription" maxlength="500" placeholder="Tell viewers what this stream is about…"></textarea></div>
+        <div class="field" style="margin-bottom:0"><label for="category">Category</label>
+          <select id="category"><option>Gaming</option><option>Music</option><option>Education</option><option>Entertainment</option><option>Technology</option><option>Sports</option><option>Lifestyle</option><option>Other</option></select>
+        </div>
+      </div>
 
-<div id="welcomeUser">
-Welcome Creator
+      <div class="card">
+        <h2>Preview</h2>
+        <div class="preview">
+          <video id="videoPreview" class="mirror" playsinline autoplay muted></video>
+          <div class="msg" id="previewMsg">Press Go live to start your camera.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Go live</h2>
+        <div class="actions">
+          <button class="btn live" id="goLiveBtn" type="button">🔴 Go live</button>
+          <button class="btn" id="stopLiveBtn" type="button">⏹ End stream</button>
+        </div>
+        <p class="muted" style="margin:12px 0 0">Go live starts your camera and microphone and shows your stream to everyone.</p>
+        <p class="muted" id="feeNote" style="margin:8px 0 0"></p>
+      </div>
+
+      <div class="card">
+        <h2>Camera &amp; microphone</h2>
+        <div class="controls">
+          <button class="btn" id="micBtn" type="button" disabled>🎤 Mic on</button>
+          <button class="btn" id="camBtn" type="button" disabled>📷 Camera on</button>
+          <button class="btn" id="flipBtn" type="button" disabled>🔄 Flip</button>
+        </div>
+        <p class="muted" style="margin:12px 0 0">Streaming from your phone? Keep this page open and your screen on. Browsers pause the camera when you switch apps or lock the phone.</p>
+      </div>
+
+      <div class="card">
+        <h2>Supporters</h2>
+        <div class="feed" id="feed"><span class="muted">Tips and gifts will appear here.</span></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-</header>
-
-<div class="container">
-
-<!-- Sidebar -->
-
-<div class="sidebar">
-
-<div class="profile">
-
-<img id="profilePic" src="default-avatar.png">
-
-<h2 id="username">
-Streamer
-</h2>
-
-<div id="liveStatus" class="status">
-⚫ Offline
-</div>
-
-</div>
-
-<div class="stats">
-
-<div class="stat-card">
-
-<h3>Current Viewers</h3>
-
-<p id="viewerCount">
-0
-</p>
-
-</div>
-
-<div class="stat-card">
-
-<h3>Likes</h3>
-
-<p id="likesCount">
-0
-</p>
-
-</div>
-
-<div class="stat-card">
-
-<h3>Comments</h3>
-
-<p id="commentsCount">
-0
-</p>
-
-</div>
-
-<div class="stat-card">
-
-<h3>Duration</h3>
-
-<p id="duration">
-00:00:00
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- Main -->
-
-<div class="main">
-
-<div class="card">
-
-<h2>Stream Information</h2>
-
-<div class="form-group">
-
-<label>Stream Title</label>
-
-<input
-type="text"
-id="streamTitle"
-placeholder="Enter stream title">
-
-</div>
-
-<div class="form-group">
-
-<label>Description</label>
-
-<textarea
-id="streamDescription"
-placeholder="Tell viewers what this stream is about..."></textarea>
-
-</div>
-
-<div class="form-group">
-
-<label>Category</label>
-
-<select id="category">
-
-<option>Gaming</option>
-<option>Music</option>
-<option>Education</option>
-<option>Entertainment</option>
-<option>Technology</option>
-<option>Sports</option>
-<option>Lifestyle</option>
-<option>Other</option>
-
-</select>
-
-</div>
-
-</div>
-
-<div class="card">
-
-<h2>Encoder Settings</h2>
-
-<div class="row">
-
-<div>
-
-<label>RTMP Server</label>
-
-<div class="copy-group">
-
-<input
-id="rtmpServer"
-readonly
-value="rtmp://YOUR_SERVER/live">
-
-<button
-class="copy-btn"
-id="copyServer">
-
-Copy
-
-</button>
-
-</div>
-
-</div>
-
-<div>
-
-<label>Playback URL</label>
-
-<div class="copy-group">
-
-<input
-id="playbackUrl"
-readonly>
-
-<button
-class="copy-btn"
-id="copyPlayback">
-
-Copy
-
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-<br>
-
-<label>Stream Key</label>
-
-<div class="copy-group">
-
-<input
-id="streamKey"
-type="password"
-readonly>
-
-<button
-class="show-btn"
-id="toggleKey">
-
-Show
-
-</button>
-
-<button
-class="copy-btn"
-id="copyKey">
-
-Copy
-
-</button>
-
-</div>
-
-<button
-class="go-live"
-id="goLiveBtn">
-
-🔴 GO LIVE
-
-</button>
-
-<button
-class="stop-live"
-id="stopLiveBtn">
-
-⏹ END STREAM
-
-</button>
-
-</div>
-
-<div class="card">
-
-<h2>Live Preview</h2>
-
-<div class="preview">
-
-<video
-id="videoPreview"
-controls
-autoplay
-muted>
-
-</video>
-
-</div>
-
-</div>
-
-<div class="footer">
-
-Vryza+ Live Studio © 2026
-
-</div>
-
-</div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2.15.7/dist/livekit-client.umd.min.js"></script>
+<script src="https://vryza-connect-backend-1.onrender.com/socket.io/socket.io.js"></script>
 <script src="live-studio.js"></script>
-
 </body>
 </html>

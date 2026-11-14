@@ -1,62 +1,61 @@
-// Function to register listener safely on socket connection
-function initAiAdminSocketListener() {
-  if (typeof socket === 'undefined' || !socket) {
-    console.warn("⚠️ Socket instance not found on window. Listener deferred.");
-    return;
-  }
+// AI Admin chat messages (used on a page that has a #chat-window element and a global `socket`).
+// Shows AI replies with a badge and normal messages as plain bubbles. All text is inserted safely.
+(function () {
+  "use strict";
+  var registered = false;
 
-  socket.on('receive_message', (data) => {
-    const chatWindow = document.getElementById('chat-window');
-    if (!chatWindow) return;
+  function addMessage(data) {
+    var chatWindow = document.getElementById("chat-window");
+    if (!chatWindow || !data) return;
 
-    const msgElement = document.createElement('div');
-
-    const rawDate = data.timestamp ? new Date(data.timestamp) : new Date();
-    const timeString = !isNaN(rawDate.getTime()) ? rawDate.toLocaleTimeString() : '';
+    var msgElement = document.createElement("div");
+    var rawDate = data.timestamp ? new Date(data.timestamp) : new Date();
+    var timeString = !isNaN(rawDate.getTime()) ? rawDate.toLocaleTimeString() : "";
 
     if (data.isAi) {
-      msgElement.className = 'message ai-admin-message';
+      msgElement.className = "message ai-admin-message";
 
-      const msgHeader = document.createElement('div');
-      msgHeader.className = 'msg-header';
+      var header = document.createElement("div");
+      header.className = "msg-header";
+      var badge = document.createElement("span");
+      badge.className = "bot-badge";
+      badge.textContent = "🤖 AI ADMIN";
+      var time = document.createElement("span");
+      time.className = "time";
+      time.textContent = timeString;
+      header.append(badge, time);
 
-      const botBadge = document.createElement('span');
-      botBadge.className = 'bot-badge';
-      botBadge.textContent = '🤖 AI ADMIN';
+      var body = document.createElement("div");
+      body.className = "msg-body";
+      body.textContent = data.message || "";
 
-      const timeSpan = document.createElement('span');
-      timeSpan.className = 'time';
-      timeSpan.textContent = timeString;
-
-      msgHeader.appendChild(botBadge);
-      msgHeader.appendChild(timeSpan);
-
-      const msgBody = document.createElement('div');
-      msgBody.className = 'msg-body';
-      msgBody.textContent = data.message || '';
-
-      msgElement.appendChild(msgHeader);
-      msgElement.appendChild(msgBody);
+      msgElement.append(header, body);
     } else {
-      msgElement.className = 'message user-message';
-
-      const senderElement = document.createElement('strong');
-      senderElement.textContent = `${data.sender || 'User'}: `;
-
-      const messageText = document.createTextNode(data.message || '');
-
-      msgElement.appendChild(senderElement);
-      msgElement.appendChild(messageText);
+      msgElement.className = "message user-message";
+      var sender = document.createElement("strong");
+      sender.textContent = (data.sender || "User") + ": ";
+      msgElement.append(sender, document.createTextNode(data.message || ""));
     }
 
     chatWindow.appendChild(msgElement);
     chatWindow.scrollTop = chatWindow.scrollHeight;
-  });
-}
+  }
 
-// Auto-run or export attachment helper
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initAiAdminSocketListener);
-} else {
-  initAiAdminSocketListener();
-}
+  // The page defines `socket` in its own script; wait for it instead of giving up.
+  function register(attempt) {
+    if (registered) return;
+    var s = (typeof socket !== "undefined" && socket) ? socket : null;
+    if (!s) {
+      if (attempt < 40) setTimeout(function () { register(attempt + 1); }, 250);
+      else console.warn("[isadmin] no socket found, AI admin messages will not show on this page");
+      return;
+    }
+    registered = true;
+    s.on("receive_message", addMessage);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { register(0); });
+  else register(0);
+
+  window.addAiAdminMessage = addMessage;   // handy for testing: addAiAdminMessage({isAi:true, message:"Hi"})
+})();

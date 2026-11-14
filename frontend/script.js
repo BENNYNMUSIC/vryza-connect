@@ -31,14 +31,20 @@ let currentUserFollowingSet = new Set();
 
 async function syncCurrentUserFollowing() {
   try {
-    const res = await fetch(`${API}/api/user/${currentUserId}`, {
+    let res = await fetch(`${API}/api/user/${currentUserId}`, {
       headers: { "Authorization": `Bearer ${token}` }
     });
+    if (!res.ok) {
+      res = await fetch(`${API}/api/users/${currentUserId}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+    }
     if (res.ok) {
       const data = await res.json();
       const userObj = data.user || data;
       const followingList = userObj.following || [];
       currentUserFollowingSet = new Set(followingList.map(item => String(typeof item === "object" ? (item._id || item.id) : item)));
+      refreshAllFollowButtons();
     }
   } catch (err) {
     console.warn("⚠️ Unable to sync currentUser handle following status:", err);
@@ -47,6 +53,34 @@ async function syncCurrentUserFollowing() {
 
 function isUserFollowed(targetUserId) {
   return currentUserFollowingSet.has(String(targetUserId));
+}
+
+// ---- Follow button UI: every follow button carries data-follow-user="<id>" ----
+function setFollowButtonState(btn, following) {
+  if (!btn) return;
+  btn.disabled = false;
+  if (following) {
+    btn.textContent = "Following";
+    btn.classList.remove("bg-blue-600", "hover:bg-blue-700", "text-white", "shadow-sm", "shadow-xs", "cursor-pointer");
+    btn.classList.add("bg-slate-200", "text-slate-700", "cursor-default", "opacity-80");
+    btn.title = "You are already following this user";
+  } else {
+    btn.textContent = "Follow";
+    btn.classList.remove("bg-slate-200", "text-slate-700", "cursor-default", "opacity-80");
+    btn.classList.add("bg-blue-600", "hover:bg-blue-700", "text-white", "cursor-pointer");
+    btn.title = "";
+  }
+}
+
+function refreshFollowButtonsFor(userId) {
+  const following = isUserFollowed(userId);
+  document.querySelectorAll(`[data-follow-user="${String(userId)}"]`).forEach(btn => setFollowButtonState(btn, following));
+}
+
+function refreshAllFollowButtons() {
+  document.querySelectorAll("[data-follow-user]").forEach(btn => {
+    setFollowButtonState(btn, isUserFollowed(btn.getAttribute("data-follow-user")));
+  });
 }
 
 // Initialize following set on boot
@@ -408,7 +442,7 @@ async function loadPosts() {
 
             <div class="flex items-center gap-2">
               ${!isOwner ? `
-                <button onclick="followUser('${targetAuthorId}', this)" class="${followBtnClass}">
+                <button data-follow-user="${targetAuthorId}" onclick="followUser('${targetAuthorId}', this)" class="${followBtnClass}">
                   ${isFollowing ? 'Following' : 'Follow'}
                 </button>
               ` : `
@@ -630,55 +664,56 @@ async function deletePost(postId) {
 // ================= SOCIAL GRAPH RELATIONSHIPS =================
 async function followUser(targetUserId, btnElement = null) {
   if (!targetUserId || targetUserId === "undefined") return;
+  targetUserId = String(targetUserId);
 
+  // Already following: just make sure every button for this user says "Following".
   if (isUserFollowed(targetUserId)) {
-    return; // Already following
+    refreshFollowButtonsFor(targetUserId);
+    if (btnElement) setFollowButtonState(btnElement, true);
+    return;
   }
 
-  try {
-    let res = await fetch(`${API}/api/user/follow/${targetUserId}`, {
-      method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
-    });
+  if (btnElement) btnElement.disabled = true;
 
+  const markFollowing = () => {
+    currentUserFollowingSet.add(targetUserId);
+    refreshFollowButtonsFor(targetUserId);
+    if (btnElement) setFollowButtonState(btnElement, true);
+  };
+
+  try {
+    const headers = {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    };
+
+    let res = await fetch(`${API}/api/user/follow/${targetUserId}`, { method: "PUT", headers });
     if (!res.ok) {
-      res = await fetch(`${API}/api/users/follow/${targetUserId}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
+      res = await fetch(`${API}/api/users/follow/${targetUserId}`, { method: "PUT", headers });
     }
 
-    const data = await res.json();
+    let data = {};
+    try { data = await res.json(); } catch (e) {}
+
+    // The server toggles follow/unfollow. If we meant to follow but it unfollowed
+    // (our list was out of date), toggle again so the user ends up following.
+    if (res.ok && data.following === false) {
+      res = await fetch(`${API}/api/user/follow/${targetUserId}`, { method: "PUT", headers });
+      try { data = await res.json(); } catch (e) { data = {}; }
+    }
+
     if (res.ok) {
-      currentUserFollowingSet.add(String(targetUserId));
-
-      if (btnElement) {
-        btnElement.innerText = "Following";
-        btnElement.className = btnElement.className
-          .replace("bg-blue-600", "bg-slate-200")
-          .replace("hover:bg-blue-700", "")
-          .replace("text-white", "text-slate-700") + " cursor-default opacity-80";
-        btnElement.onclick = null;
-      }
-
-      // Sync across all visible UI components
-      const targetBtns = document.querySelectorAll(`[id*="-follow-btn-${targetUserId}"]`);
-      targetBtns.forEach(btn => {
-        btn.innerText = "Following";
-        btn.className = "bg-slate-200 text-slate-700 px-3 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 cursor-default opacity-80";
-        btn.onclick = null;
-      });
+      markFollowing();
+    } else if (/already/i.test(String(data.message || ""))) {
+      // Server says we already follow them: fix the button instead of showing an error.
+      markFollowing();
     } else {
+      if (btnElement) btnElement.disabled = false;
       alert(data.message || "Unable to update follow state.");
     }
   } catch (err) {
     console.error("❌ RELATIONSHIP TRANSIT FAULT:", err);
+    if (btnElement) btnElement.disabled = false;
   }
 }
 
@@ -829,6 +864,7 @@ window.updatePostPreviewTheme = updatePostPreviewTheme;
 window.applyPostPreset = applyPostPreset;
 window.syncCurrentUserFollowing = syncCurrentUserFollowing;
 window.isUserFollowed = isUserFollowed;
+window.refreshAllFollowButtons = refreshAllFollowButtons;
 
 // Initial execution
 loadPosts();
