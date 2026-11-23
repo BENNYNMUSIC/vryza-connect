@@ -22,8 +22,6 @@ const myId = String(me._id || me.id || "");
 const $ = (id) => document.getElementById(id);
 const video = $("player");
 let stream = null;
-let hls = null;
-let attachedUrl = "";
 let socket = null;
 let sending = false;
 let giftTimer = null;
@@ -60,42 +58,64 @@ function setOverlay(text, spinning) {
   $("spin").style.display = spinning ? "block" : "none";
 }
 
-/* ---------------- player ---------------- */
+/* ---------------- player (LiveKit) ---------------- */
+let room = null;
+let connecting = false;
+let watchingId = "";
+
 function detachPlayer() {
-  if (hls) { hls.destroy(); hls = null; }
-  video.removeAttribute("src");
-  video.load();
-  attachedUrl = "";
+  if (room) { try { room.disconnect(); } catch (e) {} room = null; }
+  video.srcObject = null;
+  watchingId = "";
 }
 
-function attachPlayer(url) {
-  if (attachedUrl === url) return;
-  detachPlayer();
-  attachedUrl = url;
+async function attachPlayer() {
+  if (room || connecting) return;
+  const LK = window.LivekitClient;
+  if (!LK) { setOverlay("Live video couldn't load. Refresh the page.", false); return; }
+  if (!token) { setOverlay("Log in to watch this stream.", false); return; }
+  connecting = true;
   setOverlay("Connecting to the stream…", true);
-
-  if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = url;                       // Safari / iPhone play HLS natively
-    video.play().catch(() => {});
-  } else if (window.Hls && Hls.isSupported()) {
-    hls = new Hls({ lowLatencyMode: true, liveSyncDurationCount: 3 });
-    hls.loadSource(url);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-    hls.on(Hls.Events.ERROR, (_, d) => {
-      if (!d.fatal) return;
-      setOverlay("Waiting for the streamer's video…", true);
-      if (d.type === Hls.ErrorTypes.NETWORK_ERROR) setTimeout(() => hls && hls.startLoad(), 3000);
-      else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+  try {
+    const res = await fetch(`${API_URL}/api/live/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ role: "watch", streamId })
     });
-  } else {
-    setOverlay("Your browser can't play live video.", false);
+    const data = await res.json();
+    if (!res.ok || !data.success) { setOverlay(data.message || "Couldn't join the stream.", false); return; }
+
+    const r = new LK.Room({ adaptiveStream: true });
+    r.on(LK.RoomEvent.TrackSubscribed, (track) => {
+      if (track.kind === "video" || track.kind === "audio") {
+        track.attach(video);
+        video.play().catch(() => {});
+        setOverlay("", false);
+      }
+    });
+    r.on(LK.RoomEvent.TrackUnsubscribed, (track) => track.detach());
+    r.on(LK.RoomEvent.Reconnecting, () => setOverlay("Reconnecting…", true));
+    r.on(LK.RoomEvent.Reconnected, () => setOverlay("", false));
+    r.on(LK.RoomEvent.Disconnected, () => {
+      if (room === r) { room = null; setOverlay("Waiting for the streamer's video…", true); }
+    });
+    await r.connect(data.url, data.token);
+    room = r;
+    // pick up tracks that were already published before we joined
+    r.remoteParticipants.forEach((p) => p.trackPublications.forEach((pub) => {
+      if (pub.track) { pub.track.attach(video); video.play().catch(() => {}); setOverlay("", false); }
+    }));
+    if (!video.srcObject) setOverlay("Waiting for the streamer's video…", true);
+  } catch (err) {
+    console.error("Watch failed:", err);
+    setOverlay("Couldn't connect. Retrying…", true);
+  } finally {
+    connecting = false;
   }
 }
 
+video.setAttribute("playsinline", "");
 video.addEventListener("playing", () => setOverlay("", false));
-video.addEventListener("waiting", () => { if (attachedUrl) setOverlay("Buffering…", true); });
-video.addEventListener("error", () => { if (attachedUrl) setOverlay("Waiting for the streamer's video…", true); });
 
 /* ---------------- stream info ---------------- */
 async function loadStream() {
@@ -108,9 +128,10 @@ async function loadStream() {
     }
     stream = data.stream;
     renderInfo();
+    updateInteractionState();
 
     if (stream.isLive && stream.streaming) {
-      attachPlayer(`${API_URL}${stream.hlsUrl}`);
+      attachPlayer();
     } else if (stream.isLive) {
       detachPlayer();
       setOverlay("The streamer is getting ready…", true);
@@ -200,6 +221,163 @@ function buildSupportButtons() {
   });
 }
 
+
+/* ---------------- comments ---------------- */
+const seenComments = new Set();
+let commentSending = false;
+
+function isHost() { return !!(stream && stream.user && String(stream.user._id || "") === myId); }
+
+function addComment(c) {
+  if (!c || !c._id || seenComments.has(c._id)) return;
+  seenComments.add(c._id);
+  const list = $("commentList");
+  if (!list.querySelector(".comment")) list.replaceChildren();
+  const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 80;
+  const author = c.user || {};
+  const canDelete = !!token && (String(author._id || "") === myId || isHost());
+  const avatar = h("img", { class: "c-avatar", src: buildImage(author.profilePic), alt: "", loading: "lazy" });
+  avatar.addEventListener("error", () => { avatar.src = DEFAULT_AVATAR; }, { once: true });
+  list.append(h("div", { class: "comment", "data-id": c._id },
+    avatar,
+    h("div", { class: "c-body" }, h("b", { text: author.username || "User" }), h("span", { text: c.text })),
+    canDelete ? h("button", { class: "c-del", type: "button", "aria-label": "Delete comment", text: "✕", onclick: () => deleteComment(c._id) }) : null));
+  while (list.children.length > 200) { seenComments.delete(list.firstChild.dataset.id); list.firstChild.remove(); }
+  if (nearBottom) list.scrollTop = list.scrollHeight;
+}
+
+function removeComment(id) {
+  const el = $("commentList").querySelector(`[data-id="${CSS.escape(String(id))}"]`);
+  if (el) el.remove();
+  seenComments.delete(String(id));
+  const list = $("commentList");
+  if (!list.querySelector(".comment")) list.replaceChildren(h("span", { class: "muted", text: "No comments yet. Say something!" }));
+}
+
+async function loadComments() {
+  try {
+    const res = await fetch(`${API_URL}/api/live/${encodeURIComponent(streamId)}/comments`);
+    const data = await res.json();
+    if (!res.ok || !data.success) return;
+    data.comments.forEach(addComment);
+    const list = $("commentList");
+    list.scrollTop = list.scrollHeight;
+  } catch (err) { console.warn("Load comments failed:", err); }
+}
+
+async function sendComment() {
+  if (!token) { toast("Log in to comment.", true); return; }
+  const input = $("commentInput");
+  const text = input.value.trim();
+  if (!text || commentSending) return;
+  commentSending = true;
+  $("commentBtn").disabled = true;
+  try {
+    const res = await fetch(`${API_URL}/api/live/${encodeURIComponent(streamId)}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) { toast(data.message || "Couldn't send your comment.", true); return; }
+    input.value = "";
+    addComment(data.comment);
+    const list = $("commentList");
+    list.scrollTop = list.scrollHeight;
+  } catch (err) {
+    toast("Couldn't send your comment.", true);
+  } finally {
+    commentSending = false;
+    $("commentBtn").disabled = !!(stream && !stream.isLive);
+  }
+}
+
+async function deleteComment(id) {
+  try {
+    const res = await fetch(`${API_URL}/api/live/${encodeURIComponent(streamId)}/comments/${encodeURIComponent(id)}`, {
+      method: "DELETE", headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) { toast(data.message || "Couldn't delete that.", true); return; }
+    removeComment(id);
+  } catch (err) { toast("Couldn't delete that.", true); }
+}
+
+function updateInteractionState() {
+  const ended = !!(stream && !stream.isLive);
+  $("commentInput").disabled = ended;
+  $("commentBtn").disabled = ended || commentSending;
+  $("commentInput").placeholder = ended ? "This stream has ended" : "Add a comment…";
+}
+
+/* ---------------- like / dislike / share ---------------- */
+let myReaction = null;
+let reacting = false;
+
+function fmt(n) {
+  n = Number(n) || 0;
+  return n >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M" : n >= 1e3 ? (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K" : String(n);
+}
+
+function renderReactions(r) {
+  if (!r) return;
+  if (r.likes != null) $("likeCount").textContent = fmt(r.likes);
+  if (r.dislikes != null) $("dislikeCount").textContent = fmt(r.dislikes);
+  if (r.shares != null) $("shareCount").textContent = r.shares > 0 ? fmt(r.shares) : "";
+  if ("mine" in r) myReaction = r.mine;
+  $("likeBtn").classList.toggle("active", myReaction === "like");
+  $("likeBtn").setAttribute("aria-pressed", String(myReaction === "like"));
+  $("dislikeBtn").classList.toggle("active", myReaction === "dislike");
+  $("dislikeBtn").setAttribute("aria-pressed", String(myReaction === "dislike"));
+}
+
+async function loadReactions() {
+  if (!token) return;
+  try {
+    const res = await fetch(`${API_URL}/api/live/${encodeURIComponent(streamId)}/reactions`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (res.ok && data.success) renderReactions(data);
+  } catch (err) { console.warn("Load reactions failed:", err); }
+}
+
+async function react(kind) {
+  if (!token) { toast("Log in to react.", true); return; }
+  if (reacting) return;
+  reacting = true;
+  const value = myReaction === kind ? "none" : kind;
+  try {
+    const res = await fetch(`${API_URL}/api/live/${encodeURIComponent(streamId)}/react`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ value })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) { toast(data.message || "Couldn't save that.", true); return; }
+    renderReactions(data);
+  } catch (err) { toast("Couldn't save that.", true); }
+  finally { reacting = false; }
+}
+
+async function shareStream() {
+  const url = new URL(`live-viewer.html?id=${encodeURIComponent(streamId)}`, window.location.href).href;
+  const host = (stream && stream.user && stream.user.username) || "someone";
+  const title = (stream && stream.title) || "Live on Vryza+";
+  let done = false;
+
+  if (navigator.share) {
+    try { await navigator.share({ title, text: `Watch ${host} live on Vryza+: ${title}`, url }); done = true; }
+    catch (err) { if (err && err.name === "AbortError") return; }
+  }
+  if (!done) {
+    try { await navigator.clipboard.writeText(url); toast("Live link copied!"); done = true; }
+    catch (err) { window.prompt("Copy this link to share:", url); done = true; }
+  }
+  if (done && token) {
+    fetch(`${API_URL}/api/live/${encodeURIComponent(streamId)}/share`, { method: "POST", headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json()).then((d) => { if (d && d.success) renderReactions({ shares: d.shares }); }).catch(() => {});
+  }
+}
+
 /* ---------------- live alerts ---------------- */
 function addFeedItem(alert) {
   const feed = $("feed");
@@ -225,6 +403,9 @@ function connectSocket() {
   socket = io(API_URL, { auth: { token }, transports: ["websocket", "polling"] });
   socket.on("connect", () => socket.emit("join_stream", streamId));
   socket.on("viewer_count", (d) => { if (d && d.streamId === streamId) $("viewerPill").textContent = `👁 ${d.count}`; });
+  socket.on("live_comment", (d) => { if (d && d.streamId === streamId) addComment(d.comment); });
+  socket.on("live_comment_deleted", (d) => { if (d && d.streamId === streamId) removeComment(d.commentId); });
+  socket.on("live_reactions", (d) => { if (d && d.streamId === streamId) renderReactions({ likes: d.likes, dislikes: d.dislikes, shares: d.shares }); });
   socket.on("new_monetization_alert", (alert) => {
     if (!alert || alert.streamId !== streamId) return;
     addFeedItem(alert);
@@ -237,6 +418,13 @@ document.addEventListener("DOMContentLoaded", () => {
   $("backBtn").addEventListener("click", () => {
     if (document.referrer && history.length > 1) history.back(); else window.location.href = "live.html";
   });
+  $("likeBtn").addEventListener("click", () => react("like"));
+  $("dislikeBtn").addEventListener("click", () => react("dislike"));
+  $("shareBtn").addEventListener("click", shareStream);
+  $("commentBtn").addEventListener("click", sendComment);
+  $("commentInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); sendComment(); } });
+  loadComments();
+  loadReactions();
   buildSupportButtons();
   loadStream();
   loadBalance();
@@ -244,5 +432,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setInterval(loadStream, 15000);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { loadStream(); loadBalance(); } });
-  window.addEventListener("beforeunload", () => { if (socket) socket.emit("leave_stream", streamId); });
+  window.addEventListener("beforeunload", () => { if (socket) socket.emit("leave_stream", streamId); detachPlayer(); });
 });

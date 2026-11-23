@@ -69,6 +69,22 @@
     .feed { max-height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
     .item { background:var(--soft); border:1px solid var(--line); border-radius:12px; padding:8px 12px; font-size:13px; overflow-wrap:anywhere; }
     .item.super { background:#f59e0b; color:#1c1200; border-color:#f59e0b; }
+
+    .actions { display:flex; gap:8px; padding:10px; }
+    .act { flex:1; min-height:46px; border-radius:12px; border:1px solid var(--line); background:var(--soft); font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center; gap:6px; }
+    .act:active { transform:scale(.97); }
+    .act.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+    html.dark .act.active { color:#0b1220; }
+    .act:disabled { opacity:.5; }
+    .comments { max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; overscroll-behavior:contain; }
+    .comment { display:flex; align-items:flex-start; gap:8px; font-size:14px; }
+    .c-avatar { width:28px; height:28px; border-radius:50%; object-fit:cover; background:var(--chip); flex:none; }
+    .c-body { flex:1; min-width:0; overflow-wrap:anywhere; line-height:1.35; }
+    .c-body b { font-weight:800; margin-right:4px; }
+    .c-del { border:0; background:none; color:var(--muted); font-size:14px; padding:2px 6px; flex:none; }
+    .comment-form { display:flex; gap:8px; margin-top:12px; }
+    .comment-form input { flex:1; min-width:0; width:auto; }
+    .comment-form .btn { flex:none; }
     @media (max-width:860px) { .layout { grid-template-columns:1fr; } .player { border-radius:0 0 18px 18px; margin:0 -14px; } }
 </style>
 </head>
@@ -101,6 +117,21 @@
         </div>
         <h2 id="streamTitle" style="margin:14px 0 4px;font-size:18px"></h2>
         <p class="muted" id="streamDesc" style="margin:0"></p>
+      </div>
+
+      <div class="card actions" style="margin-top:14px">
+        <button class="act" id="likeBtn" type="button" aria-pressed="false" aria-label="Like">👍 <span id="likeCount">0</span></button>
+        <button class="act" id="dislikeBtn" type="button" aria-pressed="false" aria-label="Dislike">👎 <span id="dislikeCount">0</span></button>
+        <button class="act" id="shareBtn" type="button" aria-label="Share this live">↗ Share <span id="shareCount"></span></button>
+      </div>
+
+      <div class="card">
+        <h2>Live chat</h2>
+        <div class="comments" id="commentList" aria-live="polite"><span class="muted">No comments yet. Say something!</span></div>
+        <div class="comment-form">
+          <input id="commentInput" type="text" maxlength="200" placeholder="Add a comment…" autocomplete="off" enterkeyhint="send" />
+          <button class="btn primary" id="commentBtn" type="button">Send</button>
+        </div>
       </div>
     </main>
 
